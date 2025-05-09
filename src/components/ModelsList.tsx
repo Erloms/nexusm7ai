@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowUpRight, Sparkles, Star, Volume2, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ModelType {
   name: string;
@@ -13,6 +15,8 @@ interface ModelType {
 const ModelsList: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string>("text");
   const [hoveredItem, setHoveredItem] = useState<number | null>(null);
+  const navigate = useNavigate();
+  const { isAuthenticated, checkPaymentStatus } = useAuth();
   
   const textModels: ModelType[] = [
     {
@@ -70,6 +74,27 @@ const ModelsList: React.FC = () => {
   const item = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0 }
+  };
+
+  const handleStartClick = () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    } else if (!checkPaymentStatus()) {
+      navigate('/payment');
+    } else {
+      // Already a paid member, navigate to the appropriate feature
+      switch (activeCategory) {
+        case 'text':
+          navigate('/chat');
+          break;
+        case 'image':
+          navigate('/image');
+          break;
+        case 'voice':
+          navigate('/voice');
+          break;
+      }
+    }
   };
 
   return (
@@ -194,8 +219,13 @@ const ModelsList: React.FC = () => {
               </div>
               
               <div className="mt-6">
-                <button className="w-full px-6 py-3 bg-gradient-to-r from-nexus-blue to-nexus-cyan text-white rounded-md flex items-center justify-center font-medium hover:opacity-90 transition-all group">
-                  立即体验高级AI能力 
+                <button 
+                  className="w-full px-6 py-3 bg-gradient-to-r from-nexus-blue to-nexus-cyan text-white rounded-md flex items-center justify-center font-medium hover:opacity-90 transition-all group"
+                  onClick={handleStartClick}
+                >
+                  {!isAuthenticated ? "立即注册体验" : 
+                   !checkPaymentStatus() ? "立即升级会员" : 
+                   "开始使用AI能力"}
                   <ArrowUpRight className="ml-2 h-5 w-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                 </button>
               </div>

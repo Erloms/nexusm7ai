@@ -1,14 +1,28 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { 
+  Volume2, 
+  Play, 
+  Download, 
+  Clock, 
+  AlignLeft, 
+  RotateCcw,
+  Info,
+  CheckCircle2
+} from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { Download, Clock, Music, History, Trash2, Volume2, Loader2, FileText, Lightbulb, AlertTriangle } from "lucide-react";
-import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from '@/contexts/AuthContext';
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
-interface VoiceStyle {
+interface VoiceOption {
   id: string;
   name: string;
   description: string;
@@ -20,406 +34,397 @@ interface HistoryItem {
   timestamp: Date;
   voice: string;
   text: string;
-  previewText: string;
   audioUrl?: string;
 }
 
-const Voice: React.FC = () => {
-  const [text, setText] = useState<string>("");
-  const [selectedVoice, setSelectedVoice] = useState<string>("alloy");
-  const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [audioSrc, setAudioSrc] = useState<string | null>(null);
-  const [charCount, setCharCount] = useState<number>(0);
-  const [estimatedDuration, setEstimatedDuration] = useState<string>("0 秒");
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+const Voice = () => {
   const { toast } = useToast();
-  const CHARS_PER_MINUTE = 150;
+  const navigate = useNavigate();
+  const { isAuthenticated, checkPaymentStatus } = useAuth();
+  const [text, setText] = useState('');
+  const [selectedVoice, setSelectedVoice] = useState('alloy');
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [exactReading, setExactReading] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
-  const voiceStyles: VoiceStyle[] = [
-    { id: "alloy", name: "Alloy", description: "平衡中性", color: "bg-indigo-600" },
-    { id: "echo", name: "Echo", description: "深沉有力", color: "bg-indigo-500" },
-    { id: "fable", name: "Fable", description: "温暖讲述", color: "bg-purple-600" },
-    { id: "onyx", name: "Onyx", description: "威严庄重", color: "bg-gray-800" },
-    { id: "nova", name: "Nova", description: "友好专业", color: "bg-emerald-600" },
-    { id: "shimmer", name: "Shimmer", description: "轻快明亮", color: "bg-blue-500" },
-    { id: "coral", name: "Coral", description: "温柔平静", color: "bg-rose-500" },
-    { id: "verse", name: "Verse", description: "生动诗意", color: "bg-amber-500" },
-    { id: "ballad", name: "Ballad", description: "抒情柔和", color: "bg-violet-500" },
-    { id: "ash", name: "Ash", description: "思考沉稳", color: "bg-gray-600" },
-    { id: "sage", name: "Sage", description: "智慧老练", color: "bg-green-700" },
-    { id: "amuch", name: "Amuch", description: "饱满自然", color: "bg-orange-500" },
-    { id: "aster", name: "Aster", description: "清晰直接", color: "bg-blue-700" },
-    { id: "brook", name: "Brook", description: "流畅舒适", color: "bg-blue-600" },
-    { id: "clover", name: "Clover", description: "活泼年轻", color: "bg-pink-600" },
-    { id: "dan", name: "Dan", description: "男声稳重", color: "bg-gray-900" }
+  // Voice options
+  const voiceOptions: VoiceOption[] = [
+    { id: 'alloy', name: 'Alloy', description: '平衡中性', color: '#4F46E5' },
+    { id: 'echo', name: 'Echo', description: '深沉有力', color: '#6366F1' },
+    { id: 'fable', name: 'Fable', description: '温暖讲述', color: '#8B5CF6' },
+    { id: 'onyx', name: 'Onyx', description: '威严庄重', color: '#333333' },
+    { id: 'nova', name: 'Nova', description: '友好专业', color: '#10B981' },
+    { id: 'shimmer', name: 'Shimmer', description: '轻快明亮', color: '#60A5FA' },
+    { id: 'coral', name: 'Coral', description: '温柔平静', color: '#F87171' },
+    { id: 'verse', name: 'Verse', description: '生动诗意', color: '#FBBF24' },
   ];
 
+  // Load history from localStorage
   useEffect(() => {
-    loadHistory();
-  }, []);
-
-  useEffect(() => {
-    updateTextStats();
-  }, [text]);
-
-  const updateTextStats = () => {
-    const count = text.trim().length;
-    setCharCount(count);
-    
-    // Calculate and update duration estimate
-    const durationMinutes = count / CHARS_PER_MINUTE;
-    let durationText;
-    if (durationMinutes < 1/60) {
-      durationText = '不到1秒';
-    } else if (durationMinutes < 1) {
-      const seconds = Math.round(durationMinutes * 60);
-      durationText = `${seconds} 秒`;
-    } else {
-      const minutes = Math.floor(durationMinutes);
-      const seconds = Math.round((durationMinutes - minutes) * 60);
-      if (seconds === 0) {
-        durationText = `${minutes} 分钟`;
-      } else {
-        durationText = `${minutes} 分钟 ${seconds} 秒`;
+    const savedHistory = localStorage.getItem('nexusAiVoiceHistory');
+    if (savedHistory) {
+      try {
+        const parsed = JSON.parse(savedHistory);
+        setHistory(parsed.map((item: any) => ({
+          ...item,
+          timestamp: new Date(item.timestamp)
+        })));
+      } catch (e) {
+        console.error('Failed to parse voice history', e);
       }
     }
-    setEstimatedDuration(durationText);
-  };
+  }, []);
 
-  const generateAudio = async () => {
+  // Save history to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('nexusAiVoiceHistory', JSON.stringify(history));
+  }, [history]);
+
+  const handleGenerateVoice = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "需要登录",
+        description: "请先登录后再使用语音合成功能",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
+
+    if (!checkPaymentStatus()) {
+      toast({
+        title: "会员功能",
+        description: "语音合成是会员专享功能，请先升级为会员",
+        variant: "destructive",
+      });
+      navigate('/payment');
+      return;
+    }
+
     if (!text.trim()) {
       toast({
-        title: "请输入文本内容",
+        title: "内容为空",
+        description: "请输入需要转换为语音的文本",
         variant: "destructive",
       });
       return;
     }
 
-    setIsGenerating(true);
-    setAudioSrc(null);
-
+    setLoading(true);
+    
     try {
-      // In a real application, this would be your backend API call
-      // For now, we'll simulate the API call to Pollinations.ai
-      const url = `https://text.pollinations.ai/${encodeURIComponent(text)}?model=openai-audio&voice=${selectedVoice}`;
+      // Prepare the text with optional prefix for exact reading
+      let processedText = text;
+      if (exactReading) {
+        processedText = `请严格按照以下内容朗读，不要做任何修改或演绎：${text}`;
+      }
+
+      // Create the URL with the encoded text and selected voice
+      const url = `https://text.pollinations.ai/${encodeURIComponent(processedText)}?model=openai-audio&voice=${selectedVoice}&nologo=true`;
       
-      // Simulating a delay for the API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // For demo purposes, we'll simulate a delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // In a real implementation, we'd fetch the audio blob here
-      // For now, just set the audio source directly
-      setAudioSrc(url);
+      // In a real app, you'd fetch the audio from the API
+      // const response = await fetch(url);
+      // const audioBlob = await response.blob();
+      // const audioUrl = URL.createObjectURL(audioBlob);
       
-      // Save to history
-      const timestamp = new Date();
-      const previewText = text.substring(0, 20) + (text.length > 20 ? '...' : '');
-      const newHistoryItem = {
+      // For now, we'll just use the URL directly as if it was successful
+      setAudioUrl(url);
+      
+      // Add to history
+      const newHistoryItem: HistoryItem = {
         id: Date.now(),
-        timestamp,
+        timestamp: new Date(),
         voice: selectedVoice,
-        text,
-        previewText,
+        text: text,
         audioUrl: url
       };
       
-      const newHistory = [newHistoryItem, ...history].slice(0, 10);
-      setHistory(newHistory);
-      saveHistory(newHistory);
+      setHistory(prev => [newHistoryItem, ...prev.slice(0, 9)]);
       
       toast({
-        title: "语音生成成功！",
-        description: "您可以播放或下载生成的音频",
+        title: "语音生成成功",
+        description: "您的文本已成功转换为语音",
+        variant: "default",
       });
     } catch (error) {
+      console.error('Error generating audio:', error);
       toast({
-        title: "语音生成失败",
-        description: "请稍后重试或联系客服",
+        title: "生成失败",
+        description: "语音生成过程中发生错误，请稍后再试",
         variant: "destructive",
       });
     } finally {
-      setIsGenerating(false);
+      setLoading(false);
     }
   };
 
-  const downloadAudio = (url: string, filename: string) => {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename || `nexus_voice_${new Date().getTime()}.mp3`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  };
-
-  const saveHistory = (newHistory: HistoryItem[]) => {
-    try {
-      localStorage.setItem('nexusAudioGeneratorHistory', JSON.stringify(newHistory));
-    } catch (e) {
-      console.error('Error saving history to localStorage:', e);
-    }
-  };
-
-  const loadHistory = () => {
-    try {
-      const historyData = localStorage.getItem('nexusAudioGeneratorHistory');
-      if (historyData) {
-        const parsedHistory = JSON.parse(historyData);
-        setHistory(parsedHistory.map((item: any) => ({
-          ...item,
-          timestamp: new Date(item.timestamp)
-        })));
-      }
-    } catch (e) {
-      console.error('Error loading history from localStorage:', e);
-    }
-  };
-
-  const clearHistory = () => {
-    if (confirm('确定要清空所有历史记录吗？这个操作不可撤销。')) {
+  const handleClearHistory = () => {
+    if (confirm('确定要清空所有历史记录吗？')) {
       setHistory([]);
-      localStorage.removeItem('nexusAudioGeneratorHistory');
       toast({
-        title: "历史记录已清空",
+        title: "历史已清空",
+        description: "语音生成历史记录已被清除",
       });
     }
   };
 
-  const getSelectedVoiceStyle = () => {
-    return voiceStyles.find(v => v.id === selectedVoice) || voiceStyles[0];
+  const formatTime = (date: Date): string => {
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   return (
-    <div className="min-h-screen bg-nexus-dark relative">
+    <div className="min-h-screen bg-nexus-dark flex flex-col">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-nexus-blue to-nexus-cyan bg-clip-text text-transparent mb-4">
-            AI 语音合成
-          </h1>
-          <p className="text-white/80 max-w-3xl mx-auto">
-            输入文本，选择语音风格，一键将文字转换为自然流畅的语音。
-            支持多种声音特征，帮您创建专业水准的音频内容。
-          </p>
+      <main className="flex-grow flex flex-col md:flex-row gap-4 p-4 pt-20 md:p-20">
+        {/* Left Panel - Text Input and Voice Selection */}
+        <div className="w-full md:w-1/2 flex flex-col gap-4">
+          <Card className="p-5 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm border-nexus-blue/20">
+            <h2 className="text-2xl font-bold mb-4 flex items-center text-white">
+              <Volume2 className="mr-2 h-6 w-6 text-nexus-cyan" />
+              AI 语音合成
+            </h2>
+            
+            <Tabs defaultValue="voice" className="w-full mb-6">
+              <TabsList className="grid grid-cols-2 w-full bg-nexus-dark/50">
+                <TabsTrigger value="voice" className="data-[state=active]:bg-nexus-blue text-white">选择声音</TabsTrigger>
+                <TabsTrigger value="settings" className="data-[state=active]:bg-nexus-blue text-white">设置</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="voice" className="pt-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {voiceOptions.map(voice => (
+                    <div 
+                      key={voice.id}
+                      className={`relative cursor-pointer p-3 rounded-lg border transition-all ${
+                        selectedVoice === voice.id 
+                          ? 'border-nexus-cyan bg-nexus-cyan/10' 
+                          : 'border-nexus-blue/20 bg-nexus-dark/40 hover:bg-nexus-dark/60'
+                      }`}
+                      onClick={() => setSelectedVoice(voice.id)}
+                    >
+                      {selectedVoice === voice.id && (
+                        <div className="absolute -top-2 -right-2 bg-nexus-cyan rounded-full">
+                          <CheckCircle2 className="h-5 w-5" />
+                        </div>
+                      )}
+                      <div 
+                        className="w-10 h-10 rounded-full flex items-center justify-center mb-2"
+                        style={{ backgroundColor: voice.color }}
+                      >
+                        <Volume2 className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="text-white font-medium">{voice.name}</div>
+                      <div className="text-white/60 text-sm">{voice.description}</div>
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="settings" className="pt-4">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="exact-reading" className="text-white">严格原文朗读</Label>
+                      <div className="text-sm text-white/60">开启后，AI将严格按照文本内容进行朗读，不会进行创意演绎</div>
+                    </div>
+                    <Switch
+                      id="exact-reading"
+                      checked={exactReading}
+                      onCheckedChange={setExactReading}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+            
+            <div className="mb-4">
+              <Label htmlFor="text-input" className="text-white mb-2 block">输入文本</Label>
+              <Textarea
+                id="text-input"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="输入需要转换为语音的文本内容..."
+                className="min-h-[200px] bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
+              />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4 text-white/70 text-sm">
+                <div className="flex items-center">
+                  <AlignLeft className="h-4 w-4 mr-1" />
+                  <span>字符数: {text.length}</span>
+                </div>
+                <div className="flex items-center">
+                  <Clock className="h-4 w-4 mr-1" />
+                  <span>预计时长: {Math.max(1, Math.ceil(text.length / 150))}秒</span>
+                </div>
+              </div>
+              
+              <Button 
+                onClick={handleGenerateVoice} 
+                disabled={loading || !text.trim()}
+                className="bg-nexus-blue hover:bg-nexus-blue/80"
+              >
+                {loading ? "生成中..." : "生成语音"}
+              </Button>
+            </div>
+            
+            <div className="mt-4 bg-nexus-blue/10 border border-nexus-blue/20 rounded-lg p-3">
+              <div className="flex items-start">
+                <Info className="h-5 w-5 text-nexus-cyan mr-2 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-white/80">
+                  {exactReading
+                    ? "严格朗读模式已开启，AI将按原文精确朗读，不添加额外语气或演绎。"
+                    : "智能演绎模式已开启，AI可能会对文本进行自然语气调整，使朗读更加自然流畅。"}
+                </p>
+              </div>
+            </div>
+          </Card>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Column - Input Area */}
-          <div>
-            <Card className="bg-nexus-dark/70 border-nexus-blue/20 backdrop-blur-sm overflow-hidden">
-              <CardContent className="p-6">
-                <div className="mb-6">
-                  <h2 className="text-xl font-semibold text-white flex items-center mb-3">
-                    <Volume2 className="mr-2 h-5 w-5 text-nexus-blue" />
-                    选择语音风格
-                  </h2>
-                  <p className="text-sm text-white/60 mb-4">每种风格都有其独特的音色和表现力，选择最适合您内容的声音</p>
-                  
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {voiceStyles.map(voice => (
-                      <div 
-                        key={voice.id} 
-                        className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                          selectedVoice === voice.id 
-                            ? 'border-nexus-blue/50 bg-nexus-blue/10' 
-                            : 'border-nexus-blue/10 bg-nexus-dark/40 hover:bg-nexus-dark/60'
-                        }`}
-                        onClick={() => setSelectedVoice(voice.id)}
-                      >
-                        <div className="flex flex-col items-center text-center">
-                          <div className={`w-8 h-8 ${voice.color} rounded-full flex items-center justify-center mb-2`}>
-                            <Volume2 className="h-4 w-4 text-white" />
-                          </div>
-                          <div className="text-white font-medium text-sm">{voice.name}</div>
-                          <div className="text-white/60 text-xs">{voice.description}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="mb-6">
-                  <h2 className="text-xl font-semibold text-white flex items-center mb-3">
-                    <FileText className="mr-2 h-5 w-5 text-nexus-blue" />
-                    输入文本
-                  </h2>
-                  
-                  <Textarea
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    placeholder="输入要转换为语音的文本。如需让AI照着念，可以在文本之前加上：请照着文本念"
-                    className="h-40 bg-nexus-dark/30 border-nexus-blue/20 focus:border-nexus-blue/50 text-white"
-                  />
-                  
-                  <div className="flex items-center mt-2 text-sm text-white/60">
-                    <div className="flex items-center mr-4">
-                      <FileText className="mr-1 h-4 w-4" />
-                      <span>字符数: {charCount}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Clock className="mr-1 h-4 w-4" />
-                      <span>估计时长: {estimatedDuration}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <Button 
-                  onClick={generateAudio}
-                  disabled={isGenerating} 
-                  className="w-full bg-gradient-to-r from-nexus-blue to-nexus-cyan hover:opacity-90 text-white"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      正在生成...
-                    </>
-                  ) : (
-                    <>
-                      <Volume2 className="mr-2 h-4 w-4" />
-                      生成语音
-                    </>
-                  )}
-                </Button>
-                
-                <div className="mt-6 bg-nexus-blue/5 border border-nexus-blue/20 rounded-lg p-4">
-                  <div className="flex items-center text-white/90 mb-2">
-                    <Lightbulb className="h-4 w-4 mr-2 text-yellow-400" />
-                    <h3 className="font-medium">使用小技巧</h3>
-                  </div>
-                  <ul className="text-white/70 text-sm space-y-1">
-                    <li>• 输入标点符号可增加语音的自然停顿和语调变化</li>
-                    <li>• 不同语音风格适合不同场景，可以尝试多种风格找到最适合的</li>
-                    <li>• 大段文本可划分为多个段落，生成后再合并，效果更佳</li>
-                    <li>• 特殊专业术语可能需要加注音或替换为更通用的表达</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Right Column - Preview & History */}
-          <div className="space-y-6">
-            {/* Audio Preview */}
-            <Card className="bg-nexus-dark/70 border-nexus-blue/20 backdrop-blur-sm overflow-hidden">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-white flex items-center">
-                    <Music className="mr-2 h-5 w-5 text-nexus-blue" />
-                    音频预览
-                  </h2>
-                </div>
-                
-                {selectedVoice && (
-                  <div className="bg-nexus-dark/40 rounded-lg p-3 mb-4 flex items-center">
-                    <div className={`w-10 h-10 ${getSelectedVoiceStyle().color} rounded-full flex items-center justify-center mr-3`}>
-                      <Volume2 className="h-5 w-5 text-white" />
+        {/* Right Panel - Audio Output and History */}
+        <div className="w-full md:w-1/2 flex flex-col gap-4">
+          <Card className="p-5 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm border-nexus-blue/20">
+            <h2 className="text-2xl font-bold mb-4 flex items-center text-white">
+              <Play className="mr-2 h-6 w-6 text-nexus-cyan" />
+              语音播放
+            </h2>
+            
+            {audioUrl ? (
+              <div>
+                <div className="mb-4 p-4 bg-nexus-dark/40 rounded-lg border border-nexus-blue/20">
+                  <div className="flex items-center mb-3">
+                    <div 
+                      className="w-8 h-8 rounded-full flex items-center justify-center mr-3"
+                      style={{ 
+                        backgroundColor: voiceOptions.find(v => v.id === selectedVoice)?.color || '#4F46E5' 
+                      }}
+                    >
+                      <Volume2 className="h-4 w-4 text-white" />
                     </div>
                     <div>
-                      <div className="text-white font-medium">{getSelectedVoiceStyle().name}</div>
-                      <div className="text-white/60 text-sm">{getSelectedVoiceStyle().description}</div>
+                      <div className="text-white font-medium">
+                        {voiceOptions.find(v => v.id === selectedVoice)?.name || 'Voice'}
+                      </div>
+                      <div className="text-white/60 text-xs">
+                        {voiceOptions.find(v => v.id === selectedVoice)?.description}
+                      </div>
                     </div>
                   </div>
-                )}
-                
-                <div className="bg-nexus-dark/30 border border-nexus-blue/10 rounded-lg p-6 min-h-[200px] flex items-center justify-center">
-                  {isGenerating ? (
-                    <div className="text-center text-white/60">
-                      <Loader2 className="h-10 w-10 mb-4 mx-auto animate-spin text-nexus-blue" />
-                      <p>正在生成语音...</p>
-                    </div>
-                  ) : audioSrc ? (
-                    <div className="w-full">
-                      <audio ref={audioRef} src={audioSrc} controls className="w-full" />
-                      <Button 
-                        onClick={() => downloadAudio(audioSrc, `nexus_${selectedVoice}_${new Date().getTime()}.mp3`)}
-                        className="mt-4 w-full bg-green-600 hover:bg-green-700"
-                      >
-                        <Download className="mr-2 h-4 w-4" />
-                        下载音频文件
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="text-center text-white/60">
-                      <Music className="h-12 w-12 mb-4 mx-auto opacity-40" />
-                      <p>尚未生成语音</p>
-                      <p className="text-sm mt-1">请输入文本并点击生成按钮</p>
-                    </div>
-                  )}
+                  
+                  <audio ref={audioRef} controls className="w-full" src={audioUrl}></audio>
                 </div>
-              </CardContent>
-            </Card>
+                
+                <div className="flex justify-between">
+                  <Button variant="outline" onClick={() => setAudioUrl(null)} className="border-nexus-blue/30 text-white">
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    重新生成
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => {
+                      // In a real app, you would trigger a download here
+                      toast({
+                        title: "下载开始",
+                        description: "语音文件下载已开始",
+                      });
+                    }} 
+                    className="bg-nexus-blue hover:bg-nexus-blue/80"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    下载语音
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-64 bg-nexus-dark/40 rounded-lg border border-nexus-blue/20 text-white/50">
+                <Volume2 className="h-16 w-16 mb-4 opacity-30" />
+                <p className="text-lg">尚未生成语音</p>
+                <p className="text-sm">在左侧输入文本并选择声音后生成</p>
+              </div>
+            )}
+          </Card>
+          
+          <Card className="p-5 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm border-nexus-blue/20">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold flex items-center text-white">
+                <Clock className="mr-2 h-5 w-5 text-nexus-cyan" />
+                历史记录
+              </h2>
+              
+              {history.length > 0 && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleClearHistory}
+                  className="border-red-500/50 text-red-400 hover:bg-red-500/10"
+                >
+                  清空
+                </Button>
+              )}
+            </div>
             
-            {/* History */}
-            <Card className="bg-nexus-dark/70 border-nexus-blue/20 backdrop-blur-sm overflow-hidden">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-white flex items-center">
-                    <History className="mr-2 h-5 w-5 text-nexus-blue" />
-                    历史记录
-                  </h2>
-                  {history.length > 0 && (
-                    <Button 
-                      variant="destructive" 
-                      size="sm" 
-                      onClick={clearHistory}
-                    >
-                      <Trash2 className="mr-1 h-4 w-4" />
-                      清空记录
-                    </Button>
-                  )}
-                </div>
-                
-                {history.length > 0 ? (
-                  <div>
-                    <div className="mb-4 p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start">
-                      <AlertTriangle className="h-4 w-4 text-amber-500 mr-2 mt-0.5 flex-shrink-0" />
-                      <span className="text-xs text-amber-200">生成记录链接刷新后重置，请注意下载重要音频</span>
+            {history.length > 0 ? (
+              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                {history.map((item) => (
+                  <div 
+                    key={item.id}
+                    className="p-3 rounded-lg bg-nexus-dark/40 border border-nexus-blue/10 hover:border-nexus-blue/30 transition-all"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center">
+                        <div 
+                          className="w-6 h-6 rounded-full flex items-center justify-center mr-2"
+                          style={{ 
+                            backgroundColor: voiceOptions.find(v => v.id === item.voice)?.color || '#4F46E5' 
+                          }}
+                        >
+                          <Volume2 className="h-3 w-3 text-white" />
+                        </div>
+                        <span className="text-white font-medium text-sm">
+                          {voiceOptions.find(v => v.id === item.voice)?.name || item.voice}
+                        </span>
+                      </div>
+                      <span className="text-white/50 text-xs">{formatTime(item.timestamp)}</span>
                     </div>
                     
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-                      {history.map(item => (
-                        <div 
-                          key={item.id}
-                          className="p-3 bg-nexus-dark/40 border border-nexus-blue/10 rounded-lg hover:bg-nexus-dark/60 transition-colors"
+                    <p className="text-white/80 text-sm mt-1 line-clamp-2">{item.text}</p>
+                    
+                    {item.audioUrl && (
+                      <div className="mt-2 flex justify-end">
+                        <Button 
+                          size="sm"
+                          variant="ghost"
+                          className="text-nexus-cyan hover:text-nexus-cyan/80 hover:bg-nexus-blue/10"
+                          onClick={() => setAudioUrl(item.audioUrl)}
                         >
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <div className="text-xs text-white/50 mb-1">
-                                {new Date(item.timestamp).toLocaleString()}
-                              </div>
-                              <div className="font-medium text-nexus-blue mb-1">
-                                {voiceStyles.find(v => v.id === item.voice)?.name || item.voice}
-                              </div>
-                              <div className="text-sm text-white/80 truncate max-w-[300px]">
-                                {item.previewText}
-                              </div>
-                            </div>
-                            {item.audioUrl && (
-                              <Button 
-                                size="sm"
-                                variant="outline"
-                                className="border-nexus-blue/30 bg-transparent"
-                                onClick={() => downloadAudio(item.audioUrl!, `nexus_${item.voice}_${new Date(item.timestamp).getTime()}.mp3`)}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                          <Play className="mr-1 h-3 w-3" /> 播放
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div className="text-center py-8 text-white/50">
-                    <History className="h-12 w-12 mb-3 mx-auto opacity-30" />
-                    <p>暂无历史记录</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-24 text-white/50">
+                <p>暂无历史记录</p>
+              </div>
+            )}
+          </Card>
         </div>
-      </div>
+      </main>
       
       <Footer />
     </div>

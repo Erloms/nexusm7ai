@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, checkPaymentStatus } = useAuth();
   const navigate = useNavigate();
 
   // Close menu when navigating
@@ -40,12 +40,32 @@ const Navigation = () => {
           <Link to="/chat" className="text-white/80 hover:text-white hover:text-nexus-cyan transition">AI 对话</Link>
           <Link to="/image" className="text-white/80 hover:text-white hover:text-nexus-cyan transition">AI 图像生成</Link>
           <Link to="/voice" className="text-white/80 hover:text-white hover:text-nexus-cyan transition">AI 语音合成</Link>
-          <div className="ml-4 border-l border-nexus-blue/30 pl-4">
-            <Button variant="outline" className="bg-transparent border border-nexus-cyan hover:bg-nexus-cyan/20 text-nexus-cyan">
-              <Diamond className="mr-2 h-4 w-4" />
-              会员
-            </Button>
-          </div>
+          
+          {isAuthenticated && !checkPaymentStatus() && (
+            <div className="ml-4 border-l border-nexus-blue/30 pl-4">
+              <Button 
+                variant="outline" 
+                className="bg-transparent border border-nexus-cyan hover:bg-nexus-cyan/20 text-nexus-cyan"
+                onClick={() => navigate('/payment')}
+              >
+                <Diamond className="mr-2 h-4 w-4" />
+                会员升级
+              </Button>
+            </div>
+          )}
+          
+          {isAuthenticated && checkPaymentStatus() && (
+            <div className="ml-4 border-l border-nexus-blue/30 pl-4">
+              <Button 
+                variant="outline" 
+                className="bg-transparent border border-nexus-cyan hover:bg-nexus-cyan/20 text-nexus-cyan cursor-default"
+              >
+                <Diamond className="mr-2 h-4 w-4" />
+                已是会员
+              </Button>
+            </div>
+          )}
+          
           {isAuthenticated ? (
             <div className="flex items-center space-x-3">
               <span className="text-white">{user?.name || user?.email}</span>
@@ -84,12 +104,32 @@ const Navigation = () => {
             <Link to="/chat" className="text-white py-2 hover:text-nexus-cyan transition">AI 对话</Link>
             <Link to="/image" className="text-white py-2 hover:text-nexus-cyan transition">AI 图像生成</Link>
             <Link to="/voice" className="text-white py-2 hover:text-nexus-cyan transition">AI 语音合成</Link>
-            <div className="pt-2 border-t border-nexus-blue/30">
-              <Button variant="outline" className="w-full bg-transparent border border-nexus-cyan hover:bg-nexus-cyan/20 text-nexus-cyan">
-                <Diamond className="mr-2 h-4 w-4" />
-                会员
-              </Button>
-            </div>
+            
+            {isAuthenticated && !checkPaymentStatus() && (
+              <div className="pt-2 border-t border-nexus-blue/30">
+                <Button 
+                  variant="outline" 
+                  className="w-full bg-transparent border border-nexus-cyan hover:bg-nexus-cyan/20 text-nexus-cyan"
+                  onClick={() => navigate('/payment')}
+                >
+                  <Diamond className="mr-2 h-4 w-4" />
+                  会员升级
+                </Button>
+              </div>
+            )}
+            
+            {isAuthenticated && checkPaymentStatus() && (
+              <div className="pt-2 border-t border-nexus-blue/30">
+                <Button 
+                  variant="outline" 
+                  className="w-full bg-transparent border border-nexus-cyan hover:bg-nexus-cyan/20 text-nexus-cyan cursor-default"
+                >
+                  <Diamond className="mr-2 h-4 w-4" />
+                  已是会员
+                </Button>
+              </div>
+            )}
+            
             {isAuthenticated ? (
               <>
                 <div className="text-white py-2">{user?.name || user?.email}</div>

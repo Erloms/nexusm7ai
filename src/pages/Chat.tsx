@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -6,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MessageSquare, Send, Sparkles, User, Bot } from 'lucide-react';
+import PaymentCheck from '@/components/PaymentCheck';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -113,131 +113,133 @@ const Chat = () => {
     <div className="min-h-screen bg-nexus-dark flex flex-col">
       <Navigation />
       
-      <main className="flex-grow flex flex-col md:flex-row gap-4 p-4 pt-20 md:p-20">
-        {/* Model selection sidebar */}
-        <aside className="w-full md:w-64 lg:w-72 flex-shrink-0 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-4 mb-4 md:mb-0">
-          <h2 className="text-xl font-bold text-white mb-4 flex items-center">
-            <Sparkles className="w-5 h-5 mr-2 text-nexus-blue" />
-            选择模型
-          </h2>
+      <PaymentCheck>
+        <main className="flex-grow flex flex-col md:flex-row gap-4 p-4 pt-20 md:p-20">
+          {/* Model selection sidebar */}
+          <aside className="w-full md:w-64 lg:w-72 flex-shrink-0 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-4 mb-4 md:mb-0">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+              <Sparkles className="w-5 h-5 mr-2 text-nexus-blue" />
+              选择模型
+            </h2>
+            
+            <Select 
+              value={selectedModel}
+              onValueChange={setSelectedModel}
+            >
+              <SelectTrigger className="w-full bg-nexus-dark/50 border-nexus-blue/30 text-white">
+                <SelectValue placeholder="选择AI模型" />
+              </SelectTrigger>
+              <SelectContent className="bg-nexus-dark border-nexus-blue/30">
+                {Object.entries(models).map(([group, groupModels]) => (
+                  <div key={group} className="p-1">
+                    <h3 className="text-xs text-nexus-blue uppercase font-bold px-2 py-1">{group}</h3>
+                    {groupModels.map((model) => (
+                      <SelectItem 
+                        key={model.id} 
+                        value={model.id}
+                        className="text-white hover:bg-nexus-blue/20"
+                      >
+                        {model.name}
+                      </SelectItem>
+                    ))}
+                  </div>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <div className="mt-4 p-3 bg-nexus-blue/10 rounded border border-nexus-blue/30 text-white/80 text-sm">
+              <p className="text-nexus-cyan font-medium mb-1">当前模型</p>
+              <p>{allModels.find(m => m.id === selectedModel)?.description || selectedModel}</p>
+              <p className="mt-2 text-xs text-white/60">由 Pollinations.AI 提供技术支持</p>
+            </div>
+          </aside>
           
-          <Select 
-            value={selectedModel}
-            onValueChange={setSelectedModel}
-          >
-            <SelectTrigger className="w-full bg-nexus-dark/50 border-nexus-blue/30 text-white">
-              <SelectValue placeholder="选择AI模型" />
-            </SelectTrigger>
-            <SelectContent className="bg-nexus-dark border-nexus-blue/30">
-              {Object.entries(models).map(([group, groupModels]) => (
-                <div key={group} className="p-1">
-                  <h3 className="text-xs text-nexus-blue uppercase font-bold px-2 py-1">{group}</h3>
-                  {groupModels.map((model) => (
-                    <SelectItem 
-                      key={model.id} 
-                      value={model.id}
-                      className="text-white hover:bg-nexus-blue/20"
-                    >
-                      {model.name}
-                    </SelectItem>
-                  ))}
+          {/* Chat area */}
+          <div className="flex-grow flex flex-col bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 overflow-hidden">
+            {/* Messages container */}
+            <div 
+              ref={chatContainerRef}
+              className="flex-grow p-4 overflow-y-auto"
+              style={{ maxHeight: 'calc(100vh - 260px)' }}
+            >
+              {messages.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-white/60">
+                  <div className="w-16 h-16 bg-nexus-blue/20 rounded-full flex items-center justify-center mb-4">
+                    <MessageSquare className="w-8 h-8 text-nexus-blue" />
+                  </div>
+                  <h3 className="text-xl font-medium text-white mb-2">开始你的AI对话</h3>
+                  <p className="text-center max-w-md">
+                    选择一个AI模型，然后在下方输入框中输入问题或指令，开始与AI助手��话。
+                  </p>
                 </div>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          <div className="mt-4 p-3 bg-nexus-blue/10 rounded border border-nexus-blue/30 text-white/80 text-sm">
-            <p className="text-nexus-cyan font-medium mb-1">当前模型</p>
-            <p>{allModels.find(m => m.id === selectedModel)?.description || selectedModel}</p>
-            <p className="mt-2 text-xs text-white/60">由 Pollinations.AI 提供技术支持</p>
-          </div>
-        </aside>
-        
-        {/* Chat area */}
-        <div className="flex-grow flex flex-col bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 overflow-hidden">
-          {/* Messages container */}
-          <div 
-            ref={chatContainerRef}
-            className="flex-grow p-4 overflow-y-auto"
-            style={{ maxHeight: 'calc(100vh - 260px)' }}
-          >
-            {messages.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-white/60">
-                <div className="w-16 h-16 bg-nexus-blue/20 rounded-full flex items-center justify-center mb-4">
-                  <MessageSquare className="w-8 h-8 text-nexus-blue" />
-                </div>
-                <h3 className="text-xl font-medium text-white mb-2">开始你的AI对话</h3>
-                <p className="text-center max-w-md">
-                  选择一个AI模型，然后在下方输入框中输入问题或指令，开始与AI助手对话。
-                </p>
-              </div>
-            ) : (
-              messages.map((msg, index) => (
-                <div 
-                  key={index}
-                  className={`mb-4 flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
+              ) : (
+                messages.map((msg, index) => (
                   <div 
-                    className={`max-w-[80%] rounded-2xl p-4 ${
-                      msg.role === 'user' 
-                        ? 'bg-nexus-blue text-white rounded-tr-none' 
-                        : 'bg-nexus-dark/80 border border-nexus-blue/20 text-white rounded-tl-none'
-                    }`}
+                    key={index}
+                    className={`mb-4 flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className="flex items-center mb-2">
-                      {msg.role === 'assistant' ? (
-                        <Bot className="w-5 h-5 mr-2 text-nexus-cyan" />
-                      ) : (
-                        <User className="w-5 h-5 mr-2" />
-                      )}
-                      <p className="font-medium text-sm">
-                        {msg.role === 'assistant' ? allModels.find(m => m.id === selectedModel)?.name || 'AI助手' : '你'}
-                      </p>
+                    <div 
+                      className={`max-w-[80%] rounded-2xl p-4 ${
+                        msg.role === 'user' 
+                          ? 'bg-nexus-blue text-white rounded-tr-none' 
+                          : 'bg-nexus-dark/80 border border-nexus-blue/20 text-white rounded-tl-none'
+                      }`}
+                    >
+                      <div className="flex items-center mb-2">
+                        {msg.role === 'assistant' ? (
+                          <Bot className="w-5 h-5 mr-2 text-nexus-cyan" />
+                        ) : (
+                          <User className="w-5 h-5 mr-2" />
+                        )}
+                        <p className="font-medium text-sm">
+                          {msg.role === 'assistant' ? allModels.find(m => m.id === selectedModel)?.name || 'AI助手' : '你'}
+                        </p>
+                      </div>
+                      <div className="whitespace-pre-wrap">{msg.content}</div>
                     </div>
-                    <div className="whitespace-pre-wrap">{msg.content}</div>
+                  </div>
+                ))
+              )}
+              {loading && (
+                <div className="mb-4 flex justify-start">
+                  <div className="max-w-[80%] rounded-2xl p-4 bg-nexus-dark/80 border border-nexus-blue/20 text-white rounded-tl-none animate-pulse">
+                    <div className="flex items-center mb-2">
+                      <Bot className="w-5 h-5 mr-2 text-nexus-cyan" />
+                      <p className="font-medium text-sm">{allModels.find(m => m.id === selectedModel)?.name || 'AI助手'}</p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <div className="h-2 w-2 bg-nexus-cyan/60 rounded-full animate-bounce"></div>
+                      <div className="h-2 w-2 bg-nexus-cyan/60 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="h-2 w-2 bg-nexus-cyan/60 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                    </div>
                   </div>
                 </div>
-              ))
-            )}
-            {loading && (
-              <div className="mb-4 flex justify-start">
-                <div className="max-w-[80%] rounded-2xl p-4 bg-nexus-dark/80 border border-nexus-blue/20 text-white rounded-tl-none animate-pulse">
-                  <div className="flex items-center mb-2">
-                    <Bot className="w-5 h-5 mr-2 text-nexus-cyan" />
-                    <p className="font-medium text-sm">{allModels.find(m => m.id === selectedModel)?.name || 'AI助手'}</p>
-                  </div>
-                  <div className="flex space-x-2">
-                    <div className="h-2 w-2 bg-nexus-cyan/60 rounded-full animate-bounce"></div>
-                    <div className="h-2 w-2 bg-nexus-cyan/60 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="h-2 w-2 bg-nexus-cyan/60 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-                  </div>
-                </div>
+              )}
+            </div>
+            
+            {/* Input area */}
+            <div className="p-4 border-t border-nexus-blue/20 bg-nexus-dark/50 backdrop-blur-md">
+              <div className="flex items-end gap-2">
+                <Textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="输入你的问题或指令..."
+                  className="resize-none bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
+                  rows={2}
+                />
+                <Button 
+                  onClick={handleSendMessage} 
+                  disabled={loading || !input.trim()} 
+                  className="bg-nexus-blue hover:bg-nexus-blue/80 text-white"
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
               </div>
-            )}
-          </div>
-          
-          {/* Input area */}
-          <div className="p-4 border-t border-nexus-blue/20 bg-nexus-dark/50 backdrop-blur-md">
-            <div className="flex items-end gap-2">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="输入你的问题或指令..."
-                className="resize-none bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
-                rows={2}
-              />
-              <Button 
-                onClick={handleSendMessage} 
-                disabled={loading || !input.trim()} 
-                className="bg-nexus-blue hover:bg-nexus-blue/80 text-white"
-              >
-                <Send className="w-4 h-4" />
-              </Button>
             </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </PaymentCheck>
       
       <Footer />
     </div>

@@ -1,448 +1,377 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Download, Copy, RefreshCw, Image as ImageIcon, Trash2 } from 'lucide-react';
-import { toast } from "@/components/ui/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Slider } from "@/components/ui/slider";
+import { Sparkles, Download, Image as ImageIcon, Loader2, RefreshCw } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast";
+import PaymentCheck from '@/components/PaymentCheck';
 
-interface HistoryItem {
-  id: string;
-  prompt: string;
-  negativePrompt: string;
-  model: string;
-  width: number;
-  height: number;
-  seed: number;
-  imageUrl: string;
-  timestamp: number;
-}
-
-const modelOptions = [
-  { value: 'flux', label: '通用创意 | flux' },
-  { value: 'flux-pro', label: '专业版 | flux-pro' },
-  { value: 'flux-realism', label: '超真实效果 | flux-realism' },
-  { value: 'flux-anime', label: '动漫风格 | flux-anime' },
-  { value: 'flux-3d', label: '三维效果 | flux-3d' },
-  { value: 'flux-cablyai', label: '创意艺术 | flux-cablyai' },
-  { value: 'turbo', label: '极速生成 | turbo' }
-];
-
-const ImageGenerator = () => {
+const Image = () => {
+  const { toast } = useToast();
   const [prompt, setPrompt] = useState('');
-  const [negativePrompt, setNegativePrompt] = useState('');
-  const [model, setModel] = useState('flux');
-  const [width, setWidth] = useState(720);
-  const [height, setHeight] = useState(1280);
-  const [seed, setSeed] = useState(-1);
-  const [safeMode, setSafeMode] = useState(true);
+  const [negativePrompt, setNegativePrompt] = useState('worst quality, blurry, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, jpeg artifacts, signature, watermark, username,SFW.');
+  const [width, setWidth] = useState(1024);
+  const [height, setHeight] = useState(768);
+  const [steps, setSteps] = useState(30);
+  const [seed, setSeed] = useState('');
+  const [selectedModel, setSelectedModel] = useState('flux');
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [imageUrl, setImageUrl] = useState('');
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [history, setHistory] = useState<Array<{id: number, url: string, prompt: string, timestamp: Date}>>([]);
+  const imageRef = useRef<HTMLImageElement>(null);
 
-  // Load history from localStorage on component mount
-  useEffect(() => {
-    const savedHistory = localStorage.getItem('nexusAiImageHistory');
-    if (savedHistory) {
-      try {
-        setHistory(JSON.parse(savedHistory));
-      } catch (e) {
-        console.error("Failed to parse saved history:", e);
-      }
-    }
-  }, []);
+  const models = [
+    { id: 'flux', name: '通用创意 | flux', description: '适合大多数创意场景' },
+    { id: 'flux-pro', name: '专业版 | flux-pro', description: '更高质量的图像生成' },
+    { id: 'flux-realism', name: '超真实效果 | flux-realism', description: '生成逼真的照片级图像' },
+    { id: 'flux-anime', name: '动漫风格 | flux-anime', description: '生成动漫和插画风格图像' },
+    { id: 'flux-3d', name: '三维效果 | flux-3d', description: '生成3D风格的图像' },
+    { id: 'flux-cablyai', name: '创意艺术 | flux-cablyai', description: '艺术风格的创意图像' },
+    { id: 'turbo', name: '极速生成 | turbo', description: '快速生成图像，质量略低' },
+  ];
 
-  // Generate random seed
-  const generateRandomSeed = () => {
-    setSeed(Math.floor(Math.random() * 1000000));
-  };
-
-  // Handle form submission to generate image
-  const handleGenerateImage = () => {
+  const handleGenerateImage = async () => {
     if (!prompt.trim()) {
       toast({
-        title: "提示词不能为空",
-        description: "请输入图像生成提示词",
+        title: "提示词为空",
+        description: "请输入图像提示词",
         variant: "destructive",
       });
       return;
     }
 
     setLoading(true);
-
-    // Encode prompts for URL
-    const encodedPrompt = encodeURIComponent(prompt);
-    const encodedNegativePrompt = encodeURIComponent(negativePrompt);
     
-    // Always remove logo and respect safe mode setting
-    const noLogo = true;
-    const safe = safeMode;
-    
-    // Construct the image URL with all parameters
-    let url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&model=${model}`;
-    
-    if (seed !== -1) {
-      url += `&seed=${seed}`;
+    try {
+      // Construct the URL with parameters
+      const baseUrl = 'https://image.pollinations.ai/prompt/';
+      const encodedPrompt = encodeURIComponent(prompt);
+      const encodedNegativePrompt = encodeURIComponent(negativePrompt);
+      
+      // Add parameters
+      const params = new URLSearchParams({
+        width: width.toString(),
+        height: height.toString(),
+        seed: seed || Math.floor(Math.random() * 1000000).toString(),
+        steps: steps.toString(),
+        negative: encodedNegativePrompt,
+        model: selectedModel,
+        nologo: 'true'
+      });
+      
+      const imageUrl = `${baseUrl}${encodedPrompt}?${params.toString()}`;
+      
+      // In a real app, you might want to fetch the image first to ensure it loads
+      // For now, we'll just set the URL
+      setGeneratedImage(imageUrl);
+      
+      // Add to history
+      const newHistoryItem = {
+        id: Date.now(),
+        url: imageUrl,
+        prompt: prompt,
+        timestamp: new Date()
+      };
+      
+      setHistory(prev => [newHistoryItem, ...prev.slice(0, 9)]);
+      
+      toast({
+        title: "图像生成成功",
+        description: "您的AI图像已生成",
+      });
+    } catch (error) {
+      console.error('Error generating image:', error);
+      toast({
+        title: "生成失败",
+        description: "图像生成过程中发生错误，请稍后再试",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-    
-    if (negativePrompt) {
-      url += `&negative_prompt=${encodedNegativePrompt}`;
-    }
-    
-    if (noLogo) {
-      url += "&nologo=true";
-    }
-    
-    if (!safe) {
-      url += "&safe=false";
-    }
-    
-    // Set the image URL
-    setImageUrl(url);
-    
-    // Save to history
-    const historyItem: HistoryItem = {
-      id: Date.now().toString(),
-      prompt,
-      negativePrompt,
-      model,
-      width,
-      height,
-      seed,
-      imageUrl: url,
-      timestamp: Date.now()
-    };
-    
-    const updatedHistory = [historyItem, ...history];
-    setHistory(updatedHistory);
-    localStorage.setItem('nexusAiImageHistory', JSON.stringify(updatedHistory));
-    
-    setLoading(false);
   };
 
-  // Clear current form input
-  const handleClearInput = () => {
-    setPrompt('');
-    setNegativePrompt('');
-    setModel('flux');
-    setWidth(720);
-    setHeight(1280);
-    setSeed(-1);
-    setSafeMode(true);
-  };
-
-  // Copy image URL to clipboard
-  const handleCopyPrompt = () => {
-    navigator.clipboard.writeText(prompt);
+  const handleDownload = () => {
+    if (!generatedImage) return;
+    
+    const link = document.createElement('a');
+    link.href = generatedImage;
+    link.download = `nexus-ai-image-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
     toast({
-      title: "提示词已复制",
-      description: "提示词已成功复制到剪贴板",
+      title: "下载开始",
+      description: "图像下载已开始",
     });
   };
 
-  // Load a history item to the form
-  const handleLoadHistory = (item: HistoryItem) => {
-    setPrompt(item.prompt);
-    setNegativePrompt(item.negativePrompt);
-    setModel(item.model);
-    setWidth(item.width);
-    setHeight(item.height);
-    setSeed(item.seed);
-    setImageUrl(item.imageUrl);
+  const handleRandomSeed = () => {
+    setSeed(Math.floor(Math.random() * 1000000).toString());
   };
 
-  // Clear all history
-  const handleClearHistory = () => {
-    setHistory([]);
-    localStorage.removeItem('nexusAiImageHistory');
-    toast({
-      title: "历史记录已清空",
+  const formatTime = (date: Date): string => {
+    return date.toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
     });
-  };
-
-  // Download image
-  const handleDownloadImage = () => {
-    // Open image in new tab, as direct download might not work with external URLs
-    window.open(imageUrl, '_blank');
   };
 
   return (
-    <div className="min-h-screen bg-nexus-dark">
+    <div className="min-h-screen bg-nexus-dark flex flex-col">
       <Navigation />
       
-      <main className="container mx-auto px-4 pt-20 pb-16">
-        <h1 className="text-3xl font-bold text-center my-8">
-          <span className="text-gradient">AI图像生成</span>
-        </h1>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left column: Controls */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-6">
-              <h2 className="text-xl font-bold text-white mb-4 flex items-center">
-                <ImageIcon className="w-5 h-5 mr-2 text-nexus-blue" />
-                图像参数设置
+      <PaymentCheck>
+        <main className="flex-grow flex flex-col md:flex-row gap-6 p-4 pt-20 md:p-20">
+          {/* Left Panel - Controls */}
+          <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col gap-4">
+            <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-5">
+              <h2 className="text-2xl font-bold mb-4 flex items-center text-white">
+                <Sparkles className="mr-2 h-6 w-6 text-nexus-cyan" />
+                AI 图像生成
               </h2>
               
-              {/* Prompt */}
-              <div className="space-y-6">
-                <div>
-                  <label htmlFor="prompt" className="block text-sm font-medium text-white mb-2">
-                    提示词 (Prompt)
-                  </label>
-                  <Textarea
-                    id="prompt"
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="描述你想要生成的图像，例如：一只蓝色的猫咪在森林中奔跑，梦幻风格..."
-                    className="h-32 bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
-                  />
-                </div>
+              <Tabs defaultValue="basic" className="w-full">
+                <TabsList className="grid grid-cols-2 w-full bg-nexus-dark/50">
+                  <TabsTrigger value="basic" className="data-[state=active]:bg-nexus-blue text-white">基本设置</TabsTrigger>
+                  <TabsTrigger value="advanced" className="data-[state=active]:bg-nexus-blue text-white">高级设置</TabsTrigger>
+                </TabsList>
                 
-                {/* Negative Prompt */}
-                <div>
-                  <label htmlFor="negativePrompt" className="block text-sm font-medium text-white mb-2">
-                    负面提示词 (Negative Prompt)
-                  </label>
-                  <Input
-                    id="negativePrompt"
-                    value={negativePrompt}
-                    onChange={(e) => setNegativePrompt(e.target.value)}
-                    placeholder="指定不希望在图像中出现的元素，例如：模糊, 扭曲, 低质量"
-                    className="bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
-                  />
-                </div>
-                
-                {/* Model */}
-                <div>
-                  <label htmlFor="model" className="block text-sm font-medium text-white mb-2">
-                    模型选择
-                  </label>
-                  <Select value={model} onValueChange={setModel}>
-                    <SelectTrigger className="bg-nexus-dark/50 border-nexus-blue/30 text-white">
-                      <SelectValue placeholder="选择模型" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-nexus-dark border-nexus-blue/30">
-                      {modelOptions.map((option) => (
-                        <SelectItem 
-                          key={option.value} 
-                          value={option.value}
-                          className="text-white hover:bg-nexus-blue/20"
-                        >
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                {/* Image Size */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="width" className="block text-sm font-medium text-white mb-2">
-                      宽度 (Width)
-                    </label>
-                    <Input
-                      id="width"
-                      type="number"
-                      value={width}
-                      onChange={(e) => setWidth(Number(e.target.value))}
-                      className="bg-nexus-dark/50 border-nexus-blue/30 text-white focus:border-nexus-blue"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="height" className="block text-sm font-medium text-white mb-2">
-                      高度 (Height)
-                    </label>
-                    <Input
-                      id="height"
-                      type="number"
-                      value={height}
-                      onChange={(e) => setHeight(Number(e.target.value))}
-                      className="bg-nexus-dark/50 border-nexus-blue/30 text-white focus:border-nexus-blue"
-                    />
-                  </div>
-                </div>
-                
-                {/* Seed */}
-                <div className="flex gap-3 items-end">
-                  <div className="flex-grow">
-                    <label htmlFor="seed" className="block text-sm font-medium text-white mb-2">
-                      种子值 (Seed)
-                    </label>
-                    <Input
-                      id="seed"
-                      type="number"
-                      value={seed}
-                      onChange={(e) => setSeed(Number(e.target.value))}
-                      className="bg-nexus-dark/50 border-nexus-blue/30 text-white focus:border-nexus-blue"
-                    />
-                    <p className="text-xs text-white/60 mt-1">-1 表示随机种子</p>
-                  </div>
-                  <Button 
-                    onClick={generateRandomSeed}
-                    variant="outline"
-                    className="bg-transparent border border-nexus-blue/50 hover:bg-nexus-blue/20 text-nexus-blue"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                  </Button>
-                </div>
-                
-                {/* Safe Mode */}
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="safeMode" 
-                    checked={safeMode} 
-                    onCheckedChange={(checked) => setSafeMode(!!checked)} 
-                    className="data-[state=checked]:bg-nexus-blue"
-                  />
-                  <label
-                    htmlFor="safeMode"
-                    className="text-sm font-medium text-white leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    安全模式 (过滤不适内容)
-                  </label>
-                </div>
-                
-                {/* Action Buttons */}
-                <div className="flex space-x-3 pt-2">
-                  <Button
-                    className="flex-1 bg-nexus-blue hover:bg-nexus-blue/80 text-white"
-                    onClick={handleGenerateImage}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        生成中...
-                      </>
-                    ) : "生成图像"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="bg-transparent border border-nexus-blue/50 hover:bg-nexus-blue/20 text-nexus-blue"
-                    onClick={handleClearInput}
-                  >
-                    清空
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Right column: Preview */}
-          <div className="lg:col-span-2">
-            <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-6">
-              <h2 className="text-xl font-bold text-white mb-4">图像预览</h2>
-              
-              <div className="w-full rounded-lg overflow-hidden bg-nexus-dark/50 border border-nexus-blue/20 flex items-center justify-center">
-                {imageUrl ? (
-                  <div className="relative w-full">
-                    <img 
-                      src={imageUrl} 
-                      alt="Generated AI image" 
-                      className="w-full h-auto object-contain"
-                      onLoad={() => setLoading(false)}
-                      onError={() => {
-                        setLoading(false);
-                        toast({
-                          title: "图像加载失败",
-                          description: "请检查参数后重试",
-                          variant: "destructive",
-                        });
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className="h-96 flex flex-col items-center justify-center text-white/60 p-4">
-                    <ImageIcon className="w-16 h-16 mb-4 text-nexus-blue/40" />
-                    <p className="text-center">点击"生成图像"开始创作</p>
-                  </div>
-                )}
-                
-                {loading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                    <div className="flex flex-col items-center">
-                      <Loader2 className="h-10 w-10 animate-spin text-nexus-blue" />
-                      <p className="mt-2 text-white">生成中，请稍候...</p>
+                <TabsContent value="basic" className="pt-4">
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="model" className="block text-sm font-medium text-white mb-2">
+                        选择模型
+                      </label>
+                      <Select value={selectedModel} onValueChange={setSelectedModel}>
+                        <SelectTrigger className="bg-nexus-dark/50 border-nexus-blue/30 text-white">
+                          <SelectValue placeholder="选择模型" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-nexus-dark border-nexus-blue/30">
+                          {models.map((model) => (
+                            <SelectItem 
+                              key={model.id} 
+                              value={model.id}
+                              className="text-white hover:bg-nexus-blue/20"
+                            >
+                              <div>
+                                <div>{model.name}</div>
+                                <div className="text-xs text-white/60">{model.description}</div>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="prompt" className="block text-sm font-medium text-white mb-2">
+                        提示词
+                      </label>
+                      <Textarea
+                        id="prompt"
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        placeholder="描述您想要生成的图像，例如：一只可爱的猫咪在阳光下玩耍"
+                        className="min-h-[100px] bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="negative-prompt" className="block text-sm font-medium text-white mb-2">
+                        负面提示词
+                      </label>
+                      <Textarea
+                        id="negative-prompt"
+                        value={negativePrompt}
+                        onChange={(e) => setNegativePrompt(e.target.value)}
+                        placeholder="描述您不希望在图像中出现的元素"
+                        className="min-h-[80px] bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="width" className="block text-sm font-medium text-white mb-2">
+                          宽度
+                        </label>
+                        <Input
+                          id="width"
+                          type="number"
+                          value={width}
+                          onChange={(e) => setWidth(Number(e.target.value))}
+                          className="bg-nexus-dark/50 border-nexus-blue/30 text-white"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="height" className="block text-sm font-medium text-white mb-2">
+                          高度
+                        </label>
+                        <Input
+                          id="height"
+                          type="number"
+                          value={height}
+                          onChange={(e) => setHeight(Number(e.target.value))}
+                          className="bg-nexus-dark/50 border-nexus-blue/30 text-white"
+                        />
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
+                </TabsContent>
+                
+                <TabsContent value="advanced" className="pt-4">
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label htmlFor="steps" className="block text-sm font-medium text-white">
+                          步数: {steps}
+                        </label>
+                        <span className="text-xs text-white/60">更高的步数 = 更高质量，但更慢</span>
+                      </div>
+                      <Slider
+                        id="steps"
+                        min={10}
+                        max={50}
+                        step={1}
+                        value={[steps]}
+                        onValueChange={(value) => setSteps(value[0])}
+                        className="py-4"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="seed" className="block text-sm font-medium text-white mb-2">
+                        种子值 (留空为随机)
+                      </label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="seed"
+                          value={seed}
+                          onChange={(e) => setSeed(e.target.value)}
+                          placeholder="随机种子"
+                          className="bg-nexus-dark/50 border-nexus-blue/30 text-white flex-grow"
+                        />
+                        <Button 
+                          variant="outline" 
+                          onClick={handleRandomSeed}
+                          className="border-nexus-blue/30 text-white"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-white/60 mt-1">使用相同的种子值可以生成相似的图像</p>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
               
-              {imageUrl && (
-                <div className="mt-4 flex space-x-3">
-                  <Button
-                    variant="outline"
-                    className="bg-transparent border border-nexus-blue/50 hover:bg-nexus-blue/20 text-nexus-blue"
-                    onClick={handleDownloadImage}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    下载图像
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="bg-transparent border border-nexus-blue/50 hover:bg-nexus-blue/20 text-nexus-blue"
-                    onClick={handleCopyPrompt}
-                  >
-                    <Copy className="mr-2 h-4 w-4" />
-                    复制提示词
-                  </Button>
+              <div className="mt-6">
+                <Button 
+                  onClick={handleGenerateImage} 
+                  disabled={loading || !prompt.trim()}
+                  className="w-full bg-nexus-blue hover:bg-nexus-blue/80 text-white py-6"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      生成中...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      生成图像
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+            
+            {/* History Section */}
+            {history.length > 0 && (
+              <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-5">
+                <h3 className="text-xl font-bold mb-4 text-white">历史记录</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[300px] overflow-y-auto pr-1">
+                  {history.map((item) => (
+                    <div 
+                      key={item.id}
+                      className="relative cursor-pointer rounded-lg overflow-hidden border border-nexus-blue/20 hover:border-nexus-blue/50 transition-all"
+                      onClick={() => {
+                        setGeneratedImage(item.url);
+                        setPrompt(item.prompt);
+                      }}
+                    >
+                      <img 
+                        src={item.url} 
+                        alt={item.prompt} 
+                        className="w-full h-24 object-cover"
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 bg-nexus-dark/80 backdrop-blur-sm p-1 text-xs text-white/80">
+                        {formatTime(item.timestamp)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Right Panel - Image Preview */}
+          <div className="w-full md:w-1/2 lg:w-3/5 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-5 flex flex-col">
+            <h2 className="text-2xl font-bold mb-4 flex items-center text-white">
+              <ImageIcon className="mr-2 h-6 w-6 text-nexus-cyan" />
+              图像预览
+            </h2>
+            
+            <div className="flex-grow flex items-center justify-center bg-nexus-dark/40 rounded-lg border border-nexus-blue/20 overflow-hidden">
+              {loading ? (
+                <div className="flex flex-col items-center justify-center p-8">
+                  <Loader2 className="h-12 w-12 text-nexus-blue animate-spin mb-4" />
+                  <p className="text-white/80 text-center">正在生成您的图像，请稍候...</p>
+                  <p className="text-white/60 text-sm text-center mt-2">这可能需要几秒钟时间</p>
+                </div>
+              ) : generatedImage ? (
+                <div className="relative w-full h-full flex items-center justify-center p-4">
+                  <img 
+                    ref={imageRef}
+                    src={generatedImage} 
+                    alt="Generated" 
+                    className="max-w-full max-h-[70vh] object-contain rounded shadow-lg"
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-8">
+                  <ImageIcon className="h-16 w-16 text-white/20 mb-4" />
+                  <p className="text-white/60 text-center">填写左侧表单并点击"生成图像"按钮</p>
                 </div>
               )}
             </div>
-          </div>
-        </div>
-        
-        {/* History Panel */}
-        {history.length > 0 && (
-          <div className="mt-10">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-white">历史记录</h2>
-              <Button
-                variant="outline"
-                className="bg-transparent border border-red-500/50 hover:bg-red-500/20 text-red-400"
-                onClick={handleClearHistory}
-                size="sm"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                清空历史
-              </Button>
-            </div>
             
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {history.map((item) => (
-                <div 
-                  key={item.id} 
-                  className="bg-nexus-dark/80 border border-nexus-blue/20 rounded-lg overflow-hidden cursor-pointer hover:border-nexus-blue/60 transition-colors"
-                  onClick={() => handleLoadHistory(item)}
+            {generatedImage && (
+              <div className="mt-4 flex justify-end">
+                <Button 
+                  onClick={handleDownload}
+                  className="bg-nexus-blue hover:bg-nexus-blue/80 text-white"
                 >
-                  <div className="aspect-square overflow-hidden">
-                    <img 
-                      src={item.imageUrl} 
-                      alt={item.prompt} 
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                  <div className="p-2">
-                    <p className="text-white text-sm truncate">{item.prompt}</p>
-                    <p className="text-white/60 text-xs">{item.model}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  <Download className="mr-2 h-4 w-4" />
+                  下载图像
+                </Button>
+              </div>
+            )}
           </div>
-        )}
-      </main>
+        </main>
+      </PaymentCheck>
       
       <Footer />
     </div>
   );
 };
 
-export default ImageGenerator;
+export default Image;

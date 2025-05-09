@@ -11,6 +11,7 @@ import Register from "./pages/Register";
 import Chat from "./pages/Chat";
 import Image from "./pages/Image";
 import Voice from "./pages/Voice";
+import Payment from "./pages/Payment";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/chat" element={<Chat />} />
             <Route path="/image" element={<Image />} />
             <Route path="/voice" element={<Voice />} />
+            <Route path="/payment" element={<Payment />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
