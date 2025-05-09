@@ -3,6 +3,7 @@ import React from 'react';
 import Navigation from '@/components/Navigation';
 import HeroSection from '@/components/HeroSection';
 import FeaturesSection from '@/components/FeaturesSection';
+import ModelsList from '@/components/ModelsList';
 import TestimonialsSection from '@/components/TestimonialsSection';
 import CTASection from '@/components/CTASection';
 import Footer from '@/components/Footer';
@@ -13,6 +14,9 @@ const Index = () => {
       <Navigation />
       <HeroSection />
       <FeaturesSection />
+      <div className="container mx-auto px-4 py-8">
+        <ModelsList />
+      </div>
       <TestimonialsSection />
       <CTASection />
       <Footer />

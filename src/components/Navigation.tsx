@@ -1,11 +1,28 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Diamond, Menu, X } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, logout, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  // Close menu when navigating
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [navigate]);
+
+  const handleLogin = () => {
+    navigate('/login');
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-nexus-dark/80 to-nexus-purple/80 backdrop-blur-md border-b border-nexus-blue/20 px-4 md:px-8">
@@ -29,9 +46,26 @@ const Navigation = () => {
               会员
             </Button>
           </div>
-          <Button variant="default" className="bg-nexus-blue hover:bg-nexus-blue/80 text-white">
-            登录
-          </Button>
+          {isAuthenticated ? (
+            <div className="flex items-center space-x-3">
+              <span className="text-white">{user?.name || user?.email}</span>
+              <Button 
+                variant="default" 
+                className="bg-nexus-blue hover:bg-nexus-blue/80 text-white"
+                onClick={handleLogout}
+              >
+                退出
+              </Button>
+            </div>
+          ) : (
+            <Button 
+              variant="default" 
+              className="bg-nexus-blue hover:bg-nexus-blue/80 text-white"
+              onClick={handleLogin}
+            >
+              登录 / 注册
+            </Button>
+          )}
         </div>
 
         {/* Mobile menu button */}
@@ -56,9 +90,26 @@ const Navigation = () => {
                 会员
               </Button>
             </div>
-            <Button variant="default" className="w-full bg-nexus-blue hover:bg-nexus-blue/80 text-white">
-              登录
-            </Button>
+            {isAuthenticated ? (
+              <>
+                <div className="text-white py-2">{user?.name || user?.email}</div>
+                <Button 
+                  variant="default" 
+                  className="w-full bg-nexus-blue hover:bg-nexus-blue/80 text-white"
+                  onClick={handleLogout}
+                >
+                  退出
+                </Button>
+              </>
+            ) : (
+              <Button 
+                variant="default" 
+                className="w-full bg-nexus-blue hover:bg-nexus-blue/80 text-white"
+                onClick={handleLogin}
+              >
+                登录 / 注册
+              </Button>
+            )}
           </div>
         </div>
       )}
