@@ -13,10 +13,10 @@ const Index = () => {
     <div className="min-h-screen bg-nexus-dark relative">
       <Navigation />
       <HeroSection />
-      <FeaturesSection />
       <div className="container mx-auto px-4 py-8">
         <ModelsList />
       </div>
+      <FeaturesSection />
       <TestimonialsSection />
       <CTASection />
       <Footer />
