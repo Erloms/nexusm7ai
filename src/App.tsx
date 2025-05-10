@@ -31,7 +31,6 @@ const App = () => (
             <Route path="/image" element={<Image />} />
             <Route path="/voice" element={<Voice />} />
             <Route path="/payment" element={<Payment />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

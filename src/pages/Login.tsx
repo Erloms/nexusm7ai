@@ -13,7 +13,7 @@ const Login = () => {
   const navigate = useNavigate();
   
   // Login form
-  const [email, setEmail] = useState('');
+  const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   
   // Register form
@@ -26,7 +26,7 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (await login(email, password)) {
+    if (await login(emailOrUsername, password)) {
       navigate('/');
     }
   };
@@ -65,18 +65,19 @@ const Login = () => {
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-6">
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
-                      邮箱
+                    <label htmlFor="emailOrUsername" className="block text-sm font-medium text-white mb-2">
+                      邮箱或用户名
                     </label>
                     <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      id="emailOrUsername"
+                      type="text"
+                      value={emailOrUsername}
+                      onChange={(e) => setEmailOrUsername(e.target.value)}
                       className="bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
-                      placeholder="输入您的邮箱"
+                      placeholder="输入您的邮箱或用户名"
                       required
                     />
+                    <p className="text-xs text-white/60 mt-1">提示：管理员可使用特殊账号登录</p>
                   </div>
                   
                   <div>

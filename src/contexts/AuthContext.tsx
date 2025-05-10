@@ -13,7 +13,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (emailOrUsername: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
   checkPaymentStatus: () => boolean;
@@ -63,13 +63,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Mock login function - in a real app, this would call an API
-  const login = async (email: string, password: string): Promise<boolean> => {
+  // Login function - now accepts either email or username
+  const login = async (emailOrUsername: string, password: string): Promise<boolean> => {
     setLoading(true);
     
     try {
       // Special admin account
-      if (email === "Master" && password === "Mengzhen888") {
+      if (emailOrUsername === "Master" && password === "Mengzhen888") {
         const adminUser = {
           id: 'admin-123',
           email: 'admin@nexusai.com',
@@ -93,11 +93,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Simple validation for demo purposes
-      if (email && password.length >= 6) {
+      if (emailOrUsername && password.length >= 6) {
         const mockUser = {
           id: '123456',
-          email: email,
-          name: email.split('@')[0],
+          email: emailOrUsername.includes('@') ? emailOrUsername : `${emailOrUsername}@example.com`,
+          name: emailOrUsername.includes('@') ? emailOrUsername.split('@')[0] : emailOrUsername,
           isVip: false
         };
         
@@ -114,7 +114,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else {
         toast({
           title: "登录失败",
-          description: "邮箱或密码不正确",
+          description: "用户名或密码不正确",
           variant: "destructive",
           duration: 3000,
         });

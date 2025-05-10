@@ -3,7 +3,7 @@ import React from 'react';
 import Navigation from '@/components/Navigation';
 import HeroSection from '@/components/HeroSection';
 import FeaturesSection from '@/components/FeaturesSection';
-import ModelsList from '@/components/ModelsList';
+import ModelCarousel from '@/components/ModelCarousel';
 import TestimonialsSection from '@/components/TestimonialsSection';
 import CTASection from '@/components/CTASection';
 import Footer from '@/components/Footer';
@@ -13,7 +13,7 @@ const Index = () => {
     <div className="min-h-screen bg-nexus-dark relative">
       <Navigation />
       <HeroSection />
-      <ModelsList />
+      <ModelCarousel />
       <FeaturesSection />
       <TestimonialsSection />
       <CTASection />
