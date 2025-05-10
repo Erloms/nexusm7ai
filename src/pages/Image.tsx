@@ -11,7 +11,11 @@ import { Sparkles, Download, Image as ImageIcon, Loader2, RefreshCw } from 'luci
 import { useToast } from "@/components/ui/use-toast";
 import PaymentCheck from '@/components/PaymentCheck';
 
-const Image = () => {
+interface ImageProps {
+  decrementUsage?: () => void;
+}
+
+const Image = ({ decrementUsage }: ImageProps) => {
   const { toast } = useToast();
   const [prompt, setPrompt] = useState('');
   const [negativePrompt, setNegativePrompt] = useState('worst quality, blurry, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, jpeg artifacts, signature, watermark, username,SFW.');
@@ -35,6 +39,15 @@ const Image = () => {
     { id: 'turbo', name: '极速生成 | turbo', description: '快速生成图像，质量略低' },
   ];
 
+  const formatTime = (date: Date): string => {
+    return date.toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   const handleGenerateImage = async () => {
     if (!prompt.trim()) {
       toast({
@@ -45,6 +58,9 @@ const Image = () => {
       return;
     }
 
+    // Call decrementUsage if provided (for non-paying users)
+    decrementUsage?.();
+    
     setLoading(true);
     
     try {
@@ -116,23 +132,15 @@ const Image = () => {
     setSeed(Math.floor(Math.random() * 1000000).toString());
   };
 
-  const formatTime = (date: Date): string => {
-    return date.toLocaleString('zh-CN', {
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   return (
     <div className="min-h-screen bg-nexus-dark flex flex-col">
       <Navigation />
       
-      <PaymentCheck>
+      <PaymentCheck featureType="image">
         <main className="flex-grow flex flex-col md:flex-row gap-6 p-4 pt-20 md:p-20">
           {/* Left Panel - Controls */}
           <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col gap-4">
+            {/* Left Panel - Controls */}
             <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-5">
               <h2 className="text-2xl font-bold mb-4 flex items-center text-white">
                 <Sparkles className="mr-2 h-6 w-6 text-nexus-cyan" />

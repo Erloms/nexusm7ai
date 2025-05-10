@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -19,37 +20,35 @@ interface Model {
   group: string;
 }
 
-const Chat = () => {
+interface ChatProps {
+  decrementUsage?: () => void;
+}
+
+const Chat = ({ decrementUsage }: ChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('openai');
+  const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  // Models grouped by provider
+  // Models grouped by provider - updated with working models
   const models: Record<string, Model[]> = {
     'OpenAI': [
-      { id: 'openai', name: 'GPT-4o-mini', description: 'OpenAI GPT-4o-mini', group: 'OpenAI' },
-      { id: 'openai-large', name: 'GPT-4o', description: 'OpenAI GPT-4o', group: 'OpenAI' },
-      { id: 'openai-reasoning', name: 'o1-mini', description: 'OpenAI o1-mini', group: 'OpenAI' }
-    ],
-    'Google': [
-      { id: 'gemini', name: 'Gemini 2.0 Flash', description: 'Gemini 2.0 Flash', group: 'Google' },
-      { id: 'gemini-thinking', name: 'Gemini 2.0 Flash Thinking', description: 'Gemini 2.0 Flash Thinking', group: 'Google' }
+      { id: 'gpt-4o-mini', name: 'GPT-4o-mini', description: 'OpenAI GPT-4o-mini', group: 'OpenAI' },
+      { id: 'gpt-4o', name: 'GPT-4o', description: 'OpenAI GPT-4o', group: 'OpenAI' },
+      { id: 'o1-mini', name: 'o1-mini', description: 'OpenAI o1-mini', group: 'OpenAI' }
     ],
     'Meta': [
-      { id: 'llama', name: 'Llama 3.3 70B', description: 'Llama 3.3 70B', group: 'Meta' },
-      { id: 'llamalight', name: 'Llama 3.1 8B Instruct', description: 'Llama 3.1 8B Instruct', group: 'Meta' }
+      { id: 'llama-3.3-70b-instruct', name: 'Llama 3.3 70B', description: 'Llama 3.3 70B', group: 'Meta' },
+      { id: '@cf/meta/llama-3.1-8b-instruct', name: 'Llama 3.1 8B Instruct', description: 'Llama 3.1 8B Instruct', group: 'Meta' }
     ],
     'DeepSeek': [
-      { id: 'deepseek', name: 'DeepSeek-V3', description: 'DeepSeek-V3', group: 'DeepSeek' },
-      { id: 'deepseek-r1', name: 'DeepSeek-R1 Distill Qwen 32B', description: 'DeepSeek-R1 Distill Qwen 32B', group: 'DeepSeek' },
-      { id: 'deepseek-reasoner', name: 'DeepSeek R1 - Full', description: 'DeepSeek R1 - Full', group: 'DeepSeek' }
+      { id: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', name: 'DeepSeek-R1 Distill Qwen 32B', description: 'DeepSeek-R1 Distill Qwen 32B', group: 'DeepSeek' }
     ],
     'Other': [
-      { id: 'mistral', name: 'Mistral Nemo', description: 'Mistral Nemo', group: 'Mistral' },
-      { id: 'qwen-coder', name: 'Qwen 2.5 Coder 32B', description: 'Qwen 2.5 Coder 32B', group: 'Qwen' },
-      { id: 'phi', name: 'Phi-4 Multimodal Instruct', description: 'Phi-4 Multimodal Instruct', group: 'Microsoft' }
+      { id: 'mistral-small-3.1-24b-instruct-2503', name: 'Mistral Small 3.1', description: 'Mistral Small 3.1', group: 'Mistral' },
+      { id: 'qwen2.5-coder-32b-instruct', name: 'Qwen 2.5 Coder 32B', description: 'Qwen 2.5 Coder 32B', group: 'Qwen' },
+      { id: 'phi-4-instruct', name: 'Phi-4 Instruct', description: 'Phi-4 Instruct', group: 'Microsoft' }
     ]
   };
 
@@ -65,6 +64,9 @@ const Chat = () => {
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
+    
+    // Call decrementUsage if provided (for non-paying users)
+    decrementUsage?.();
     
     const userMessage = { role: 'user' as const, content: input };
     setMessages(prev => [...prev, userMessage]);
@@ -92,11 +94,24 @@ const Chat = () => {
         aiResponse += chunk;
       }
 
+      // Check for error in response
+      if (aiResponse.includes('{"error":')) {
+        try {
+          const errorObj = JSON.parse(aiResponse);
+          throw new Error(errorObj.error || "API错误，请尝试其他模型");
+        } catch (e) {
+          throw new Error("API返回无效响应，请尝试其他模型");
+        }
+      }
+
       // Add AI response to chat
       setMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
     } catch (error) {
       console.error('Error calling AI API:', error);
-      setMessages(prev => [...prev, { role: 'assistant', content: '抱歉，发生了错误，请稍后再试。' }]);
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: `抱歉，发生了错误: ${error instanceof Error ? error.message : '请稍后再试或选择其他模型。'}`
+      }]);
     } finally {
       setLoading(false);
     }
@@ -113,7 +128,7 @@ const Chat = () => {
     <div className="min-h-screen bg-nexus-dark flex flex-col">
       <Navigation />
       
-      <PaymentCheck>
+      <PaymentCheck featureType="chat">
         <main className="flex-grow flex flex-col md:flex-row gap-4 p-4 pt-20 md:p-20">
           {/* Model selection sidebar */}
           <aside className="w-full md:w-64 lg:w-72 flex-shrink-0 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-4 mb-4 md:mb-0">
@@ -169,7 +184,7 @@ const Chat = () => {
                   </div>
                   <h3 className="text-xl font-medium text-white mb-2">开始你的AI对话</h3>
                   <p className="text-center max-w-md">
-                    选择一个AI模型，然后在下方输入框中输入问题或指令，开始与AI助手��话。
+                    选择一个AI模型，然后在下方输入框中输入问题或指令，开始与AI助手对话。
                   </p>
                 </div>
               ) : (

@@ -104,6 +104,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(mockUser);
         localStorage.setItem('nexusAiUser', JSON.stringify(mockUser));
         
+        // Initialize usage counts for new user
+        localStorage.setItem(`nexusAi_chat_usage_${mockUser.id}`, JSON.stringify({ remaining: 5 }));
+        localStorage.setItem(`nexusAi_image_usage_${mockUser.id}`, JSON.stringify({ remaining: 10 }));
+        
         toast({
           title: "登录成功",
           description: "欢迎回来！",
@@ -153,6 +157,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         setUser(mockUser);
         localStorage.setItem('nexusAiUser', JSON.stringify(mockUser));
+        
+        // Initialize usage counts for new user
+        localStorage.setItem(`nexusAi_chat_usage_${mockUser.id}`, JSON.stringify({ remaining: 5 }));
+        localStorage.setItem(`nexusAi_image_usage_${mockUser.id}`, JSON.stringify({ remaining: 10 }));
         
         toast({
           title: "注册成功",
