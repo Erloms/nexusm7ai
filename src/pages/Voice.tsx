@@ -199,7 +199,7 @@ const Voice = () => {
             <Tabs defaultValue="voice" className="w-full mb-6">
               <TabsList className="grid grid-cols-2 w-full bg-nexus-dark/50">
                 <TabsTrigger value="voice" className="data-[state=active]:bg-nexus-blue text-white">选择声音</TabsTrigger>
-                <TabsTrigger value="settings" className="data-[state=active]:bg-nexus-blue text-white">设置</TabsTrigger>
+                <TabsTrigger value="settings" className="data-[state=active]:bg-nexus-blue text-white">高级设置</TabsTrigger>
               </TabsList>
               
               <TabsContent value="voice" className="pt-4">
@@ -234,16 +234,13 @@ const Voice = () => {
               
               <TabsContent value="settings" className="pt-4">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="exact-reading" className="text-white">严格原文朗读</Label>
-                      <div className="text-sm text-white/60">开启后，AI将严格按照文本内容进行朗读，不会进行创意演绎</div>
+                  <div className="p-4 bg-nexus-blue/10 border border-nexus-blue/20 rounded-lg">
+                    <div className="flex items-start">
+                      <Info className="h-5 w-5 text-nexus-cyan mr-2 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-white/80">
+                        在这里可以调整其他TTS引擎参数，如速度，音高等（当前版本暂未实现）
+                      </p>
                     </div>
-                    <Switch
-                      id="exact-reading"
-                      checked={exactReading}
-                      onCheckedChange={setExactReading}
-                    />
                   </div>
                 </div>
               </TabsContent>
@@ -260,25 +257,44 @@ const Voice = () => {
               />
             </div>
             
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4 text-white/70 text-sm">
-                <div className="flex items-center">
-                  <AlignLeft className="h-4 w-4 mr-1" />
-                  <span>字符数: {text.length}</span>
-                </div>
-                <div className="flex items-center">
-                  <Clock className="h-4 w-4 mr-1" />
-                  <span>预计时长: {Math.max(1, Math.ceil(text.length / 150))}秒</span>
+            <div className="flex flex-col space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4 text-white/70 text-sm">
+                  <div className="flex items-center">
+                    <AlignLeft className="h-4 w-4 mr-1" />
+                    <span>字符数: {text.length}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Clock className="h-4 w-4 mr-1" />
+                    <span>预计时长: {Math.max(1, Math.ceil(text.length / 150))}秒</span>
+                  </div>
                 </div>
               </div>
               
-              <Button 
-                onClick={handleGenerateVoice} 
-                disabled={loading || !text.trim()}
-                className="bg-nexus-blue hover:bg-nexus-blue/80"
-              >
-                {loading ? "生成中..." : "生成语音"}
-              </Button>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-nexus-dark/50 rounded-lg border border-nexus-blue/20">
+                <div className="flex items-center mb-3 sm:mb-0">
+                  <div className="flex items-center">
+                    <div className={`w-3 h-3 rounded-full mr-2 ${exactReading ? 'bg-nexus-cyan' : 'bg-nexus-blue/50'}`}></div>
+                    <span className="text-white font-medium mr-2">朗读模式:</span>
+                  </div>
+                  <div className="relative flex items-center space-x-2">
+                    <span className={`text-sm ${!exactReading ? 'text-white' : 'text-white/50'}`}>智能演绎</span>
+                    <Switch
+                      checked={exactReading}
+                      onCheckedChange={setExactReading}
+                    />
+                    <span className={`text-sm ${exactReading ? 'text-white' : 'text-white/50'}`}>严格原文</span>
+                  </div>
+                </div>
+                
+                <Button 
+                  onClick={handleGenerateVoice} 
+                  disabled={loading || !text.trim()}
+                  className="bg-nexus-blue hover:bg-nexus-blue/80 w-full sm:w-auto"
+                >
+                  {loading ? "生成中..." : "生成语音"}
+                </Button>
+              </div>
             </div>
             
             <div className="mt-4 bg-nexus-blue/10 border border-nexus-blue/20 rounded-lg p-3">

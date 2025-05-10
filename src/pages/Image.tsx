@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -5,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { Sparkles, Download, Image as ImageIcon, Loader2, RefreshCw } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
@@ -147,139 +147,126 @@ const Image = ({ decrementUsage }: ImageProps) => {
                 AI 图像生成
               </h2>
               
-              <Tabs defaultValue="basic" className="w-full">
-                <TabsList className="grid grid-cols-2 w-full bg-nexus-dark/50">
-                  <TabsTrigger value="basic" className="data-[state=active]:bg-nexus-blue text-white">基本设置</TabsTrigger>
-                  <TabsTrigger value="advanced" className="data-[state=active]:bg-nexus-blue text-white">高级设置</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="basic" className="pt-4">
-                  <div className="space-y-4">
-                    <div>
-                      <label htmlFor="model" className="block text-sm font-medium text-white mb-2">
-                        选择模型
-                      </label>
-                      <Select value={selectedModel} onValueChange={setSelectedModel}>
-                        <SelectTrigger className="bg-nexus-dark/50 border-nexus-blue/30 text-white">
-                          <SelectValue placeholder="选择模型" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-nexus-dark border-nexus-blue/30">
-                          {models.map((model) => (
-                            <SelectItem 
-                              key={model.id} 
-                              value={model.id}
-                              className="text-white hover:bg-nexus-blue/20"
-                            >
-                              <div>
-                                <div>{model.name}</div>
-                                <div className="text-xs text-white/60">{model.description}</div>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="prompt" className="block text-sm font-medium text-white mb-2">
-                        提示词
-                      </label>
-                      <Textarea
-                        id="prompt"
-                        value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                        placeholder="描述您想要生成的图像，例如：一只可爱的猫咪在阳光下玩耍"
-                        className="min-h-[100px] bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="negative-prompt" className="block text-sm font-medium text-white mb-2">
-                        负面提示词
-                      </label>
-                      <Textarea
-                        id="negative-prompt"
-                        value={negativePrompt}
-                        onChange={(e) => setNegativePrompt(e.target.value)}
-                        placeholder="描述您不希望在图像中出现的元素"
-                        className="min-h-[80px] bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="width" className="block text-sm font-medium text-white mb-2">
-                          宽度
-                        </label>
-                        <Input
-                          id="width"
-                          type="number"
-                          value={width}
-                          onChange={(e) => setWidth(Number(e.target.value))}
-                          className="bg-nexus-dark/50 border-nexus-blue/30 text-white"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="height" className="block text-sm font-medium text-white mb-2">
-                          高度
-                        </label>
-                        <Input
-                          id="height"
-                          type="number"
-                          value={height}
-                          onChange={(e) => setHeight(Number(e.target.value))}
-                          className="bg-nexus-dark/50 border-nexus-blue/30 text-white"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="advanced" className="pt-4">
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label htmlFor="steps" className="block text-sm font-medium text-white">
-                          步数: {steps}
-                        </label>
-                        <span className="text-xs text-white/60">更高的步数 = 更高质量，但更慢</span>
-                      </div>
-                      <Slider
-                        id="steps"
-                        min={10}
-                        max={50}
-                        step={1}
-                        value={[steps]}
-                        onValueChange={(value) => setSteps(value[0])}
-                        className="py-4"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="seed" className="block text-sm font-medium text-white mb-2">
-                        种子值 (留空为随机)
-                      </label>
-                      <div className="flex gap-2">
-                        <Input
-                          id="seed"
-                          value={seed}
-                          onChange={(e) => setSeed(e.target.value)}
-                          placeholder="随机种子"
-                          className="bg-nexus-dark/50 border-nexus-blue/30 text-white flex-grow"
-                        />
-                        <Button 
-                          variant="outline" 
-                          onClick={handleRandomSeed}
-                          className="border-nexus-blue/30 text-white"
+              <div className="space-y-5">
+                <div>
+                  <label htmlFor="model" className="block text-sm font-medium text-white mb-2">
+                    选择模型
+                  </label>
+                  <Select value={selectedModel} onValueChange={setSelectedModel}>
+                    <SelectTrigger className="bg-nexus-dark/50 border-nexus-blue/30 text-white">
+                      <SelectValue placeholder="选择模型" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-nexus-dark border-nexus-blue/30">
+                      {models.map((model) => (
+                        <SelectItem 
+                          key={model.id} 
+                          value={model.id}
+                          className="text-white hover:bg-nexus-blue/20"
                         >
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <p className="text-xs text-white/60 mt-1">使用相同的种子值可以生成相似的图像</p>
-                    </div>
+                          <div>
+                            <div>{model.name}</div>
+                            <div className="text-xs text-white/60">{model.description}</div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <label htmlFor="prompt" className="block text-sm font-medium text-white mb-2">
+                    提示词
+                  </label>
+                  <Textarea
+                    id="prompt"
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="描述您想要生成的图像，例如：一只可爱的猫咪在阳光下玩耍"
+                    className="min-h-[100px] bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="negative-prompt" className="block text-sm font-medium text-white mb-2">
+                    负面提示词
+                  </label>
+                  <Textarea
+                    id="negative-prompt"
+                    value={negativePrompt}
+                    onChange={(e) => setNegativePrompt(e.target.value)}
+                    placeholder="描述您不希望在图像中出现的元素"
+                    className="min-h-[80px] bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="width" className="block text-sm font-medium text-white mb-2">
+                      宽度
+                    </label>
+                    <Input
+                      id="width"
+                      type="number"
+                      value={width}
+                      onChange={(e) => setWidth(Number(e.target.value))}
+                      className="bg-nexus-dark/50 border-nexus-blue/30 text-white"
+                    />
                   </div>
-                </TabsContent>
-              </Tabs>
+                  <div>
+                    <label htmlFor="height" className="block text-sm font-medium text-white mb-2">
+                      高度
+                    </label>
+                    <Input
+                      id="height"
+                      type="number"
+                      value={height}
+                      onChange={(e) => setHeight(Number(e.target.value))}
+                      className="bg-nexus-dark/50 border-nexus-blue/30 text-white"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label htmlFor="steps" className="block text-sm font-medium text-white">
+                      步数: {steps}
+                    </label>
+                    <span className="text-xs text-white/60">更高的步数 = 更高质量，但更慢</span>
+                  </div>
+                  <Slider
+                    id="steps"
+                    min={10}
+                    max={50}
+                    step={1}
+                    value={[steps]}
+                    onValueChange={(value) => setSteps(value[0])}
+                    className="py-4"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="seed" className="block text-sm font-medium text-white mb-2">
+                    种子值 (留空为随机)
+                  </label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="seed"
+                      value={seed}
+                      onChange={(e) => setSeed(e.target.value)}
+                      placeholder="随机种子"
+                      className="bg-nexus-dark/50 border-nexus-blue/30 text-white flex-grow"
+                    />
+                    <Button 
+                      variant="outline" 
+                      onClick={handleRandomSeed}
+                      className="border-nexus-blue/30 text-white"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-white/60 mt-1">使用相同的种子值可以生成相似的图像</p>
+                </div>
+              </div>
               
               <div className="mt-6">
                 <Button 
