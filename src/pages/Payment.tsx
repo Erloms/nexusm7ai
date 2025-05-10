@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
@@ -12,15 +13,33 @@ const Payment = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [verifying, setVerifying] = useState(false);
+  const [orderNumber, setOrderNumber] = useState('');
 
   const handleManualVerification = () => {
+    if (!orderNumber || orderNumber.length < 4) {
+      toast({
+        title: "请输入订单号后四位",
+        description: "请输入支付宝订单号后四位进行验证",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setVerifying(true);
     
     // Simulate payment verification process
     setTimeout(() => {
       setUserAsPaid();
       setVerifying(false);
-      navigate('/');
+      
+      toast({
+        title: "会员开通成功",
+        description: "您已成功开通Nexus AI终身会员，即刻享受全部AI能力！",
+      });
+      
+      setTimeout(() => {
+        navigate('/');
+      }, 1500);
     }, 2000);
   };
 
@@ -44,7 +63,7 @@ const Payment = () => {
                       <div className="mr-3 bg-gradient-to-r from-nexus-blue to-nexus-cyan w-6 h-6 flex items-center justify-center rounded-full flex-shrink-0 mt-1">
                         <span className="text-sm">✓</span>
                       </div>
-                      <span>使用全部最先进的AI大模型，GPT-4o、Gemini等一应俱全</span>
+                      <span>使用全部最先进的AI大模型，GPT-4o、GPT-4.1、Gemini等一应俱全</span>
                     </li>
                     <li className="flex items-start">
                       <div className="mr-3 bg-gradient-to-r from-nexus-blue to-nexus-cyan w-6 h-6 flex items-center justify-center rounded-full flex-shrink-0 mt-1">
@@ -94,11 +113,24 @@ const Payment = () => {
                   <p className="text-white font-bold mb-2">请使用支付宝扫码支付</p>
                   <p className="text-white/70 text-sm mb-4">
                     <span className="text-red-500 font-bold">重要：</span> 
-                    请在备注中填写您的用户名或邮箱：
-                    <span className="bg-nexus-blue/30 px-2 py-1 rounded text-white font-mono">
-                      {user?.email || '未登录'}
-                    </span>
+                    请记住您的支付宝订单号后四位
                   </p>
+                  
+                  <div className="flex flex-col space-y-3 mb-4">
+                    <div>
+                      <label htmlFor="order-number" className="block text-sm font-medium text-white mb-1">
+                        输入订单号后四位
+                      </label>
+                      <Input
+                        id="order-number"
+                        value={orderNumber}
+                        onChange={(e) => setOrderNumber(e.target.value)}
+                        maxLength={4}
+                        className="bg-nexus-dark/50 border-nexus-blue/30 text-white"
+                        placeholder="例如：1234"
+                      />
+                    </div>
+                  </div>
                   
                   <Button 
                     onClick={handleManualVerification}
@@ -109,7 +141,7 @@ const Payment = () => {
                   </Button>
                   
                   <p className="text-white/50 text-xs mt-3">
-                    支付完成后，我们将在后台确认并为您开通会员权限
+                    支付验证后，系统将自动为您开通会员权限
                   </p>
                 </div>
               </div>

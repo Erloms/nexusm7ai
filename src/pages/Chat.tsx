@@ -37,25 +37,27 @@ const Chat = ({ decrementUsage }: ChatProps) => {
   // 更新模型列表为最新可用的模型
   const models: Record<string, Model[]> = {
     'OpenAI': [
-      { id: 'gpt-4o-mini', name: 'GPT-4o-mini', description: 'OpenAI GPT-4o-mini', group: 'OpenAI' },
-      { id: 'gpt-4o', name: 'GPT-4o', description: 'OpenAI GPT-4o', group: 'OpenAI' },
-      { id: 'o1-mini', name: 'o1-mini', description: 'OpenAI o1-mini', group: 'OpenAI' }
+      { id: 'gpt-4o-mini', name: 'GPT-4o-mini', description: 'OpenAI GPT-4o-mini 多模态模型', group: 'OpenAI' },
+      { id: 'gpt-4o', name: 'GPT-4o', description: 'OpenAI GPT-4o 多模态大语言模型', group: 'OpenAI' },
+      { id: 'o1-mini', name: 'o1-mini', description: 'OpenAI o1-mini 轻量级大语言模型', group: 'OpenAI' },
+      { id: 'gpt-4.1-nano', name: 'GPT-4.1-nano', description: 'OpenAI GPT-4.1-nano 新一代大语言模型', group: 'OpenAI' },
+      { id: 'gpt-4.1-mini', name: 'GPT-4.1-mini', description: 'OpenAI GPT-4.1-mini 新一代大语言模型', group: 'OpenAI' }
     ],
     'Gemini': [
-      { id: 'gemini-2.5-pro-exp-03-25', name: 'Gemini 2.5 Pro', description: 'Google最新一代大语言模型', group: 'Gemini' },
-      { id: 'gemini-2.5-flash-preview-04-17', name: 'Gemini 2.5 Flash', description: 'Google Gemini 2.5 系列闪电版', group: 'Gemini' }
+      { id: 'gemini-2.5-pro-exp-03-25', name: 'Gemini 2.5 Pro (exp-03-25)', description: 'Google最新一代大语言模型', group: 'Gemini' },
+      { id: 'gemini-2.5-flash-preview-04-17', name: 'Gemini 2.5 Flash (preview-04-17)', description: 'Google Gemini 2.5 系列闪电版', group: 'Gemini' }
     ],
     'Meta': [
-      { id: 'llama-3.3-70b-instruct', name: 'Llama 3.3 70B', description: 'Meta开源大模型最新版', group: 'Meta' },
-      { id: '@cf/meta/llama-3.1-8b-instruct', name: 'Llama 3.1 8B', description: 'Meta轻量级开源大模型', group: 'Meta' }
+      { id: 'llama-3.3-70b-instruct', name: 'Llama 3.3 70B Instruct', description: 'Meta开源大模型最新版', group: 'Meta' },
+      { id: '@cf/meta/llama-3.1-8b-instruct', name: 'Llama 3.1 8B Instruct', description: 'Meta轻量级开源大模型', group: 'Meta' }
     ],
     'DeepSeek': [
-      { id: 'DeepSeek-V3-0324', name: 'DeepSeek V3', description: '国产大模型DeepSeek最新版', group: 'DeepSeek' },
-      { id: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', name: 'DeepSeek R1 Qwen-32B', description: 'DeepSeek精华版32B大模型', group: 'DeepSeek' }
+      { id: 'DeepSeek-V3-0324', name: 'DeepSeek V3-0324', description: '国产大模型DeepSeek最新版', group: 'DeepSeek' },
+      { id: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', name: 'DeepSeek R1 Distill Qwen-32B', description: 'DeepSeek精华版32B大模型', group: 'DeepSeek' }
     ],
     'Other': [
-      { id: 'mistral-small-3.1-24b-instruct-2503', name: 'Mistral Small 3.1', description: 'Mistral Small 3.1', group: 'Mistral' },
-      { id: 'qwen2.5-coder-32b-instruct', name: 'Qwen 2.5 Coder 32B', description: 'Qwen 2.5 编程专用模型', group: 'Qwen' },
+      { id: 'mistral-small-3.1-24b-instruct-2503', name: 'Mistral Small 3.1-24B-instruct-2503', description: 'Mistral最新指令微调模型', group: 'Mistral' },
+      { id: 'qwen2.5-coder-32b-instruct', name: 'Qwen 2.5 Coder 32B Instruct', description: 'Qwen 2.5 编程专用模型', group: 'Qwen' },
       { id: 'phi-4-instruct', name: 'Phi-4 Instruct', description: 'Microsoft Phi-4 指令微调模型', group: 'Microsoft' }
     ]
   };
@@ -171,6 +173,12 @@ const Chat = ({ decrementUsage }: ChatProps) => {
       
       <PaymentCheck featureType="chat">
         <main className="flex-grow flex flex-col p-4 pt-16 md:p-8">
+          {/* 页面标题 */}
+          <div className="container mx-auto text-center mb-6">
+            <h1 className="text-3xl md:text-4xl font-bold text-gradient mb-2">AI 对话</h1>
+            <p className="text-white/70 text-lg">输入文本，选择模型，一键得到自然流畅的对话</p>
+          </div>
+
           {/* 顶部栏 - 模型选择 */}
           <div className="w-full max-w-7xl mx-auto mb-4 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-3">
             <div className="flex items-center">
@@ -216,10 +224,10 @@ const Chat = ({ decrementUsage }: ChatProps) => {
             <div 
               ref={chatContainerRef}
               className="flex-grow p-4 md:p-6 overflow-y-auto"
-              style={{ minHeight: "calc(65vh - 180px)" }}
+              style={{ minHeight: "calc(75vh - 180px)" }}
             >
               {messages.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-white/60">
+                <div className="h-full flex flex-col items-center justify-center text-white/60 py-20">
                   <div className="w-16 h-16 bg-nexus-blue/20 rounded-full flex items-center justify-center mb-6">
                     <MessageSquare className="w-8 h-8 text-nexus-blue" />
                   </div>
@@ -244,6 +252,18 @@ const Chat = ({ decrementUsage }: ChatProps) => {
                         <p className="text-white/80">{suggestion}</p>
                       </div>
                     ))}
+                  </div>
+
+                  <div className="mt-12 bg-nexus-blue/10 p-4 rounded-lg border border-nexus-blue/30 max-w-3xl w-full">
+                    <h4 className="font-medium text-white mb-2 flex items-center">
+                      <Sparkles className="w-4 h-4 mr-2 text-nexus-cyan" />
+                      使用小技巧
+                    </h4>
+                    <ul className="text-white/70 text-sm space-y-1 list-disc pl-5">
+                      <li>上传图片可以让AI理解图像内容并基于图像回答问题</li>
+                      <li>使用精确的指令可以获得更好的回答质量</li>
+                      <li>长篇内容可以分段提问，效果更佳</li>
+                    </ul>
                   </div>
                 </div>
               ) : (
