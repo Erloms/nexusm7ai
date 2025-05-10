@@ -58,18 +58,18 @@ const Image = ({ decrementUsage }: ImageProps) => {
       return;
     }
 
-    // Call decrementUsage if provided (for non-paying users)
+    // 调用decrementUsage函数（如果提供）
     decrementUsage?.();
     
     setLoading(true);
     
     try {
-      // Construct the URL with parameters
+      // 构造带参数的URL
       const baseUrl = 'https://image.pollinations.ai/prompt/';
       const encodedPrompt = encodeURIComponent(prompt);
       const encodedNegativePrompt = encodeURIComponent(negativePrompt);
       
-      // Add parameters
+      // 添加参数
       const params = new URLSearchParams({
         width: width.toString(),
         height: height.toString(),
@@ -82,11 +82,11 @@ const Image = ({ decrementUsage }: ImageProps) => {
       
       const imageUrl = `${baseUrl}${encodedPrompt}?${params.toString()}`;
       
-      // In a real app, you might want to fetch the image first to ensure it loads
-      // For now, we'll just set the URL
+      // 在真实应用中，您可能想要先获取图像以确保它加载
+      // 现在，我们只是设置URL
       setGeneratedImage(imageUrl);
       
-      // Add to history
+      // 添加到历史记录
       const newHistoryItem = {
         id: Date.now(),
         url: imageUrl,
@@ -101,7 +101,7 @@ const Image = ({ decrementUsage }: ImageProps) => {
         description: "您的AI图像已生成",
       });
     } catch (error) {
-      console.error('Error generating image:', error);
+      console.error('生成图像时出错:', error);
       toast({
         title: "生成失败",
         description: "图像生成过程中发生错误，请稍后再试",
@@ -137,42 +137,16 @@ const Image = ({ decrementUsage }: ImageProps) => {
       <Navigation />
       
       <PaymentCheck featureType="image">
-        <main className="flex-grow flex flex-col md:flex-row gap-6 p-4 pt-20 md:p-20">
-          {/* Left Panel - Controls */}
-          <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col gap-4">
-            {/* Left Panel - Controls */}
-            <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-5">
-              <h2 className="text-2xl font-bold mb-4 flex items-center text-white">
+        <main className="flex-grow p-4 pt-16 md:p-8">
+          <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
+            {/* 左侧面板 - 控制 */}
+            <div className="w-full lg:w-1/2 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-5">
+              <h2 className="text-2xl font-bold mb-6 flex items-center text-white">
                 <Sparkles className="mr-2 h-6 w-6 text-nexus-cyan" />
                 AI 图像生成
               </h2>
               
-              <div className="space-y-5">
-                <div>
-                  <label htmlFor="model" className="block text-sm font-medium text-white mb-2">
-                    选择模型
-                  </label>
-                  <Select value={selectedModel} onValueChange={setSelectedModel}>
-                    <SelectTrigger className="bg-nexus-dark/50 border-nexus-blue/30 text-white">
-                      <SelectValue placeholder="选择模型" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-nexus-dark border-nexus-blue/30">
-                      {models.map((model) => (
-                        <SelectItem 
-                          key={model.id} 
-                          value={model.id}
-                          className="text-white hover:bg-nexus-blue/20"
-                        >
-                          <div>
-                            <div>{model.name}</div>
-                            <div className="text-xs text-white/60">{model.description}</div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
+              <div className="space-y-6">
                 <div>
                   <label htmlFor="prompt" className="block text-sm font-medium text-white mb-2">
                     提示词
@@ -197,6 +171,31 @@ const Image = ({ decrementUsage }: ImageProps) => {
                     placeholder="描述您不希望在图像中出现的元素"
                     className="min-h-[80px] bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
                   />
+                </div>
+                
+                <div>
+                  <label htmlFor="model" className="block text-sm font-medium text-white mb-2">
+                    选择模型
+                  </label>
+                  <Select value={selectedModel} onValueChange={setSelectedModel}>
+                    <SelectTrigger className="bg-nexus-dark/50 border-nexus-blue/30 text-white">
+                      <SelectValue placeholder="选择模型" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-nexus-dark border-nexus-blue/30">
+                      {models.map((model) => (
+                        <SelectItem 
+                          key={model.id} 
+                          value={model.id}
+                          className="text-white hover:bg-nexus-blue/20"
+                        >
+                          <div>
+                            <div>{model.name}</div>
+                            <div className="text-xs text-white/60">{model.description}</div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
@@ -266,100 +265,100 @@ const Image = ({ decrementUsage }: ImageProps) => {
                   </div>
                   <p className="text-xs text-white/60 mt-1">使用相同的种子值可以生成相似的图像</p>
                 </div>
-              </div>
-              
-              <div className="mt-6">
-                <Button 
-                  onClick={handleGenerateImage} 
-                  disabled={loading || !prompt.trim()}
-                  className="w-full bg-nexus-blue hover:bg-nexus-blue/80 text-white py-6"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      生成中...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      生成图像
-                    </>
-                  )}
-                </Button>
+
+                <div className="mt-6">
+                  <Button 
+                    onClick={handleGenerateImage} 
+                    disabled={loading || !prompt.trim()}
+                    className="w-full bg-nexus-blue hover:bg-nexus-blue/80 text-white py-6"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        生成中...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        生成图像
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
             
-            {/* History Section */}
-            {history.length > 0 && (
-              <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-5">
-                <h3 className="text-xl font-bold mb-4 text-white">历史记录</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[300px] overflow-y-auto pr-1">
-                  {history.map((item) => (
-                    <div 
-                      key={item.id}
-                      className="relative cursor-pointer rounded-lg overflow-hidden border border-nexus-blue/20 hover:border-nexus-blue/50 transition-all"
-                      onClick={() => {
-                        setGeneratedImage(item.url);
-                        setPrompt(item.prompt);
-                      }}
-                    >
-                      <img 
-                        src={item.url} 
-                        alt={item.prompt} 
-                        className="w-full h-24 object-cover"
-                      />
-                      <div className="absolute bottom-0 left-0 right-0 bg-nexus-dark/80 backdrop-blur-sm p-1 text-xs text-white/80">
-                        {formatTime(item.timestamp)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            {/* 右侧面板 - 图像预览 */}
+            <div className="w-full lg:w-1/2 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-5 flex flex-col">
+              <h2 className="text-2xl font-bold mb-4 flex items-center text-white">
+                <ImageIcon className="mr-2 h-6 w-6 text-nexus-cyan" />
+                图像预览
+              </h2>
+              
+              <div className="flex-grow flex items-center justify-center bg-nexus-dark/40 rounded-lg border border-nexus-blue/20 overflow-hidden">
+                {loading ? (
+                  <div className="flex flex-col items-center justify-center p-8">
+                    <Loader2 className="h-12 w-12 text-nexus-blue animate-spin mb-4" />
+                    <p className="text-white/80 text-center">正在生成您的图像，请稍候...</p>
+                    <p className="text-white/60 text-sm text-center mt-2">这可能需要几秒钟时间</p>
+                  </div>
+                ) : generatedImage ? (
+                  <div className="relative w-full h-full flex items-center justify-center p-4">
+                    <img 
+                      ref={imageRef}
+                      src={generatedImage} 
+                      alt="Generated" 
+                      className="max-w-full max-h-[60vh] object-contain rounded shadow-lg"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-8">
+                    <ImageIcon className="h-16 w-16 text-white/20 mb-4" />
+                    <p className="text-white/60 text-center">填写左侧表单并点击"生成图像"按钮</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          
-          {/* Right Panel - Image Preview */}
-          <div className="w-full md:w-1/2 lg:w-3/5 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-5 flex flex-col">
-            <h2 className="text-2xl font-bold mb-4 flex items-center text-white">
-              <ImageIcon className="mr-2 h-6 w-6 text-nexus-cyan" />
-              图像预览
-            </h2>
-            
-            <div className="flex-grow flex items-center justify-center bg-nexus-dark/40 rounded-lg border border-nexus-blue/20 overflow-hidden">
-              {loading ? (
-                <div className="flex flex-col items-center justify-center p-8">
-                  <Loader2 className="h-12 w-12 text-nexus-blue animate-spin mb-4" />
-                  <p className="text-white/80 text-center">正在生成您的图像，请稍候...</p>
-                  <p className="text-white/60 text-sm text-center mt-2">这可能需要几秒钟时间</p>
+              
+              {generatedImage && (
+                <div className="mt-4 flex justify-end">
+                  <Button 
+                    onClick={handleDownload}
+                    className="bg-nexus-blue hover:bg-nexus-blue/80 text-white"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    下载图像
+                  </Button>
                 </div>
-              ) : generatedImage ? (
-                <div className="relative w-full h-full flex items-center justify-center p-4">
-                  <img 
-                    ref={imageRef}
-                    src={generatedImage} 
-                    alt="Generated" 
-                    className="max-w-full max-h-[70vh] object-contain rounded shadow-lg"
-                  />
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center p-8">
-                  <ImageIcon className="h-16 w-16 text-white/20 mb-4" />
-                  <p className="text-white/60 text-center">填写左侧表单并点击"生成图像"按钮</p>
+              )}
+
+              {/* 历史记录部分 */}
+              {history.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-xl font-bold mb-3 text-white">历史记录</h3>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[160px] overflow-y-auto pr-1">
+                    {history.map((item) => (
+                      <div 
+                        key={item.id}
+                        className="relative cursor-pointer rounded-lg overflow-hidden border border-nexus-blue/20 hover:border-nexus-blue/50 transition-all"
+                        onClick={() => {
+                          setGeneratedImage(item.url);
+                          setPrompt(item.prompt);
+                        }}
+                      >
+                        <img 
+                          src={item.url} 
+                          alt={item.prompt} 
+                          className="w-full h-20 object-cover"
+                        />
+                        <div className="absolute bottom-0 left-0 right-0 bg-nexus-dark/80 backdrop-blur-sm p-1 text-xs text-white/80">
+                          {formatTime(item.timestamp)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
-            
-            {generatedImage && (
-              <div className="mt-4 flex justify-end">
-                <Button 
-                  onClick={handleDownload}
-                  className="bg-nexus-blue hover:bg-nexus-blue/80 text-white"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  下载图像
-                </Button>
-              </div>
-            )}
           </div>
         </main>
       </PaymentCheck>

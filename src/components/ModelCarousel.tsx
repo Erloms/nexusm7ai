@@ -1,8 +1,7 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from "framer-motion";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { Card } from "@/components/ui/card";
 import { Star, Zap, Sparkles, Volume2 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -81,10 +80,11 @@ const ModelCarousel: React.FC = () => {
     }
   };
   
+  // 更新为最新的推荐模型
   const featuredModels = [
     { name: "GPT-4o", description: "OpenAI最强大的多模态大语言模型，支持图像理解", category: 'text' as const, highlight: true },
-    { name: "Gemini 2.0 Pro", description: "Google最新一代大语言模型，专业推理能力出色", category: 'text' as const, highlight: true },
-    { name: "DeepSeek R1 Full", description: "国产自研大语言模型，理解世界知识更全面", category: 'text' as const, highlight: false },
+    { name: "DeepSeek V3", description: "国产顶尖大语言模型，理解世界知识更全面", category: 'text' as const, highlight: true },
+    { name: "Gemini 2.5 Pro", description: "Google最新一代大语言模型，专业推理能力出色", category: 'text' as const, highlight: true },
     { name: "Llama 3.3 70B", description: "Meta开发的开源大语言模型，强大的上下文理解力", category: 'text' as const, highlight: true },
     { name: "flux-pro", description: "专业版图像生成模型，画面细节丰富，质量超群", category: 'image' as const, highlight: true },
     { name: "flux-realism", description: "超真实效果图像生成，精准捕捉现实世界细节", category: 'image' as const, highlight: true },
@@ -144,7 +144,7 @@ const ModelCarousel: React.FC = () => {
           </div>
         </div>
 
-        {/* Right side - Why Choose Us */}
+        {/* 右侧 - 为什么选择我们 */}
         <div className="lg:w-5/12 w-full">
           <div className="relative h-full bg-gradient-to-br from-nexus-blue/10 to-nexus-purple/10 rounded-xl border border-nexus-blue/20 p-6 backdrop-blur-sm overflow-hidden flex flex-col">
             <div className="absolute -right-6 -top-6 w-24 h-24 text-nexus-blue/10">

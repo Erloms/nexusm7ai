@@ -44,7 +44,7 @@ const Login = () => {
                   required
                 />
                 <p className="text-xs text-white/60 mt-1">
-                  可使用用户名 (例如 "Master") 或邮箱登录
+                  可使用用户名或邮箱登录
                 </p>
               </div>
               

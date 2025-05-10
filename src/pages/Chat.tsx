@@ -34,31 +34,36 @@ const Chat = ({ decrementUsage }: ChatProps) => {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Models grouped by provider - updated with working models
+  // 更新模型列表为最新可用的模型
   const models: Record<string, Model[]> = {
     'OpenAI': [
       { id: 'gpt-4o-mini', name: 'GPT-4o-mini', description: 'OpenAI GPT-4o-mini', group: 'OpenAI' },
       { id: 'gpt-4o', name: 'GPT-4o', description: 'OpenAI GPT-4o', group: 'OpenAI' },
       { id: 'o1-mini', name: 'o1-mini', description: 'OpenAI o1-mini', group: 'OpenAI' }
     ],
+    'Gemini': [
+      { id: 'gemini-2.5-pro-exp-03-25', name: 'Gemini 2.5 Pro', description: 'Google最新一代大语言模型', group: 'Gemini' },
+      { id: 'gemini-2.5-flash-preview-04-17', name: 'Gemini 2.5 Flash', description: 'Google Gemini 2.5 系列闪电版', group: 'Gemini' }
+    ],
     'Meta': [
-      { id: 'llama-3.3-70b-instruct', name: 'Llama 3.3 70B', description: 'Llama 3.3 70B', group: 'Meta' },
-      { id: '@cf/meta/llama-3.1-8b-instruct', name: 'Llama 3.1 8B Instruct', description: 'Llama 3.1 8B Instruct', group: 'Meta' }
+      { id: 'llama-3.3-70b-instruct', name: 'Llama 3.3 70B', description: 'Meta开源大模型最新版', group: 'Meta' },
+      { id: '@cf/meta/llama-3.1-8b-instruct', name: 'Llama 3.1 8B', description: 'Meta轻量级开源大模型', group: 'Meta' }
     ],
     'DeepSeek': [
-      { id: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', name: 'DeepSeek-R1 Distill Qwen 32B', description: 'DeepSeek-R1 Distill Qwen 32B', group: 'DeepSeek' }
+      { id: 'DeepSeek-V3-0324', name: 'DeepSeek V3', description: '国产大模型DeepSeek最新版', group: 'DeepSeek' },
+      { id: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', name: 'DeepSeek R1 Qwen-32B', description: 'DeepSeek精华版32B大模型', group: 'DeepSeek' }
     ],
     'Other': [
       { id: 'mistral-small-3.1-24b-instruct-2503', name: 'Mistral Small 3.1', description: 'Mistral Small 3.1', group: 'Mistral' },
-      { id: 'qwen2.5-coder-32b-instruct', name: 'Qwen 2.5 Coder 32B', description: 'Qwen 2.5 Coder 32B', group: 'Qwen' },
-      { id: 'phi-4-instruct', name: 'Phi-4 Instruct', description: 'Phi-4 Instruct', group: 'Microsoft' }
+      { id: 'qwen2.5-coder-32b-instruct', name: 'Qwen 2.5 Coder 32B', description: 'Qwen 2.5 编程专用模型', group: 'Qwen' },
+      { id: 'phi-4-instruct', name: 'Phi-4 Instruct', description: 'Microsoft Phi-4 指令微调模型', group: 'Microsoft' }
     ]
   };
 
-  // Get flat array of all models for selection dropdown
+  // 获取所有模型的平面数组，用于选择下拉框
   const allModels = Object.values(models).flat();
 
-  // Scroll to bottom of chat when messages change
+  // 当消息变化时，滚动到聊天底部
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -68,7 +73,7 @@ const Chat = ({ decrementUsage }: ChatProps) => {
   const handleSendMessage = async () => {
     if (!input.trim() && !uploadedImage) return;
     
-    // Call decrementUsage if provided (for non-paying users)
+    // 调用decrementUsage函数（如果提供）
     decrementUsage?.();
     
     const userMessage: Message = { 
@@ -83,15 +88,15 @@ const Chat = ({ decrementUsage }: ChatProps) => {
     setLoading(true);
 
     try {
-      // Encode the prompt for URL
+      // 编码提示词用于URL
       const encodedPrompt = encodeURIComponent(input);
       const model = allModels.find(m => m.id === selectedModel);
       const apiUrl = `https://text.pollinations.ai/${encodedPrompt}?model=${selectedModel}`;
 
-      // Fetch the response
+      // 获取响应
       const response = await fetch(apiUrl);
 
-      // Get the response data
+      // 获取响应数据
       const reader = response.body!.getReader();
       const decoder = new TextDecoder();
       let aiResponse = '';
@@ -103,7 +108,7 @@ const Chat = ({ decrementUsage }: ChatProps) => {
         aiResponse += chunk;
       }
 
-      // Check for error in response
+      // 检查响应中是否有错误
       if (aiResponse.includes('{"error":')) {
         try {
           const errorObj = JSON.parse(aiResponse);
@@ -113,10 +118,10 @@ const Chat = ({ decrementUsage }: ChatProps) => {
         }
       }
 
-      // Add AI response to chat
+      // 将AI响应添加到聊天中
       setMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
     } catch (error) {
-      console.error('Error calling AI API:', error);
+      console.error('调用AI API时出错:', error);
       setMessages(prev => [...prev, { 
         role: 'assistant', 
         content: `抱歉，发生了错误: ${error instanceof Error ? error.message : '请稍后再试或选择其他模型。'}`
@@ -151,7 +156,7 @@ const Chat = ({ decrementUsage }: ChatProps) => {
     }
   };
 
-  // Example chat suggestions
+  // 聊天建议
   const chatSuggestions = [
     "创建一篇关于人工智能的文章",
     "设计一个现代化的网站界面",
@@ -165,67 +170,69 @@ const Chat = ({ decrementUsage }: ChatProps) => {
       <Navigation />
       
       <PaymentCheck featureType="chat">
-        <main className="flex-grow flex flex-col p-4 pt-16 md:p-10">
-          {/* Top Bar - Model Selection */}
-          <div className="flex items-center mb-4 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-3">
-            <div className="flex items-center space-x-2 text-white">
-              <Sparkles className="h-5 w-5 text-nexus-blue" />
-              <span className="font-medium">选择模型:</span>
-            </div>
-            <div className="ml-4 flex-grow max-w-xs">
-              <Select 
-                value={selectedModel}
-                onValueChange={setSelectedModel}
-              >
-                <SelectTrigger className="w-full bg-nexus-dark/50 border-nexus-blue/30 text-white h-9">
-                  <SelectValue placeholder="选择AI模型" />
-                </SelectTrigger>
-                <SelectContent className="bg-nexus-dark border-nexus-blue/30 max-h-[400px]">
-                  {Object.entries(models).map(([group, groupModels]) => (
-                    <div key={group} className="p-1">
-                      <h3 className="text-xs text-nexus-blue uppercase font-bold px-2 py-1">{group}</h3>
-                      {groupModels.map((model) => (
-                        <SelectItem 
-                          key={model.id} 
-                          value={model.id}
-                          className="text-white hover:bg-nexus-blue/20"
-                        >
-                          {model.name}
-                        </SelectItem>
-                      ))}
-                    </div>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="ml-4 text-white/70 text-sm hidden md:block">
-              {allModels.find(m => m.id === selectedModel)?.description}
+        <main className="flex-grow flex flex-col p-4 pt-16 md:p-8">
+          {/* 顶部栏 - 模型选择 */}
+          <div className="w-full max-w-7xl mx-auto mb-4 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-3">
+            <div className="flex items-center">
+              <div className="flex items-center space-x-2 text-white">
+                <Sparkles className="h-5 w-5 text-nexus-blue" />
+                <span className="font-medium">选择模型:</span>
+              </div>
+              <div className="ml-4 w-64">
+                <Select 
+                  value={selectedModel}
+                  onValueChange={setSelectedModel}
+                >
+                  <SelectTrigger className="w-full bg-nexus-dark/50 border-nexus-blue/30 text-white h-9">
+                    <SelectValue placeholder="选择AI模型" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-nexus-dark border-nexus-blue/30 max-h-[400px]">
+                    {Object.entries(models).map(([group, groupModels]) => (
+                      <div key={group} className="p-1">
+                        <h3 className="text-xs text-nexus-blue uppercase font-bold px-2 py-1">{group}</h3>
+                        {groupModels.map((model) => (
+                          <SelectItem 
+                            key={model.id} 
+                            value={model.id}
+                            className="text-white hover:bg-nexus-blue/20"
+                          >
+                            {model.name}
+                          </SelectItem>
+                        ))}
+                      </div>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="ml-4 text-white/70 text-sm hidden md:block">
+                {allModels.find(m => m.id === selectedModel)?.description}
+              </div>
             </div>
           </div>
 
-          {/* Chat Area - Full Width */}
-          <div className="flex-grow flex flex-col bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 overflow-hidden">
-            {/* Messages container */}
+          {/* 聊天区域 - 更宽、更高 */}
+          <div className="w-full max-w-7xl mx-auto flex-grow flex flex-col bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 overflow-hidden">
+            {/* 消息容器 */}
             <div 
               ref={chatContainerRef}
               className="flex-grow p-4 md:p-6 overflow-y-auto"
-              style={{ maxHeight: 'calc(100vh - 260px)' }}
+              style={{ minHeight: "calc(65vh - 180px)" }}
             >
               {messages.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-white/60">
-                  <div className="w-16 h-16 bg-nexus-blue/20 rounded-full flex items-center justify-center mb-4">
+                  <div className="w-16 h-16 bg-nexus-blue/20 rounded-full flex items-center justify-center mb-6">
                     <MessageSquare className="w-8 h-8 text-nexus-blue" />
                   </div>
-                  <h3 className="text-xl font-medium text-white mb-4">开始你的AI对话</h3>
-                  <p className="text-center max-w-md mb-8">
+                  <h3 className="text-2xl font-medium text-white mb-6">开始你的AI对话</h3>
+                  <p className="text-center max-w-lg mb-12 text-lg">
                     选择一个AI模型，然后在下方输入框中输入问题或指令，开始与AI助手对话。
                   </p>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-w-2xl">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-3xl w-full">
                     {chatSuggestions.map((suggestion, index) => (
                       <div 
                         key={index}
-                        className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg px-4 py-2 cursor-pointer hover:bg-nexus-blue/20 transition-colors"
+                        className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg px-4 py-3 cursor-pointer hover:bg-nexus-blue/20 transition-colors"
                         onClick={() => {
                           setInput(suggestion);
                           setTimeout(() => {
@@ -234,7 +241,7 @@ const Chat = ({ decrementUsage }: ChatProps) => {
                           }, 100);
                         }}
                       >
-                        <p className="text-white/80 text-sm">{suggestion}</p>
+                        <p className="text-white/80">{suggestion}</p>
                       </div>
                     ))}
                   </div>
@@ -246,7 +253,7 @@ const Chat = ({ decrementUsage }: ChatProps) => {
                     className={`mb-6 flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div 
-                      className={`max-w-[90%] md:max-w-[80%] rounded-2xl p-4 ${
+                      className={`max-w-[85%] md:max-w-[75%] rounded-2xl p-4 ${
                         msg.role === 'user' 
                           ? 'bg-nexus-blue text-white rounded-tr-none' 
                           : 'bg-nexus-dark/80 border border-nexus-blue/20 text-white rounded-tl-none'
@@ -280,7 +287,7 @@ const Chat = ({ decrementUsage }: ChatProps) => {
               )}
               {loading && (
                 <div className="mb-6 flex justify-start">
-                  <div className="max-w-[80%] rounded-2xl p-4 bg-nexus-dark/80 border border-nexus-blue/20 text-white rounded-tl-none animate-pulse">
+                  <div className="max-w-[75%] rounded-2xl p-4 bg-nexus-dark/80 border border-nexus-blue/20 text-white rounded-tl-none animate-pulse">
                     <div className="flex items-center mb-2">
                       <Bot className="w-5 h-5 mr-2 text-nexus-cyan" />
                       <p className="font-medium text-sm">{allModels.find(m => m.id === selectedModel)?.name || 'AI助手'}</p>
@@ -295,7 +302,7 @@ const Chat = ({ decrementUsage }: ChatProps) => {
               )}
             </div>
             
-            {/* Input area */}
+            {/* 输入区域 */}
             <div className="p-4 border-t border-nexus-blue/20 bg-nexus-dark/50 backdrop-blur-md">
               {uploadedImage && (
                 <div className="mb-3 relative inline-block">
@@ -333,12 +340,12 @@ const Chat = ({ decrementUsage }: ChatProps) => {
                   onKeyDown={handleKeyDown}
                   placeholder="输入你的问题或指令..."
                   className="resize-none bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
-                  rows={1}
+                  rows={2}
                 />
                 <Button 
                   onClick={handleSendMessage} 
                   disabled={loading || (!input.trim() && !uploadedImage)} 
-                  className="bg-nexus-blue hover:bg-nexus-blue/80 text-white h-10 w-10 p-0"
+                  className="bg-nexus-blue hover:bg-nexus-blue/80 text-white h-12 w-12 p-0"
                 >
                   <Send className="w-5 h-5" />
                 </Button>
