@@ -108,7 +108,7 @@ const Payment = () => {
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-white font-bold">Nexus AI 特惠价</span>
-                      <span className="text-gradient-gold text-3xl font-bold">¥99</span>
+                      <span className="text-gradient-gold text-3xl font-bold">¥299</span>
                     </div>
                     <div className="text-white/70 text-sm mt-2">* 一次付款，终身使用</div>
                   </div>
@@ -119,7 +119,7 @@ const Payment = () => {
               <div className="flex-1 flex flex-col items-center justify-center">
                 <div className="bg-white p-4 rounded-xl mb-4 w-64 h-64 flex items-center justify-center">
                   <img 
-                    src="/lovable-uploads/15ca2332-9aa6-40f7-bf1f-c6c30ecce77b.png" 
+                    src="/lovable-uploads/57dcc2a2-00e1-41ff-8247-2ae008afe9d8.png" 
                     alt="支付宝收款码" 
                     className="max-w-full max-h-full"
                   />
