@@ -27,19 +27,35 @@ const Payment = () => {
     
     setVerifying(true);
     
-    // Simulate payment verification process
+    // Simulate payment verification process with simple validation
+    // In a real app, this would call an API to verify the payment
     setTimeout(() => {
-      setUserAsPaid();
-      setVerifying(false);
+      // Simple validation: check if the order number format is valid
+      // This is just for demonstration - a real app would need server-side verification
+      const isValidFormat = /^\d{4}$/.test(orderNumber);
       
-      toast({
-        title: "会员开通成功",
-        description: "您已成功开通Nexus AI终身会员，即刻享受全部AI能力！",
-      });
-      
-      setTimeout(() => {
-        navigate('/');
-      }, 1500);
+      if (isValidFormat) {
+        // Payment is verified
+        setUserAsPaid();
+        setVerifying(false);
+        
+        toast({
+          title: "会员开通成功",
+          description: "您已成功开通Nexus AI终身会员，即刻享受全部AI能力！",
+        });
+        
+        setTimeout(() => {
+          navigate('/');
+        }, 1500);
+      } else {
+        // Payment verification failed
+        setVerifying(false);
+        toast({
+          title: "验证失败",
+          description: "订单号格式不正确，请确认输入支付宝订单号后四位数字",
+          variant: "destructive",
+        });
+      }
     }, 2000);
   };
 
@@ -119,7 +135,7 @@ const Payment = () => {
                   <div className="flex flex-col space-y-3 mb-4">
                     <div>
                       <label htmlFor="order-number" className="block text-sm font-medium text-white mb-1">
-                        输入订单号后四位
+                        请输入订单号后四位
                       </label>
                       <Input
                         id="order-number"
@@ -127,7 +143,7 @@ const Payment = () => {
                         onChange={(e) => setOrderNumber(e.target.value)}
                         maxLength={4}
                         className="bg-nexus-dark/50 border-nexus-blue/30 text-white"
-                        placeholder="例如：1234"
+                        placeholder="请输入4位数字"
                       />
                     </div>
                   </div>

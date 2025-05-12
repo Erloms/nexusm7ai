@@ -33,37 +33,103 @@ const Chat = ({ decrementUsage }: ChatProps) => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [availableModels, setAvailableModels] = useState<Record<string, Model[]>>({});
+  const [modelsFetched, setModelsFetched] = useState(false);
 
-  // 更新模型列表为最新可用的模型
-  const models: Record<string, Model[]> = {
-    'OpenAI': [
-      { id: 'gpt-4o-mini', name: 'GPT-4o-mini', description: 'OpenAI GPT-4o-mini 多模态模型', group: 'OpenAI' },
-      { id: 'gpt-4o', name: 'GPT-4o', description: 'OpenAI GPT-4o 多模态大语言模型', group: 'OpenAI' },
-      { id: 'o1-mini', name: 'o1-mini', description: 'OpenAI o1-mini 轻量级大语言模型', group: 'OpenAI' },
-      { id: 'gpt-4.1-nano', name: 'GPT-4.1-nano', description: 'OpenAI GPT-4.1-nano 新一代大语言模型', group: 'OpenAI' },
-      { id: 'gpt-4.1-mini', name: 'GPT-4.1-mini', description: 'OpenAI GPT-4.1-mini 新一代大语言模型', group: 'OpenAI' }
-    ],
-    'Gemini': [
-      { id: 'gemini-2.5-pro-exp-03-25', name: 'Gemini 2.5 Pro (exp-03-25)', description: 'Google最新一代大语言模型', group: 'Gemini' },
-      { id: 'gemini-2.5-flash-preview-04-17', name: 'Gemini 2.5 Flash (preview-04-17)', description: 'Google Gemini 2.5 系列闪电版', group: 'Gemini' }
-    ],
-    'Meta': [
-      { id: 'llama-3.3-70b-instruct', name: 'Llama 3.3 70B Instruct', description: 'Meta开源大模型最新版', group: 'Meta' },
-      { id: '@cf/meta/llama-3.1-8b-instruct', name: 'Llama 3.1 8B Instruct', description: 'Meta轻量级开源大模型', group: 'Meta' }
-    ],
-    'DeepSeek': [
-      { id: 'DeepSeek-V3-0324', name: 'DeepSeek V3-0324', description: '国产大模型DeepSeek最新版', group: 'DeepSeek' },
-      { id: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', name: 'DeepSeek R1 Distill Qwen-32B', description: 'DeepSeek精华版32B大模型', group: 'DeepSeek' }
-    ],
-    'Other': [
-      { id: 'mistral-small-3.1-24b-instruct-2503', name: 'Mistral Small 3.1-24B-instruct-2503', description: 'Mistral最新指令微调模型', group: 'Mistral' },
-      { id: 'qwen2.5-coder-32b-instruct', name: 'Qwen 2.5 Coder 32B Instruct', description: 'Qwen 2.5 编程专用模型', group: 'Qwen' },
-      { id: 'phi-4-instruct', name: 'Phi-4 Instruct', description: 'Microsoft Phi-4 指令微调模型', group: 'Microsoft' }
-    ]
-  };
+  // 获取最新可用的API模型
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const response = await fetch('https://text.pollinations.ai/models');
+        if (response.ok) {
+          const modelsList = await response.json();
+          
+          // 整理模型列表
+          const organizedModels: Record<string, Model[]> = {
+            'OpenAI': [],
+            'Gemini': [],
+            'Meta': [],
+            'DeepSeek': [],
+            'Other': []
+          };
+          
+          modelsList.forEach((model: string) => {
+            if (model.toLowerCase().includes('gpt')) {
+              organizedModels['OpenAI'].push({
+                id: model,
+                name: model,
+                description: `OpenAI ${model} 大语言模型`,
+                group: 'OpenAI'
+              });
+            } else if (model.toLowerCase().includes('gemini')) {
+              organizedModels['Gemini'].push({
+                id: model,
+                name: model,
+                description: `Google ${model} 大语言模型`,
+                group: 'Gemini'
+              });
+            } else if (model.toLowerCase().includes('llama') || model.toLowerCase().includes('meta')) {
+              organizedModels['Meta'].push({
+                id: model,
+                name: model,
+                description: `Meta ${model} 大语言模型`,
+                group: 'Meta'
+              });
+            } else if (model.toLowerCase().includes('deepseek')) {
+              organizedModels['DeepSeek'].push({
+                id: model,
+                name: model,
+                description: `国产 ${model} 大语言模型`,
+                group: 'DeepSeek'
+              });
+            } else {
+              organizedModels['Other'].push({
+                id: model,
+                name: model,
+                description: `${model} 大语言模型`,
+                group: 'Other'
+              });
+            }
+          });
+          
+          setAvailableModels(organizedModels);
+          setModelsFetched(true);
+        }
+      } catch (error) {
+        console.error('获取模型列表失败:', error);
+        // 加载失败时使用备用模型列表
+        setAvailableModels({
+          'OpenAI': [
+            { id: 'gpt-4o-mini', name: 'GPT-4o-mini', description: 'OpenAI GPT-4o-mini 多模态模型', group: 'OpenAI' },
+            { id: 'gpt-4o', name: 'GPT-4o', description: 'OpenAI GPT-4o 多模态大语言模型', group: 'OpenAI' },
+            { id: 'o1-mini', name: 'o1-mini', description: 'OpenAI o1-mini 轻量级大语言模型', group: 'OpenAI' },
+            { id: 'gpt-4.1-nano', name: 'GPT-4.1-nano', description: 'OpenAI GPT-4.1-nano 新一代大语言模型', group: 'OpenAI' },
+            { id: 'gpt-4.1-mini', name: 'GPT-4.1-mini', description: 'OpenAI GPT-4.1-mini 新一代大语言模型', group: 'OpenAI' }
+          ],
+          'Gemini': [
+            { id: 'gemini-2.5-pro-exp-03-25', name: 'Gemini 2.5 Pro (exp-03-25)', description: 'Google最新一代大语言模型', group: 'Gemini' },
+            { id: 'gemini-2.5-flash-preview-04-17', name: 'Gemini 2.5 Flash (preview-04-17)', description: 'Google Gemini 2.5 系列闪电版', group: 'Gemini' }
+          ],
+          'Meta': [
+            { id: 'llama-3.3-70b-instruct', name: 'Llama 3.3 70B Instruct', description: 'Meta开源大模型最新版', group: 'Meta' },
+            { id: '@cf/meta/llama-3.1-8b-instruct', name: '@cf/meta/llama-3.1-8b-instruct', description: 'Meta轻量级开源大模型', group: 'Meta' }
+          ],
+          'DeepSeek': [
+            { id: 'DeepSeek-V3-0324', name: 'DeepSeek-V3-0324', description: '国产大模型DeepSeek最新版', group: 'DeepSeek' },
+            { id: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', name: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', description: 'DeepSeek精华版32B大模型', group: 'DeepSeek' }
+          ],
+          'Other': [
+            { id: 'mistral-small-3.1-24b-instruct-2503', name: 'mistral-small-3.1-24b-instruct-2503', description: 'Mistral最新指令微调模型', group: 'Mistral' },
+            { id: 'qwen2.5-coder-32b-instruct', name: 'qwen2.5-coder-32b-instruct', description: 'Qwen 2.5 编程专用模型', group: 'Qwen' },
+            { id: 'phi-4-instruct', name: 'phi-4-instruct', description: 'Microsoft Phi-4 指令微调模型', group: 'Microsoft' }
+          ]
+        });
+        setModelsFetched(true);
+      }
+    };
 
-  // 获取所有模型的平面数组，用于选择下拉框
-  const allModels = Object.values(models).flat();
+    fetchModels();
+  }, []);
 
   // 当消息变化时，滚动到聊天底部
   useEffect(() => {
@@ -92,7 +158,6 @@ const Chat = ({ decrementUsage }: ChatProps) => {
     try {
       // 编码提示词用于URL
       const encodedPrompt = encodeURIComponent(input);
-      const model = allModels.find(m => m.id === selectedModel);
       const apiUrl = `https://text.pollinations.ai/${encodedPrompt}?model=${selectedModel}`;
 
       // 获取响应
@@ -167,12 +232,15 @@ const Chat = ({ decrementUsage }: ChatProps) => {
     "解释量子计算的基本原理"
   ];
 
+  // 获取所有模型的平面数组，用于显示
+  const allModels = Object.values(availableModels).flat();
+
   return (
     <div className="min-h-screen bg-nexus-dark flex flex-col">
       <Navigation />
       
       <PaymentCheck featureType="chat">
-        <main className="flex-grow flex flex-col p-4 pt-16 md:p-8">
+        <main className="flex-grow flex flex-col p-4 pt-12 md:p-6">
           {/* 页面标题 */}
           <div className="container mx-auto text-center mb-6">
             <h1 className="text-3xl md:text-4xl font-bold text-gradient mb-2">AI 对话</h1>
@@ -186,7 +254,7 @@ const Chat = ({ decrementUsage }: ChatProps) => {
                 <Sparkles className="h-5 w-5 text-nexus-blue" />
                 <span className="font-medium">选择模型:</span>
               </div>
-              <div className="ml-4 w-64">
+              <div className="ml-4 w-64 md:w-96">
                 <Select 
                   value={selectedModel}
                   onValueChange={setSelectedModel}
@@ -195,7 +263,7 @@ const Chat = ({ decrementUsage }: ChatProps) => {
                     <SelectValue placeholder="选择AI模型" />
                   </SelectTrigger>
                   <SelectContent className="bg-nexus-dark border-nexus-blue/30 max-h-[400px]">
-                    {Object.entries(models).map(([group, groupModels]) => (
+                    {Object.entries(availableModels).map(([group, groupModels]) => (
                       <div key={group} className="p-1">
                         <h3 className="text-xs text-nexus-blue uppercase font-bold px-2 py-1">{group}</h3>
                         {groupModels.map((model) => (
@@ -213,18 +281,18 @@ const Chat = ({ decrementUsage }: ChatProps) => {
                 </Select>
               </div>
               <div className="ml-4 text-white/70 text-sm hidden md:block">
-                {allModels.find(m => m.id === selectedModel)?.description}
+                {allModels.find(m => m.id === selectedModel)?.description || '加载模型中...'}
               </div>
             </div>
           </div>
 
           {/* 聊天区域 - 更宽、更高 */}
           <div className="w-full max-w-7xl mx-auto flex-grow flex flex-col bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 overflow-hidden">
-            {/* 消息容器 */}
+            {/* 消息容器 - 增加高度 */}
             <div 
               ref={chatContainerRef}
               className="flex-grow p-4 md:p-6 overflow-y-auto"
-              style={{ minHeight: "calc(75vh - 180px)" }}
+              style={{ minHeight: "calc(100vh - 380px)" }}
             >
               {messages.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-white/60 py-20">
