@@ -5,7 +5,7 @@ import Footer from '@/components/Footer';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageSquare, Send, Sparkles, User, Bot, ImageIcon } from 'lucide-react';
+import { MessageSquare, Send, Sparkles, User, Bot, ImageIcon, Info } from 'lucide-react';
 import PaymentCheck from '@/components/PaymentCheck';
 
 interface Message {
@@ -50,50 +50,55 @@ const Chat = ({ decrementUsage }: ChatProps) => {
             'Gemini': [],
             'Meta': [],
             'DeepSeek': [],
+            'Mistral': [],
             'Other': []
           };
           
-          modelsList.forEach((model: string) => {
-            if (model.toLowerCase().includes('gpt')) {
-              organizedModels['OpenAI'].push({
-                id: model,
-                name: model,
-                description: `OpenAI ${model} 大语言模型`,
-                group: 'OpenAI'
-              });
-            } else if (model.toLowerCase().includes('gemini')) {
-              organizedModels['Gemini'].push({
-                id: model,
-                name: model,
-                description: `Google ${model} 大语言模型`,
-                group: 'Gemini'
-              });
-            } else if (model.toLowerCase().includes('llama') || model.toLowerCase().includes('meta')) {
-              organizedModels['Meta'].push({
-                id: model,
-                name: model,
-                description: `Meta ${model} 大语言模型`,
-                group: 'Meta'
-              });
-            } else if (model.toLowerCase().includes('deepseek')) {
-              organizedModels['DeepSeek'].push({
-                id: model,
-                name: model,
-                description: `国产 ${model} 大语言模型`,
-                group: 'DeepSeek'
-              });
-            } else {
-              organizedModels['Other'].push({
-                id: model,
-                name: model,
-                description: `${model} 大语言模型`,
-                group: 'Other'
-              });
+          // 处理API返回的模型数据
+          modelsList.forEach((model: any) => {
+            // 使用模型完整名称
+            const modelId = model.name || model;
+            const modelName = model.description || model;
+            const provider = model.provider || '';
+            
+            // 根据模型名称或提供商分组
+            let group = 'Other';
+            
+            if (modelId.toLowerCase().includes('gpt') || provider.toLowerCase().includes('openai') || provider.toLowerCase().includes('azure')) {
+              group = 'OpenAI';
+            } else if (modelId.toLowerCase().includes('gemini') || provider.toLowerCase().includes('google')) {
+              group = 'Gemini';
+            } else if (modelId.toLowerCase().includes('llama') || provider.toLowerCase().includes('meta') || modelId.toLowerCase().includes('llamascout')) {
+              group = 'Meta';
+            } else if (modelId.toLowerCase().includes('deepseek')) {
+              group = 'DeepSeek';
+            } else if (modelId.toLowerCase().includes('mistral')) {
+              group = 'Mistral';
+            }
+            
+            organizedModels[group].push({
+              id: modelId,
+              name: modelName,
+              description: `${provider ? provider + ' ' : ''}${modelName}`,
+              group: group
+            });
+          });
+          
+          // 过滤掉空分组
+          const filteredModels: Record<string, Model[]> = {};
+          Object.keys(organizedModels).forEach(group => {
+            if (organizedModels[group].length > 0) {
+              filteredModels[group] = organizedModels[group];
             }
           });
           
-          setAvailableModels(organizedModels);
+          setAvailableModels(filteredModels);
           setModelsFetched(true);
+          
+          // 默认选择OpenAI组中的第一个模型（如果有）
+          if (filteredModels['OpenAI'] && filteredModels['OpenAI'].length > 0) {
+            setSelectedModel(filteredModels['OpenAI'][0].id);
+          }
         }
       } catch (error) {
         console.error('获取模型列表失败:', error);
@@ -118,10 +123,12 @@ const Chat = ({ decrementUsage }: ChatProps) => {
             { id: 'DeepSeek-V3-0324', name: 'DeepSeek-V3-0324', description: '国产大模型DeepSeek最新版', group: 'DeepSeek' },
             { id: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', name: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', description: 'DeepSeek精华版32B大模型', group: 'DeepSeek' }
           ],
+          'Mistral': [
+            { id: 'mistral-small-3.1-24b-instruct-2503', name: 'Mistral Small 3.1 24B Instruct 2503', description: 'Mistral最新指令微调模型', group: 'Mistral' }
+          ],
           'Other': [
-            { id: 'mistral-small-3.1-24b-instruct-2503', name: 'mistral-small-3.1-24b-instruct-2503', description: 'Mistral最新指令微调模型', group: 'Mistral' },
-            { id: 'qwen2.5-coder-32b-instruct', name: 'qwen2.5-coder-32b-instruct', description: 'Qwen 2.5 编程专用模型', group: 'Qwen' },
-            { id: 'phi-4-instruct', name: 'phi-4-instruct', description: 'Microsoft Phi-4 指令微调模型', group: 'Microsoft' }
+            { id: 'qwen2.5-coder-32b-instruct', name: 'Qwen 2.5 Coder 32B Instruct', description: 'Qwen 2.5 编程专用模型', group: 'Qwen' },
+            { id: 'phi-4-instruct', name: 'Phi-4 Instruct', description: 'Microsoft Phi-4 指令微调模型', group: 'Microsoft' }
           ]
         });
         setModelsFetched(true);
@@ -240,26 +247,26 @@ const Chat = ({ decrementUsage }: ChatProps) => {
       <Navigation />
       
       <PaymentCheck featureType="chat">
-        <main className="flex-grow flex flex-col p-4 pt-12 md:p-6">
+        <main className="flex-grow flex flex-col p-4 pt-16 md:p-8 lg:p-12">
           {/* 页面标题 */}
-          <div className="container mx-auto text-center mb-6">
-            <h1 className="text-3xl md:text-4xl font-bold text-gradient mb-2">AI 对话</h1>
+          <div className="container mx-auto text-center mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold text-gradient mb-3">AI 对话</h1>
             <p className="text-white/70 text-lg">输入文本，选择模型，一键得到自然流畅的对话</p>
           </div>
 
           {/* 顶部栏 - 模型选择 */}
-          <div className="w-full max-w-7xl mx-auto mb-4 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-3">
-            <div className="flex items-center">
+          <div className="w-full max-w-7xl mx-auto mb-6 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-4">
+            <div className="flex items-center flex-wrap md:flex-nowrap gap-4">
               <div className="flex items-center space-x-2 text-white">
                 <Sparkles className="h-5 w-5 text-nexus-blue" />
                 <span className="font-medium">选择模型:</span>
               </div>
-              <div className="ml-4 w-64 md:w-96">
+              <div className="w-full md:w-80">
                 <Select 
                   value={selectedModel}
                   onValueChange={setSelectedModel}
                 >
-                  <SelectTrigger className="w-full bg-nexus-dark/50 border-nexus-blue/30 text-white h-9">
+                  <SelectTrigger className="w-full bg-nexus-dark/50 border-nexus-blue/30 text-white h-10">
                     <SelectValue placeholder="选择AI模型" />
                   </SelectTrigger>
                   <SelectContent className="bg-nexus-dark border-nexus-blue/30 max-h-[400px]">
@@ -280,7 +287,7 @@ const Chat = ({ decrementUsage }: ChatProps) => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="ml-4 text-white/70 text-sm hidden md:block">
+              <div className="w-full md:w-auto text-white/70 text-sm">
                 {allModels.find(m => m.id === selectedModel)?.description || '加载模型中...'}
               </div>
             </div>
@@ -292,15 +299,15 @@ const Chat = ({ decrementUsage }: ChatProps) => {
             <div 
               ref={chatContainerRef}
               className="flex-grow p-4 md:p-6 overflow-y-auto"
-              style={{ minHeight: "calc(100vh - 380px)" }}
+              style={{ minHeight: "calc(100vh - 350px)" }}
             >
               {messages.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-white/60 py-20">
+                <div className="h-full flex flex-col items-center justify-center text-white/60 py-10 md:py-20">
                   <div className="w-16 h-16 bg-nexus-blue/20 rounded-full flex items-center justify-center mb-6">
                     <MessageSquare className="w-8 h-8 text-nexus-blue" />
                   </div>
                   <h3 className="text-2xl font-medium text-white mb-6">开始你的AI对话</h3>
-                  <p className="text-center max-w-lg mb-12 text-lg">
+                  <p className="text-center max-w-lg mb-8 md:mb-12 text-lg">
                     选择一个AI模型，然后在下方输入框中输入问题或指令，开始与AI助手对话。
                   </p>
                   
@@ -322,15 +329,17 @@ const Chat = ({ decrementUsage }: ChatProps) => {
                     ))}
                   </div>
 
-                  <div className="mt-12 bg-nexus-blue/10 p-4 rounded-lg border border-nexus-blue/30 max-w-3xl w-full">
+                  <div className="mt-8 md:mt-12 bg-nexus-blue/10 p-4 rounded-lg border border-nexus-blue/30 max-w-3xl w-full">
                     <h4 className="font-medium text-white mb-2 flex items-center">
-                      <Sparkles className="w-4 h-4 mr-2 text-nexus-cyan" />
+                      <Info className="w-4 h-4 mr-2 text-nexus-cyan" />
                       使用小技巧
                     </h4>
                     <ul className="text-white/70 text-sm space-y-1 list-disc pl-5">
                       <li>上传图片可以让AI理解图像内容并基于图像回答问题</li>
                       <li>使用精确的指令可以获得更好的回答质量</li>
                       <li>长篇内容可以分段提问，效果更佳</li>
+                      <li>不同模型擅长不同领域，可以尝试多种模型找到最合适的</li>
+                      <li>复杂问题可以拆分成多个简单问题，逐步提问获得更完整的回答</li>
                     </ul>
                   </div>
                 </div>

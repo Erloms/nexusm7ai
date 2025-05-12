@@ -104,7 +104,8 @@ const ModelCarousel: React.FC = () => {
   // 更新为最新的推荐模型，优先使用API返回的模型
   const featuredModels = [
     { name: "GPT-4o", description: "OpenAI最强大的多模态大语言模型，支持图像理解", category: 'text' as const, highlight: true },
-    { name: "GPT-4.1-mini", description: "OpenAI最新一代GPT-4.1系列精简版模型", category: 'text' as const, highlight: true },
+    { name: "GPT-4.1-nano", description: "OpenAI最新一代GPT-4.1系列紧凑高效版模型", category: 'text' as const, highlight: true },
+    { name: "GPT-4.1-mini", description: "OpenAI最新一代GPT-4.1系列平衡版模型", category: 'text' as const, highlight: true },
     { name: "DeepSeek-V3-0324", description: "国产顶尖大语言模型，理解世界知识更全面", category: 'text' as const, highlight: true },
     { name: "Gemini 2.5 Pro (exp-03-25)", description: "Google最新一代大语言模型，专业推理能力出色", category: 'text' as const, highlight: true },
     { name: "Llama 3.3 70B Instruct", description: "Meta开发的开源大语言模型，强大的上下文理解力", category: 'text' as const, highlight: true },

@@ -129,7 +129,7 @@ const Payment = () => {
                   <p className="text-white font-bold mb-2">请使用支付宝扫码支付</p>
                   <p className="text-white/70 text-sm mb-4">
                     <span className="text-red-500 font-bold">重要：</span> 
-                    请记住您的支付宝订单号后四位
+                    请输入支付宝订单号后四位
                   </p>
                   
                   <div className="flex flex-col space-y-3 mb-4">
