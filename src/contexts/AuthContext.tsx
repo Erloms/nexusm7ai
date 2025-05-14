@@ -7,6 +7,7 @@ interface User {
   email: string;
   name: string;
   isVip: boolean;
+  isGuest?: boolean;
 }
 
 interface AuthContextType {
@@ -14,6 +15,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
   login: (emailOrUsername: string, password: string) => Promise<boolean>;
+  loginAsGuest: () => Promise<boolean>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
   checkPaymentStatus: () => boolean;
@@ -63,13 +65,58 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Guest login function
+  const loginAsGuest = async (): Promise<boolean> => {
+    setLoading(true);
+    
+    try {
+      // Generate a random guest ID
+      const guestId = `guest-${Math.random().toString(36).substring(2, 10)}`;
+      
+      const guestUser = {
+        id: guestId,
+        email: `guest@nexusai.com`,
+        name: `游客${guestId.substring(0, 5)}`,
+        isVip: false,
+        isGuest: true
+      };
+      
+      setUser(guestUser);
+      localStorage.setItem('nexusAiUser', JSON.stringify(guestUser));
+      
+      // Initialize usage counts for guest user
+      localStorage.setItem(`nexusAi_chat_usage_${guestUser.id}`, JSON.stringify({ remaining: 15 }));
+      localStorage.setItem(`nexusAi_image_usage_${guestUser.id}`, JSON.stringify({ remaining: 30 }));
+      localStorage.setItem(`nexusAi_voice_usage_${guestUser.id}`, JSON.stringify({ remaining: 10 }));
+      
+      toast({
+        title: "游客模式",
+        description: "您正在使用游客模式，享有有限的免费使用次数",
+        duration: 5000,
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Guest login error:", error);
+      toast({
+        title: "登录失败",
+        description: "无法创建游客账号，请稍后再试",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Login function - now accepts either email or username
   const login = async (emailOrUsername: string, password: string): Promise<boolean> => {
     setLoading(true);
     
     try {
       // Special admin account
-      if (emailOrUsername === "Master" && password === "Mengzhen888") {
+      if (emailOrUsername === "admin" && password === "admin123") {
         const adminUser = {
           id: 'admin-123',
           email: 'admin@nexusai.com',
@@ -107,6 +154,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Initialize usage counts for new user
         localStorage.setItem(`nexusAi_chat_usage_${mockUser.id}`, JSON.stringify({ remaining: 5 }));
         localStorage.setItem(`nexusAi_image_usage_${mockUser.id}`, JSON.stringify({ remaining: 10 }));
+        localStorage.setItem(`nexusAi_voice_usage_${mockUser.id}`, JSON.stringify({ remaining: 10 }));
         
         toast({
           title: "登录成功",
@@ -161,6 +209,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Initialize usage counts for new user
         localStorage.setItem(`nexusAi_chat_usage_${mockUser.id}`, JSON.stringify({ remaining: 5 }));
         localStorage.setItem(`nexusAi_image_usage_${mockUser.id}`, JSON.stringify({ remaining: 10 }));
+        localStorage.setItem(`nexusAi_voice_usage_${mockUser.id}`, JSON.stringify({ remaining: 10 }));
         
         toast({
           title: "注册成功",
@@ -207,6 +256,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isAuthenticated: !!user,
       loading,
       login,
+      loginAsGuest,
       register,
       logout,
       checkPaymentStatus,

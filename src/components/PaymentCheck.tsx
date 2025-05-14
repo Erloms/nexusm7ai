@@ -7,7 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 interface PaymentCheckProps {
   children: ReactNode;
-  featureType: 'chat' | 'image';
+  featureType: 'chat' | 'image' | 'voice';
 }
 
 const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
@@ -24,7 +24,15 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
       const { remaining } = JSON.parse(usageData);
       return remaining;
     }
-    return featureType === 'chat' ? 5 : 10; // Default: 5 for chat, 10 for image
+    
+    // Default free usage limits
+    const defaultLimits = {
+      chat: 5,   // 5 free chat interactions 
+      image: 10, // 10 free image generations
+      voice: 10  // 10 free voice generations
+    };
+    
+    return defaultLimits[featureType];
   });
 
   // Initialize usage when user logs in
@@ -33,14 +41,23 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
       const usageData = localStorage.getItem(`nexusAi_${featureType}_usage_${user.id}`);
       if (!usageData) {
         // Initialize free usage allowance
-        const initialRemaining = featureType === 'chat' ? 5 : 10;
+        const initialRemaining = {
+          chat: 5,
+          image: 10,
+          voice: 10
+        };
+        
         localStorage.setItem(`nexusAi_${featureType}_usage_${user.id}`, JSON.stringify({
-          remaining: initialRemaining
+          remaining: initialRemaining[featureType as keyof typeof initialRemaining]
         }));
-        setUsageRemaining(initialRemaining);
+        
+        setUsageRemaining(initialRemaining[featureType as keyof typeof initialRemaining]);
       }
     }
   }, [isAuthenticated, user?.id, featureType]);
+
+  // Guest mode support
+  const isGuest = user?.id === 'guest';
 
   // Function to be called when a feature is used
   const decrementUsage = () => {
@@ -58,13 +75,35 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
       <div className="w-full h-full flex flex-col items-center justify-center py-20">
         <div className="card-glowing p-8 max-w-md w-full text-center">
           <h2 className="text-2xl font-bold text-gradient mb-4">需要登录</h2>
-          <p className="text-white/80 mb-6">您需要登录后才能使用此功能</p>
-          <Button 
-            onClick={() => navigate('/login')}
-            className="bg-nexus-blue hover:bg-nexus-blue/80 text-white"
-          >
-            立即登录
-          </Button>
+          <p className="text-white/80 mb-4">您需要登录后才能使用此功能</p>
+          
+          <div className="flex flex-col gap-3">
+            <Button 
+              onClick={() => navigate('/login')}
+              className="bg-nexus-blue hover:bg-nexus-blue/80 text-white"
+            >
+              登录账号
+            </Button>
+            
+            <Button
+              onClick={async () => {
+                // Create a guest login
+                const guestLogin = await navigate('/login');
+                // Implement guest login logic here
+                toast({
+                  title: "游客模式",
+                  description: "您现在以游客身份访问，有限次数体验。",
+                });
+              }}
+              variant="outline"
+              className="border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-dark/50"
+            >
+              游客体验
+              <span className="ml-2 text-xs px-2 py-0.5 bg-nexus-blue/20 rounded-full">
+                {featureType === 'chat' ? '15次' : featureType === 'image' ? '30次' : '10次'}
+              </span>
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -77,10 +116,10 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
           <h2 className="text-2xl font-bold text-gradient mb-4">免费体验次数已用完</h2>
           <p className="text-white/80 mb-6">
             您已用完免费体验次数
-            （{featureType === 'chat' ? '5次对话' : '10次图像生成'}）
+            （{featureType === 'chat' ? '5次对话' : featureType === 'image' ? '10次图像生成' : '10次语音合成'}）
           </p>
           <p className="text-lg text-gradient-gold font-bold mb-6">
-            只需 ¥99 即可永久使用所有功能！
+            只需 ¥299 即可永久使用所有功能！
           </p>
           <Button 
             onClick={() => navigate('/payment')}
@@ -99,7 +138,9 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
     return (
       <div className="w-full h-full">
         <div className="bg-nexus-blue/20 text-white text-center py-2 px-4 mb-4 rounded-md">
-          <p>您正在使用免费体验，还剩 <span className="font-bold text-nexus-cyan">{usageRemaining}</span> 次{featureType === 'chat' ? '对话' : '图像生成'}机会</p>
+          <p>您正在使用免费体验，还剩 <span className="font-bold text-nexus-cyan">{usageRemaining}</span> 次
+            {featureType === 'chat' ? '对话' : featureType === 'image' ? '图像生成' : '语音合成'}机会
+          </p>
         </div>
         {React.cloneElement(children as React.ReactElement, { decrementUsage })}
       </div>

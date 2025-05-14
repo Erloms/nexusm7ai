@@ -255,23 +255,23 @@ const Chat = ({ decrementUsage }: ChatProps) => {
       <Navigation />
       
       <PaymentCheck featureType="chat">
-        <main className="flex-grow flex flex-col p-4 pt-16 md:p-8 lg:p-12">
+        <main className="flex-grow flex flex-col p-4 pt-20 md:p-8 md:pt-24 lg:p-12 lg:pt-32">
           {/* 页面标题 */}
           <div className="container mx-auto text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold text-gradient mb-3">AI 对话</h1>
             <p className="text-white/70 text-lg">输入文本，选择模型，一键得到自然流畅的对话</p>
           </div>
 
-          {/* 聊天区域 - 更宽、更高 */}
+          {/* 聊天区域 - 更宽、更高，增加上下空间 */}
           <div className="w-full max-w-7xl mx-auto flex-grow flex flex-col bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 overflow-hidden">
-            {/* 消息容器 - 增加高度 */}
+            {/* 消息容器 - 增加高度和上下边距 */}
             <div 
               ref={chatContainerRef}
-              className="flex-grow p-4 md:p-6 overflow-y-auto"
-              style={{ minHeight: "calc(100vh - 350px)" }}
+              className="flex-grow p-6 md:p-8 overflow-y-auto"
+              style={{ minHeight: "calc(100vh - 400px)" }}
             >
               {messages.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-white/60 py-10 md:py-20">
+                <div className="h-full flex flex-col items-center justify-center text-white/60 py-12 md:py-24">
                   <div className="w-16 h-16 bg-nexus-blue/20 rounded-full flex items-center justify-center mb-6">
                     <MessageSquare className="w-8 h-8 text-nexus-blue" />
                   </div>
@@ -369,8 +369,8 @@ const Chat = ({ decrementUsage }: ChatProps) => {
             </div>
             
             {/* 输入区域 */}
-            <div className="p-4 border-t border-nexus-blue/20 bg-nexus-dark/50 backdrop-blur-md">
-              {/* 模型选择 - 现在放到输入框上方 */}
+            <div className="p-5 border-t border-nexus-blue/20 bg-nexus-dark/50 backdrop-blur-md">
+              {/* 模型选择 - 放到输入框上方 */}
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <div className="flex items-center space-x-2 text-white">
                   <Sparkles className="h-4 w-4 text-nexus-blue" />
@@ -455,6 +455,9 @@ const Chat = ({ decrementUsage }: ChatProps) => {
               </div>
             </div>
           </div>
+          
+          {/* 底部间距 */}
+          <div className="py-8"></div>
         </main>
       </PaymentCheck>
       

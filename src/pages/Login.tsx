@@ -61,9 +61,6 @@ const Login = () => {
                   placeholder="输入密码"
                   required
                 />
-                <p className="text-xs text-white/60 mt-1">
-                  管理员账号: Master，密码: Mengzhen888
-                </p>
               </div>
               
               <Button
