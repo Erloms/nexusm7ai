@@ -12,6 +12,7 @@ import Chat from "./pages/Chat";
 import Image from "./pages/Image";
 import Voice from "./pages/Voice";
 import Payment from "./pages/Payment";
+import Admin from "./pages/Admin"; // 新增管理员页面
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/image" element={<Image />} />
             <Route path="/voice" element={<Voice />} />
             <Route path="/payment" element={<Payment />} />
+            <Route path="/admin" element={<Admin />} /> {/* 新增管理员路由 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

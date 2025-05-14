@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,15 @@ const Payment = () => {
   const navigate = useNavigate();
   const [verifying, setVerifying] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
+  const [contactInfo, setContactInfo] = useState('');
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // 预填写已登录用户的联系信息
+  useEffect(() => {
+    if (user?.email) {
+      setContactInfo(user.email);
+    }
+  }, [user]);
 
   const handleManualVerification = () => {
     if (!orderNumber || orderNumber.length < 4) {
@@ -24,40 +33,80 @@ const Payment = () => {
       });
       return;
     }
+
+    if (!contactInfo) {
+      toast({
+        title: "请输入联系方式",
+        description: "请输入您的邮箱或手机号，用于确认支付",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^1[3-9]\d{9}$/;
+    
+    if (!emailRegex.test(contactInfo) && !phoneRegex.test(contactInfo)) {
+      toast({
+        title: "联系方式格式错误",
+        description: "请输入正确的邮箱或手机号格式",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setVerifying(true);
     
-    // Simulate payment verification process with simple validation
-    // In a real app, this would call an API to verify the payment
+    // 模拟提交到后台的过程，不再自动验证成功
     setTimeout(() => {
-      // Simple validation: check if the order number format is valid
-      // This is just for demonstration - a real app would need server-side verification
-      const isValidFormat = /^\d{4}$/.test(orderNumber);
+      // 在实际项目中，这里应该调用API保存订单信息
       
-      if (isValidFormat) {
-        // Payment is verified
-        setUserAsPaid();
-        setVerifying(false);
-        
-        toast({
-          title: "会员开通成功",
-          description: "您已成功开通Nexus AI终身会员，即刻享受全部AI能力！",
-        });
-        
-        setTimeout(() => {
-          navigate('/');
-        }, 1500);
-      } else {
-        // Payment verification failed
-        setVerifying(false);
-        toast({
-          title: "验证失败",
-          description: "订单号格式不正确，请确认输入支付宝订单号后四位数字",
-          variant: "destructive",
-        });
-      }
-    }, 2000);
+      setVerifying(false);
+      setIsSubmitted(true);
+      
+      toast({
+        title: "提交成功",
+        description: "您的支付信息已提交，管理员将在24小时内审核并开通会员，请留意您的邮箱或手机通知。",
+      });
+    }, 1500);
   };
+
+  if (isSubmitted) {
+    return (
+      <div className="min-h-screen bg-nexus-dark flex flex-col">
+        <Navigation />
+        
+        <div className="flex-grow flex items-center justify-center px-4 py-20">
+          <div className="w-full max-w-md">
+            <div className="card-glowing p-8 text-center">
+              <div className="w-20 h-20 bg-nexus-blue/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-nexus-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              
+              <h2 className="text-2xl font-bold text-gradient mb-4">支付信息已提交</h2>
+              
+              <p className="text-white mb-6">
+                感谢您的支付！管理员将在24小时内审核并开通您的会员权限。
+                <br /><br />
+                我们会通过您提供的联系方式 <span className="text-nexus-cyan">{contactInfo}</span> 通知您。
+              </p>
+              
+              <Button 
+                onClick={() => navigate('/')}
+                className="bg-gradient-to-r from-nexus-blue to-nexus-cyan hover:opacity-90 text-white"
+              >
+                返回首页
+              </Button>
+            </div>
+          </div>
+        </div>
+        
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-nexus-dark flex flex-col">
@@ -129,7 +178,7 @@ const Payment = () => {
                   <p className="text-white font-bold mb-2">请使用支付宝扫码支付</p>
                   <p className="text-white/70 text-sm mb-4">
                     <span className="text-red-500 font-bold">重要：</span> 
-                    请输入支付宝订单号后四位
+                    请在下方输入支付宝订单号后四位和联系方式
                   </p>
                   
                   <div className="flex flex-col space-y-3 mb-4">
@@ -146,6 +195,19 @@ const Payment = () => {
                         placeholder="请输入4位数字"
                       />
                     </div>
+                    
+                    <div>
+                      <label htmlFor="contact-info" className="block text-sm font-medium text-white mb-1">
+                        请输入联系方式（邮箱或手机号）
+                      </label>
+                      <Input
+                        id="contact-info"
+                        value={contactInfo}
+                        onChange={(e) => setContactInfo(e.target.value)}
+                        className="bg-nexus-dark/50 border-nexus-blue/30 text-white"
+                        placeholder="用于确认支付和登录"
+                      />
+                    </div>
                   </div>
                   
                   <Button 
@@ -153,11 +215,11 @@ const Payment = () => {
                     className="w-full bg-gradient-to-r from-nexus-blue to-nexus-cyan hover:opacity-90 text-white"
                     disabled={verifying}
                   >
-                    {verifying ? '正在验证支付...' : '我已完成支付'}
+                    {verifying ? '正在提交...' : '提交支付信息'}
                   </Button>
                   
                   <p className="text-white/50 text-xs mt-3">
-                    支付验证后，系统将自动为您开通会员权限
+                    提交后，管理员将在24小时内审核并开通会员
                   </p>
                 </div>
               </div>

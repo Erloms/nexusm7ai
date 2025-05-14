@@ -20,15 +20,17 @@ const HeroSection = () => {
           <span className="text-white">对话、创想、发声，一站搞定！</span>
         </h2>
         <p className="text-lg md:text-xl text-white/80 mb-8 max-w-2xl mx-auto">
-          只需<span className="text-gradient-gold font-bold text-2xl">￥99元</span>，即可永久使用全部功能，解放创造力，提高工作效率。
+          <span className="text-gradient-gold font-bold text-2xl">￥299元</span>，告别月月付费，拒绝年年涨价！
+          <br/>
+          <span className="font-bold">顶级大模型随便撩，FLUX全系列AI创作工具，无限畅用！</span>
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-          <Button size="lg" className="bg-nexus-blue hover:bg-nexus-blue/80 text-white text-lg px-8 py-6">
-            立即体验
+          <Button size="lg" asChild className="bg-nexus-blue hover:bg-nexus-blue/80 text-white text-lg px-8 py-6">
+            <Link to="/chat">立即体验</Link>
           </Button>
-          <Button size="lg" variant="outline" className="bg-transparent border border-nexus-blue hover:bg-nexus-blue/20 text-nexus-blue text-lg px-8 py-6">
-            了解更多
+          <Button size="lg" variant="outline" asChild className="bg-transparent border border-nexus-blue hover:bg-nexus-blue/20 text-nexus-blue text-lg px-8 py-6">
+            <Link to="/payment">成为会员</Link>
           </Button>
         </div>
         

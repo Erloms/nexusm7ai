@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const CTASection = () => {
   const benefits = [
@@ -24,7 +25,7 @@ const CTASection = () => {
           </h2>
           
           <p className="text-xl text-center text-white/80 mb-10 max-w-2xl mx-auto">
-            只需<span className="text-gradient-gold font-bold text-2xl">￥99元</span>，即可永久使用全部功能，无需订阅，没有隐藏费用。
+            只需<span className="text-gradient-gold font-bold text-2xl">￥299元</span>，即可永久使用全部功能，无需订阅，没有隐藏费用。
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
@@ -45,8 +46,8 @@ const CTASection = () => {
               <p className="text-white/80 mb-6 text-center">
                 加入成为会员，立即解锁所有AI功能
               </p>
-              <Button size="lg" className="bg-nexus-blue hover:bg-nexus-cyan text-white w-full text-lg py-6">
-                立即购买会员
+              <Button size="lg" asChild className="bg-nexus-blue hover:bg-nexus-blue/80 text-white w-full text-lg py-6">
+                <Link to="/payment">立即购买会员</Link>
               </Button>
               <p className="text-white/60 text-sm mt-4">
                 支持微信、支付宝、信用卡等多种支付方式
