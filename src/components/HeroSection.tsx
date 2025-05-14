@@ -20,9 +20,9 @@ const HeroSection = () => {
           <span className="text-white">对话、创想、发声，一站搞定！</span>
         </h2>
         <p className="text-lg md:text-xl text-white/80 mb-8 max-w-2xl mx-auto">
-          <span className="text-gradient-gold font-bold text-2xl">￥299元</span>，告别月月付费，拒绝年年涨价！
+          <span className="text-gradient-gold font-bold text-2xl">￥299元</span>，<span className="font-bold">一次付费，终身使用！</span>
           <br/>
-          <span className="font-bold">成年人不做选择，Nexus AI 让你全都要！</span>
+          <span className="font-bold">拥有顶级模型不是梦，Nexus AI让科技触手可及！</span>
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">

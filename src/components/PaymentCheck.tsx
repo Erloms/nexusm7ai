@@ -97,6 +97,15 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
           <h2 className="text-2xl font-bold text-gradient mb-4">需要登录</h2>
           <p className="text-white/80 mb-6">您需要登录后才能使用此功能</p>
           
+          <div className="bg-nexus-dark/40 p-4 border border-nexus-blue/30 rounded-lg mb-4">
+            <h3 className="font-medium text-white text-center mb-2">游客快速体验</h3>
+            <p className="text-xs text-white/70 text-center mb-4">
+              账号：guest@nexusai.com<br />
+              密码：guest123<br />
+              <span className="text-nexus-cyan">（可享受15次AI对话、30次图像生成、10次语音合成）</span>
+            </p>
+          </div>
+          
           <div className="flex flex-col gap-3">
             <Button 
               onClick={() => navigate('/login')}

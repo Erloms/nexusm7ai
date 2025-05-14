@@ -118,8 +118,8 @@ const Payment = () => {
             <h1 className="text-3xl font-bold text-center mb-8 text-gradient">Nexus AI 会员支付</h1>
             
             <div className="flex flex-col md:flex-row gap-8">
-              {/* Payment Info Section */}
-              <div className="flex-1">
+              {/* Payment Info Section - Made wider */}
+              <div className="flex-1 md:flex-[1.2]">
                 <div className="bg-gradient-to-br from-nexus-dark/50 to-nexus-purple/20 rounded-lg p-6 backdrop-blur-sm border border-nexus-blue/30">
                   <h2 className="text-2xl font-bold text-gradient-gold mb-4">终身会员特权</h2>
                   
@@ -157,7 +157,7 @@ const Payment = () => {
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-white font-bold">Nexus AI 特惠价</span>
-                      <span className="text-gradient-gold text-3xl font-bold">¥299/永久</span>
+                      <div className="text-gradient-gold text-3xl font-bold">¥299/永久</div>
                     </div>
                     <div className="text-white/70 text-sm mt-2">* 一次付款，终身使用</div>
                   </div>
@@ -165,7 +165,7 @@ const Payment = () => {
               </div>
               
               {/* QR Code Section */}
-              <div className="flex-1 flex flex-col items-center justify-center">
+              <div className="flex-1 md:flex-[0.8] flex flex-col items-center justify-center">
                 <div className="bg-white p-4 rounded-xl mb-4 w-64 h-64 flex items-center justify-center">
                   <img 
                     src="/lovable-uploads/57dcc2a2-00e1-41ff-8247-2ae008afe9d8.png" 
@@ -198,16 +198,15 @@ const Payment = () => {
                     
                     <div>
                       <label htmlFor="contact-info" className="block text-sm font-medium text-white mb-1">
-                        请输入联系方式（邮箱或手机号）
+                        请输入联系方式（邮箱或手机号，作为登录账号）
                       </label>
                       <Input
                         id="contact-info"
                         value={contactInfo}
                         onChange={(e) => setContactInfo(e.target.value)}
                         className="bg-nexus-dark/50 border-nexus-blue/30 text-white"
-                        placeholder="用于确认支付和登录"
+                        placeholder="用于确认支付和账号登录"
                       />
-                      <p className="text-white/70 text-xs mt-1">此联系方式将作为您的登录账号</p>
                     </div>
                   </div>
                   

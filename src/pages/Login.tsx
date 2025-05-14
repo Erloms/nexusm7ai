@@ -93,18 +93,22 @@ const Login = () => {
                 <div className="flex-grow border-t border-white/20"></div>
               </div>
               
-              <Button
-                type="button"
-                onClick={handleGuestLogin}
-                className="w-full bg-nexus-dark border border-nexus-blue/50 hover:bg-nexus-blue/20 text-nexus-cyan"
-                disabled={guestLoading}
-              >
-                {guestLoading ? '正在创建游客账号...' : '以游客身份体验'}
-              </Button>
-              
-              <p className="text-xs text-white/50 text-center">
-                游客可免费体验：15次AI对话、30次图像生成、10次语音合成
-              </p>
+              <div className="bg-nexus-dark/40 p-4 border border-nexus-blue/30 rounded-lg">
+                <h3 className="font-medium text-white text-center mb-2">游客快速体验</h3>
+                <p className="text-xs text-white/70 text-center mb-4">
+                  账号：guest@nexusai.com<br />
+                  密码：guest123<br />
+                  <span className="text-nexus-cyan">（可享受15次AI对话、30次图像生成、10次语音合成）</span>
+                </p>
+                <Button
+                  type="button"
+                  onClick={handleGuestLogin}
+                  className="w-full bg-nexus-dark border border-nexus-blue/50 hover:bg-nexus-blue/20 text-nexus-cyan"
+                  disabled={guestLoading}
+                >
+                  {guestLoading ? '正在创建游客账号...' : '以游客身份体验'}
+                </Button>
+              </div>
             </form>
           </div>
         </div>

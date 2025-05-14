@@ -69,27 +69,6 @@ const ModelCard: React.FC<ModelCardProps> = ({ name, description, category, high
 const ModelCarousel: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, checkPaymentStatus } = useAuth();
-  const [availableModels, setAvailableModels] = useState<string[]>([]);
-  const [modelsFetched, setModelsFetched] = useState(false);
-  
-  // 获取最新的可用模型
-  useEffect(() => {
-    const fetchModels = async () => {
-      try {
-        const response = await fetch('https://text.pollinations.ai/models');
-        if (response.ok) {
-          const modelsList = await response.json();
-          setAvailableModels(modelsList);
-          setModelsFetched(true);
-        }
-      } catch (error) {
-        console.error('获取模型列表失败:', error);
-        setModelsFetched(false);
-      }
-    };
-
-    fetchModels();
-  }, []);
   
   const handleStartClick = () => {
     if (!isAuthenticated) {
@@ -101,14 +80,14 @@ const ModelCarousel: React.FC = () => {
     }
   };
   
-  // 更新为最新的推荐模型，优先使用API返回的模型
+  // 更新为最新的推荐模型
   const featuredModels = [
     { name: "GPT-4o", description: "OpenAI最强大的多模态大语言模型，支持图像理解", category: 'text' as const, highlight: true },
     { name: "GPT-4.1-nano", description: "OpenAI最新一代GPT-4.1系列紧凑高效版模型", category: 'text' as const, highlight: true },
-    { name: "GPT-4.1-mini", description: "OpenAI最新一代GPT-4.1系列平衡版模型", category: 'text' as const, highlight: true },
     { name: "DeepSeek-V3-0324", description: "国产顶尖大语言模型，理解世界知识更全面", category: 'text' as const, highlight: true },
-    { name: "Gemini 2.5 Pro (exp-03-25)", description: "Google最新一代大语言模型，专业推理能力出色", category: 'text' as const, highlight: true },
-    { name: "Llama 3.3 70B Instruct", description: "Meta开发的开源大语言模型，强大的上下文理解力", category: 'text' as const, highlight: true },
+    { name: "Gemini 2.5 Pro", description: "Google最新一代大语言模型，专业推理能力出色", category: 'text' as const, highlight: true },
+    { name: "Llama 3.3 70B", description: "Meta开发的开源大语言模型，强大的上下文理解力", category: 'text' as const, highlight: true },
+    { name: "Claude 3.5 Haiku", description: "Anthropic高效小型模型，推理速度与质量兼具", category: 'text' as const, highlight: true },
     { name: "flux-pro", description: "专业版图像生成模型，画面细节丰富，质量超群", category: 'image' as const, highlight: true },
     { name: "flux-realism", description: "超真实效果图像生成，精准捕捉现实世界细节", category: 'image' as const, highlight: true },
     { name: "Nova", description: "友好专业的AI语音，适合商业解说和教育内容", category: 'voice' as const, highlight: true },
@@ -167,7 +146,7 @@ const ModelCarousel: React.FC = () => {
           </div>
         </div>
 
-        {/* 右侧 - 为什么选择我们 */}
+        {/* 右侧 - 为什么选择我们 - 更新文字内容 */}
         <div className="lg:w-5/12 w-full">
           <div className="relative h-full bg-gradient-to-br from-nexus-blue/10 to-nexus-purple/10 rounded-xl border border-nexus-blue/20 p-6 backdrop-blur-sm overflow-hidden flex flex-col">
             <div className="absolute -right-6 -top-6 w-24 h-24 text-nexus-blue/10">
@@ -178,30 +157,30 @@ const ModelCarousel: React.FC = () => {
             <div className="relative z-10 flex flex-col h-full">
               <h3 className="text-2xl font-bold text-gradient-gold mb-5 flex items-center">
                 <Star className="mr-2 h-6 w-6 text-yellow-400" />
-                为什么选择 Nexus AI？
+                人工智能，零门槛体验
               </h3>
               
               <div className="space-y-6 flex-grow">
                 <div className="bg-nexus-dark/40 rounded-lg p-4 border border-nexus-blue/10">
-                  <div className="text-xl font-bold text-white mb-2">告别月月付费，拒绝年年涨价！</div>
+                  <div className="text-xl font-bold text-white mb-2">一次付费，终身使用</div>
                   <p className="text-white/80 text-lg">
-                    Nexus AI 只需
+                    只需
                     <span className="font-bold text-nexus-cyan text-2xl mx-1">299元</span>，
-                    <span className="font-bold text-white">买断！终身！</span>
+                    <span className="font-bold text-white">消灭订阅困扰</span>
                   </p>
                 </div>
                 
                 <div className="bg-nexus-dark/40 rounded-lg p-4 border border-nexus-blue/10">
-                  <div className="text-xl font-bold text-white mb-2">顶级大模型随便撩</div>
+                  <div className="text-xl font-bold text-white mb-2">全球顶级大模型集成</div>
                   <p className="text-white/80">
-                    GPT-4级对话、Gemini 2.0 Pro、DeepSeek R1...顶级大模型随便撩！
+                    GPT-4o、Claude 3.5、Gemini 2.5、DeepSeek V3...顶级大模型一应俱全
                   </p>
                 </div>
                 
                 <div className="bg-nexus-dark/40 rounded-lg p-4 border border-nexus-blue/10">
-                  <div className="text-xl font-bold text-white mb-2">强大AI创作工具</div>
+                  <div className="text-xl font-bold text-white mb-2">三大AI创作能力</div>
                   <p className="text-white/80">
-                    Flux全系列AI创作工具，无限畅用！成年人不做选择，Nexus AI 让你全都要！
+                    从文本对话、图像创作到语音合成，一站式满足您的AI创作需求
                   </p>
                 </div>
               </div>

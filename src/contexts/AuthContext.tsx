@@ -70,13 +70,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     
     try {
-      // Generate a random guest ID
-      const guestId = `guest-${Math.random().toString(36).substring(2, 10)}`;
-      
+      // 使用固定的游客账号信息
       const guestUser = {
-        id: guestId,
-        email: `guest@nexusai.com`,
-        name: `游客${guestId.substring(6, 10)}`,
+        id: 'guest-user',
+        email: 'guest@nexusai.com',
+        name: '游客用户',
         isVip: false,
         isGuest: true
       };
@@ -117,6 +115,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Special case for guest account
+      if ((emailOrUsername === 'guest@nexusai.com' || emailOrUsername === '游客用户') && password === 'guest123') {
+        return await loginAsGuest();
+      }
       
       // Simple validation for demo purposes
       if (emailOrUsername && password.length >= 6) {
@@ -225,6 +228,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem('nexusAiUser');
     toast({
       title: "已退出登录",
+      description: "您已成功退出登录",
       duration: 3000,
     });
   };
