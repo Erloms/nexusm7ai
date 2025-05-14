@@ -153,11 +153,11 @@ const Payment = () => {
                   <div className="mt-6 bg-gradient-to-r from-nexus-blue/20 to-nexus-cyan/20 p-4 rounded-lg border border-nexus-blue/30">
                     <div className="flex items-center justify-between">
                       <span className="text-white">普通会员价格</span>
-                      <span className="text-white line-through">¥999</span>
+                      <span className="text-white line-through">¥999/年</span>
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-white font-bold">Nexus AI 特惠价</span>
-                      <span className="text-gradient-gold text-3xl font-bold">¥299</span>
+                      <span className="text-gradient-gold text-3xl font-bold">¥299/永久</span>
                     </div>
                     <div className="text-white/70 text-sm mt-2">* 一次付款，终身使用</div>
                   </div>
@@ -207,6 +207,7 @@ const Payment = () => {
                         className="bg-nexus-dark/50 border-nexus-blue/30 text-white"
                         placeholder="用于确认支付和登录"
                       />
+                      <p className="text-white/70 text-xs mt-1">此联系方式将作为您的登录账号</p>
                     </div>
                   </div>
                   

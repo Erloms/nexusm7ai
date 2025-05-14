@@ -8,17 +8,26 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
 const Login = () => {
-  const { login, loading } = useAuth();
+  const { login, loginAsGuest, loading } = useAuth();
   const navigate = useNavigate();
   
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [guestLoading, setGuestLoading] = useState(false);
   
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (await login(emailOrUsername, password)) {
       navigate('/');
     }
+  };
+  
+  const handleGuestLogin = async () => {
+    setGuestLoading(true);
+    if (await loginAsGuest()) {
+      navigate('/');
+    }
+    setGuestLoading(false);
   };
   
   return (
@@ -71,12 +80,31 @@ const Login = () => {
                 {loading ? '登录中...' : '登录'}
               </Button>
               
-              <div className="text-center text-white/70">
+              <div className="text-center text-white/70 pt-2">
                 没有账号？{' '}
                 <Link to="/register" className="text-nexus-cyan hover:underline">
                   注册
                 </Link>
               </div>
+              
+              <div className="relative flex py-4 items-center">
+                <div className="flex-grow border-t border-white/20"></div>
+                <span className="flex-shrink mx-4 text-white/40">或</span>
+                <div className="flex-grow border-t border-white/20"></div>
+              </div>
+              
+              <Button
+                type="button"
+                onClick={handleGuestLogin}
+                className="w-full bg-nexus-dark border border-nexus-blue/50 hover:bg-nexus-blue/20 text-nexus-cyan"
+                disabled={guestLoading}
+              >
+                {guestLoading ? '正在创建游客账号...' : '以游客身份体验'}
+              </Button>
+              
+              <p className="text-xs text-white/50 text-center">
+                游客可免费体验：15次AI对话、30次图像生成、10次语音合成
+              </p>
             </form>
           </div>
         </div>

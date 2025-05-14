@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const guestUser = {
         id: guestId,
         email: `guest@nexusai.com`,
-        name: `游客${guestId.substring(0, 5)}`,
+        name: `游客${guestId.substring(6, 10)}`,
         isVip: false,
         isGuest: true
       };
@@ -115,27 +115,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     
     try {
-      // Special admin account
-      if (emailOrUsername === "admin" && password === "admin123") {
-        const adminUser = {
-          id: 'admin-123',
-          email: 'admin@nexusai.com',
-          name: '管理员',
-          isVip: true
-        };
-        
-        setUser(adminUser);
-        localStorage.setItem('nexusAiUser', JSON.stringify(adminUser));
-        
-        toast({
-          title: "管理员登录成功",
-          description: "欢迎回来，管理员！",
-          duration: 3000,
-        });
-        
-        return true;
-      }
-      
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       

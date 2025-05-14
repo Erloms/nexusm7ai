@@ -22,7 +22,7 @@ const HeroSection = () => {
         <p className="text-lg md:text-xl text-white/80 mb-8 max-w-2xl mx-auto">
           <span className="text-gradient-gold font-bold text-2xl">￥299元</span>，告别月月付费，拒绝年年涨价！
           <br/>
-          <span className="font-bold">顶级大模型随便撩，FLUX全系列AI创作工具，无限畅用！</span>
+          <span className="font-bold">成年人不做选择，Nexus AI 让你全都要！</span>
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
