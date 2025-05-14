@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MessageSquare, Send, Sparkles, User, Bot, ImageIcon, Info } from 'lucide-react';
 import PaymentCheck from '@/components/PaymentCheck';
+import { useToast } from "@/components/ui/use-toast";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -26,6 +27,7 @@ interface ChatProps {
 }
 
 const Chat = ({ decrementUsage }: ChatProps) => {
+  const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -51,6 +53,7 @@ const Chat = ({ decrementUsage }: ChatProps) => {
             'Meta': [],
             'DeepSeek': [],
             'Mistral': [],
+            'Anthropic': [],
             'Other': []
           };
           
@@ -74,6 +77,8 @@ const Chat = ({ decrementUsage }: ChatProps) => {
               group = 'DeepSeek';
             } else if (modelId.toLowerCase().includes('mistral')) {
               group = 'Mistral';
+            } else if (modelId.toLowerCase().includes('claude')) {
+              group = 'Anthropic';
             }
             
             organizedModels[group].push({
@@ -125,6 +130,9 @@ const Chat = ({ decrementUsage }: ChatProps) => {
           ],
           'Mistral': [
             { id: 'mistral-small-3.1-24b-instruct-2503', name: 'Mistral Small 3.1 24B Instruct 2503', description: 'Mistral最新指令微调模型', group: 'Mistral' }
+          ],
+          'Anthropic': [
+            { id: 'claude-3.5-haiku', name: 'Claude 3.5 Haiku', description: 'Anthropic Claude 3.5 系列轻量模型', group: 'Anthropic' }
           ],
           'Other': [
             { id: 'qwen2.5-coder-32b-instruct', name: 'Qwen 2.5 Coder 32B Instruct', description: 'Qwen 2.5 编程专用模型', group: 'Qwen' },
@@ -254,45 +262,6 @@ const Chat = ({ decrementUsage }: ChatProps) => {
             <p className="text-white/70 text-lg">输入文本，选择模型，一键得到自然流畅的对话</p>
           </div>
 
-          {/* 顶部栏 - 模型选择 */}
-          <div className="w-full max-w-7xl mx-auto mb-6 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-4">
-            <div className="flex items-center flex-wrap md:flex-nowrap gap-4">
-              <div className="flex items-center space-x-2 text-white">
-                <Sparkles className="h-5 w-5 text-nexus-blue" />
-                <span className="font-medium">选择模型:</span>
-              </div>
-              <div className="w-full md:w-80">
-                <Select 
-                  value={selectedModel}
-                  onValueChange={setSelectedModel}
-                >
-                  <SelectTrigger className="w-full bg-nexus-dark/50 border-nexus-blue/30 text-white h-10">
-                    <SelectValue placeholder="选择AI模型" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-nexus-dark border-nexus-blue/30 max-h-[400px]">
-                    {Object.entries(availableModels).map(([group, groupModels]) => (
-                      <div key={group} className="p-1">
-                        <h3 className="text-xs text-nexus-blue uppercase font-bold px-2 py-1">{group}</h3>
-                        {groupModels.map((model) => (
-                          <SelectItem 
-                            key={model.id} 
-                            value={model.id}
-                            className="text-white hover:bg-nexus-blue/20"
-                          >
-                            {model.name}
-                          </SelectItem>
-                        ))}
-                      </div>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="w-full md:w-auto text-white/70 text-sm">
-                {allModels.find(m => m.id === selectedModel)?.description || '加载模型中...'}
-              </div>
-            </div>
-          </div>
-
           {/* 聊天区域 - 更宽、更高 */}
           <div className="w-full max-w-7xl mx-auto flex-grow flex flex-col bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 overflow-hidden">
             {/* 消息容器 - 增加高度 */}
@@ -401,6 +370,43 @@ const Chat = ({ decrementUsage }: ChatProps) => {
             
             {/* 输入区域 */}
             <div className="p-4 border-t border-nexus-blue/20 bg-nexus-dark/50 backdrop-blur-md">
+              {/* 模型选择 - 现在放到输入框上方 */}
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <div className="flex items-center space-x-2 text-white">
+                  <Sparkles className="h-4 w-4 text-nexus-blue" />
+                  <span className="text-sm">选择模型:</span>
+                </div>
+                <div className="flex-grow">
+                  <Select 
+                    value={selectedModel}
+                    onValueChange={setSelectedModel}
+                  >
+                    <SelectTrigger className="w-full lg:w-auto bg-nexus-dark/50 border-nexus-blue/30 text-white h-9">
+                      <SelectValue placeholder="选择AI模型" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-nexus-dark border-nexus-blue/30 max-h-[300px]">
+                      {Object.entries(availableModels).map(([group, groupModels]) => (
+                        <div key={group} className="p-1">
+                          <h3 className="text-xs text-nexus-blue uppercase font-bold px-2 py-1">{group}</h3>
+                          {groupModels.map((model) => (
+                            <SelectItem 
+                              key={model.id} 
+                              value={model.id}
+                              className="text-white hover:bg-nexus-blue/20"
+                            >
+                              {model.name}
+                            </SelectItem>
+                          ))}
+                        </div>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="w-full lg:w-auto text-white/60 text-xs">
+                  {allModels.find(m => m.id === selectedModel)?.description || '加载模型中...'}
+                </div>
+              </div>
+              
               {uploadedImage && (
                 <div className="mb-3 relative inline-block">
                   <img 

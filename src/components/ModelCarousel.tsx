@@ -183,26 +183,25 @@ const ModelCarousel: React.FC = () => {
               
               <div className="space-y-6 flex-grow">
                 <div className="bg-nexus-dark/40 rounded-lg p-4 border border-nexus-blue/10">
-                  <div className="text-xl font-bold text-white mb-2">价格优势</div>
+                  <div className="text-xl font-bold text-white mb-2">告别月月付费，拒绝年年涨价！</div>
                   <p className="text-white/80 text-lg">
-                    无需为昂贵的大模型付费，告别999元终身会员，只需
-                    <span className="font-bold text-nexus-cyan text-2xl mx-1">99元</span>，
-                    <span className="font-bold text-white">永久</span>
-                    使用顶尖AI模型
+                    Nexus AI 只需
+                    <span className="font-bold text-nexus-cyan text-2xl mx-1">299元</span>，
+                    <span className="font-bold text-white">买断！终身！</span>
                   </p>
                 </div>
                 
                 <div className="bg-nexus-dark/40 rounded-lg p-4 border border-nexus-blue/10">
-                  <div className="text-xl font-bold text-white mb-2">功能全面</div>
+                  <div className="text-xl font-bold text-white mb-2">顶级大模型随便撩</div>
                   <p className="text-white/80">
-                    集成文本生成、图像创作与语音合成于一体，满足您所有AI创作需求
+                    GPT-4级对话、Gemini 2.0 Pro、DeepSeek R1...顶级大模型随便撩！
                   </p>
                 </div>
                 
                 <div className="bg-nexus-dark/40 rounded-lg p-4 border border-nexus-blue/10">
-                  <div className="text-xl font-bold text-white mb-2">持续更新</div>
+                  <div className="text-xl font-bold text-white mb-2">强大AI创作工具</div>
                   <p className="text-white/80">
-                    我们不断引入最新的AI模型，确保您始终使用最前沿的人工智能技术
+                    Flux全系列AI创作工具，无限畅用！成年人不做选择，Nexus AI 让你全都要！
                   </p>
                 </div>
               </div>
