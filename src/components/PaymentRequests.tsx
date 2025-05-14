@@ -56,7 +56,7 @@ const PaymentRequests = () => {
     setRequests(prev => {
       const updated = prev.map(req => 
         req.id === id 
-          ? { ...req, status: approved ? 'approved' : 'rejected' } 
+          ? { ...req, status: approved ? 'approved' as const : 'rejected' as const } 
           : req
       );
       
