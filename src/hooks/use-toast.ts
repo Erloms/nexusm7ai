@@ -1,5 +1,6 @@
 
 import { toast as sonnerToast } from "sonner";
+import { useState, useEffect } from "react";
 
 type ToastVariant = "default" | "destructive" | "success" | "warning" | "info";
 
@@ -11,6 +12,13 @@ interface ToastProps {
   action?: React.ReactNode;
 }
 
+// Define our toast interface
+export interface Toast extends ToastProps {
+  id: string;
+}
+
+// Create a dummy implementation that doesn't actually store toasts 
+// since we're using Sonner toast under the hood
 export const toast = ({
   title,
   description,
@@ -33,7 +41,10 @@ export const toast = ({
 };
 
 export const useToast = () => {
+  // Since we're using sonner under the hood and it manages its own toast state,
+  // we'll provide an empty array for compatibility
   return {
     toast,
+    toasts: [] as Toast[],
   };
 };

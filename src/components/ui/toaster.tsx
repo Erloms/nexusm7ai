@@ -1,3 +1,4 @@
+
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
@@ -11,9 +12,11 @@ import {
 export function Toaster() {
   const { toasts } = useToast()
 
+  // Since we're using Sonner under the hood, this component doesn't actually 
+  // render toasts - it's just here for compatibility
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, ...props }) {
+      {toasts && toasts.map(function ({ id, title, description, action, ...props }) {
         return (
           <Toast key={id} {...props}>
             <div className="grid gap-1">
