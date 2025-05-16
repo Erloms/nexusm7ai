@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowUpRight, Sparkles, Star, Volume2, Zap } from "lucide-react";
@@ -21,15 +20,19 @@ const ModelsList: React.FC = () => {
   const textModels: ModelType[] = [
     {
       name: 'OpenAI',
-      items: ['GPT-4o', 'GPT-4o-mini', 'o1-mini']
+      items: ['GPT-4o', 'GPT-4o-mini', 'GPT-4.1-nano']
     },
     {
       name: 'Google',
-      items: ['Gemini 2.0 Pro', 'Gemini 2.0 Flash', 'Gemini 2.0 Flash Thinking']
+      items: ['Gemini 2.5 Pro', 'Gemini 2.0 Flash', 'Gemini 2.0 Flash Thinking']
+    },
+    {
+      name: 'Anthropic',
+      items: ['Claude 3.5 Haiku', 'Claude 3.0 Opus', 'Claude Instant']
     },
     {
       name: 'Meta',
-      items: ['Llama 3.3 70B', 'Llama 3.1 8B Instruct', 'Llama (Scaleway)']
+      items: ['Llama 3.3 70B', 'Llama 3.1 8B Instruct', 'Llama 4 Scout 17B']
     },
     {
       name: 'DeepSeek',
@@ -196,8 +199,8 @@ const ModelsList: React.FC = () => {
                 <div className="bg-nexus-dark/40 rounded-lg p-4 border border-nexus-blue/10">
                   <div className="text-xl font-bold text-white mb-2">价格优势</div>
                   <p className="text-white/80 text-lg">
-                    无需为昂贵的大模型付费，告别999元终身会员，只需
-                    <span className="font-bold text-nexus-cyan text-2xl mx-1">99元</span>，
+                    无需为昂贵的大模型付费，只需
+                    <span className="font-bold text-nexus-cyan text-2xl mx-1">299元</span>
                     <span className="font-bold text-white">永久</span>
                     使用顶尖AI模型
                   </p>

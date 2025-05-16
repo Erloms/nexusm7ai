@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from "framer-motion";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
@@ -80,14 +79,14 @@ const ModelCarousel: React.FC = () => {
     }
   };
   
-  // 更新为最新的推荐模型，优先展示Gemini、DeepSeek和GPT-4系列
+  // 更新为最新的推荐模型，确保包含Gemini2.5 Pro和Claude3.5
   const featuredModels = [
     { name: "Gemini 2.5 Pro", description: "Google最新一代大语言模型，专业推理能力出色", category: 'text' as const, highlight: true },
+    { name: "Claude 3.5 Haiku", description: "Anthropic最新小型模型，速度快且高效精准", category: 'text' as const, highlight: true },
     { name: "DeepSeek-V3-0324", description: "国产顶尖大语言模型，理解世界知识更全面", category: 'text' as const, highlight: true },
     { name: "GPT-4o", description: "OpenAI最强大的多模态大语言模型，支持图像理解", category: 'text' as const, highlight: true },
     { name: "GPT-4.1-nano", description: "OpenAI最新一代GPT-4.1系列紧凑高效版模型", category: 'text' as const, highlight: true },
     { name: "Llama 3.3 70B", description: "Meta开发的开源大语言模型，强大的上下文理解力", category: 'text' as const, highlight: true },
-    { name: "Claude 3.5 Haiku", description: "Anthropic高效小型模型，推理速度与质量兼具", category: 'text' as const, highlight: true },
     { name: "flux-pro", description: "专业版图像生成模型，画面细节丰富，质量超群", category: 'image' as const, highlight: true },
     { name: "flux-realism", description: "超真实效果图像生成，精准捕捉现实世界细节", category: 'image' as const, highlight: true },
     { name: "Nova", description: "友好专业的AI语音，适合商业解说和教育内容", category: 'voice' as const, highlight: true },
@@ -146,7 +145,7 @@ const ModelCarousel: React.FC = () => {
           </div>
         </div>
 
-        {/* 右侧 - 核心优势 - 更新文字内容避免重复 */}
+        {/* 右侧 - 核心优势 */}
         <div className="lg:w-5/12 w-full">
           <div className="relative h-full bg-gradient-to-br from-nexus-blue/10 to-nexus-purple/10 rounded-xl border border-nexus-blue/20 p-6 backdrop-blur-sm overflow-hidden flex flex-col">
             <div className="absolute -right-6 -top-6 w-24 h-24 text-nexus-blue/10">
@@ -165,7 +164,7 @@ const ModelCarousel: React.FC = () => {
                   <div className="text-xl font-bold text-white mb-2">一次付费，终身使用</div>
                   <p className="text-white/80 text-lg">
                     只需
-                    <span className="font-bold text-nexus-cyan text-2xl mx-1">299元</span>，
+                    <span className="font-bold text-nexus-cyan text-2xl mx-1">299元</span>
                     <span className="font-bold text-white">消灭订阅困扰</span>
                   </p>
                 </div>
@@ -173,7 +172,7 @@ const ModelCarousel: React.FC = () => {
                 <div className="bg-nexus-dark/40 rounded-lg p-4 border border-nexus-blue/10">
                   <div className="text-xl font-bold text-white mb-2">顶级模型集成体验</div>
                   <p className="text-white/80">
-                    集成Gemini 2.5、GPT-4o、DeepSeek V3等多款全球顶级AI模型
+                    集成Gemini 2.5、Claude 3.5、GPT-4o、DeepSeek V3等多款全球顶级AI模型
                   </p>
                 </div>
                 

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -53,7 +52,8 @@ const Chat = ({ decrementUsage }: ChatProps) => {
             'gemini', 
             'deepseek', 
             'gpt-4o', 
-            'gpt-4.1'
+            'gpt-4.1',
+            'claude'
           ];
           
           // 处理模型列表
@@ -73,7 +73,7 @@ const Chat = ({ decrementUsage }: ChatProps) => {
             processedModels.push(modelObj);
           });
           
-          // 对模型进行排序，优先展示Gemini、DeepSeek和GPT-4系列
+          // 对模型进行排序，优先展示Gemini、DeepSeek、GPT-4和Claude系列
           processedModels.sort((a, b) => {
             const aHasPriority = priorityModels.some(pm => a.id.toLowerCase().includes(pm.toLowerCase()));
             const bHasPriority = priorityModels.some(pm => b.id.toLowerCase().includes(pm.toLowerCase()));
@@ -99,12 +99,12 @@ const Chat = ({ decrementUsage }: ChatProps) => {
         console.error('获取模型列表失败:', error);
         // 加载失败时使用备用模型列表
         const backupModels = [
-          { id: 'gemini-2.5-pro-exp-03-25', name: 'Gemini 2.5 Pro', description: 'Google最新一代大语言模型' },
+          { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'Google最新一代大语言模型' },
+          { id: 'claude-3.5-haiku', name: 'Claude 3.5 Haiku', description: 'Anthropic最新高效模型' },
           { id: 'deepseek-v3-0324', name: 'DeepSeek-V3-0324', description: '国产顶尖大语言模型' },
           { id: 'gpt-4o', name: 'GPT-4o', description: 'OpenAI多模态大语言模型' },
           { id: 'gpt-4.1-nano', name: 'GPT-4.1-nano', description: 'OpenAI新一代大语言模型' },
           { id: 'llama-3.3-70b-instruct', name: 'Llama 3.3 70B', description: 'Meta开源大语言模型' },
-          { id: 'claude-3.5-haiku', name: 'Claude 3.5 Haiku', description: 'Anthropic高效模型' },
           { id: 'gemini-2.5-flash-preview-04-17', name: 'Gemini 2.5 Flash', description: 'Google闪电版模型' },
           { id: 'mistral-small-3.1-24b-instruct-2503', name: 'Mistral Small 3.1', description: 'Mistral AI模型' },
           { id: 'phi-4-instruct', name: 'Phi-4 Instruct', description: 'Microsoft Phi-4模型' },

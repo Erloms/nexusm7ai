@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import PaymentRequests from '@/components/PaymentRequests';
+import UserManagement from '@/components/UserManagement';
 
 const Admin = () => {
   const { user } = useAuth();
@@ -25,7 +26,8 @@ const Admin = () => {
     
     setTimeout(() => {
       // 在实际应用中，应该调用API验证管理员凭据
-      if (username === 'admin' && password === 'admin123') {
+      if ((username === 'admin' && password === 'admin123') || 
+          (username === 'Master' && password === 'Mengzhen888')) {
         setIsAdmin(true);
         toast({
           title: "管理员登录成功",
@@ -93,7 +95,7 @@ const Admin = () => {
                 </Button>
                 
                 <p className="text-center text-white/50 text-sm">
-                  提示：默认管理员账号 admin / admin123
+                  提示：默认管理员账号 Master / Mengzhen888
                 </p>
               </div>
             </div>
@@ -114,27 +116,25 @@ const Admin = () => {
         <div className="container mx-auto">
           <h1 className="text-3xl font-bold mb-8 text-gradient">管理员控制面板</h1>
           
-          <Tabs defaultValue="payments" className="w-full">
+          <Tabs defaultValue="users" className="w-full">
             <TabsList className="bg-nexus-dark/50 border border-nexus-blue/30 mb-6">
-              <TabsTrigger value="payments" className="data-[state=active]:bg-nexus-blue text-white">
-                支付管理
-              </TabsTrigger>
               <TabsTrigger value="users" className="data-[state=active]:bg-nexus-blue text-white">
                 用户管理
+              </TabsTrigger>
+              <TabsTrigger value="payments" className="data-[state=active]:bg-nexus-blue text-white">
+                支付管理
               </TabsTrigger>
               <TabsTrigger value="settings" className="data-[state=active]:bg-nexus-blue text-white">
                 系统设置
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="payments" className="mt-6">
-              <PaymentRequests />
+            <TabsContent value="users" className="mt-6">
+              <UserManagement />
             </TabsContent>
             
-            <TabsContent value="users" className="mt-6">
-              <div className="p-8 text-center text-white bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg">
-                用户管理功能正在开发中...
-              </div>
+            <TabsContent value="payments" className="mt-6">
+              <PaymentRequests />
             </TabsContent>
             
             <TabsContent value="settings" className="mt-6">
