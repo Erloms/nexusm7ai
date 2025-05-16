@@ -26,8 +26,7 @@ const Admin = () => {
     
     setTimeout(() => {
       // 在实际应用中，应该调用API验证管理员凭据
-      if ((username === 'admin' && password === 'admin123') || 
-          (username === 'Master' && password === 'Mengzhen888')) {
+      if (username === 'Master' && password === 'Mengzhen888') {
         setIsAdmin(true);
         toast({
           title: "管理员登录成功",
@@ -95,7 +94,7 @@ const Admin = () => {
                 </Button>
                 
                 <p className="text-center text-white/50 text-sm">
-                  提示：默认管理员账号 Master / Mengzhen888
+                  管理员账号 Master / Mengzhen888
                 </p>
               </div>
             </div>

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -29,7 +30,7 @@ const Chat = ({ decrementUsage }: ChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-pro');
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -70,7 +71,10 @@ const Chat = ({ decrementUsage }: ChatProps) => {
               description: `${provider ? provider + ' ' : ''}${modelName}`,
             };
             
-            processedModels.push(modelObj);
+            // 过滤掉Midjourney相关模型
+            if (!modelId.toLowerCase().includes('midjourney')) {
+              processedModels.push(modelObj);
+            }
           });
           
           // 对模型进行排序，优先展示Gemini、DeepSeek、GPT-4和Claude系列
@@ -85,10 +89,10 @@ const Chat = ({ decrementUsage }: ChatProps) => {
           
           setAvailableModels(processedModels);
           
-          // 默认选择gpt-4o-mini或列表中的第一个模型
-          const gpt4oMini = processedModels.find(m => m.id === 'gpt-4o-mini');
-          if (gpt4oMini) {
-            setSelectedModel(gpt4oMini.id);
+          // 默认选择gemini-2.5-pro或列表中的第一个模型
+          const gemini25Pro = processedModels.find(m => m.id.toLowerCase().includes('gemini-2.5-pro'));
+          if (gemini25Pro) {
+            setSelectedModel(gemini25Pro.id);
           } else if (processedModels.length > 0) {
             setSelectedModel(processedModels[0].id);
           }
@@ -101,18 +105,18 @@ const Chat = ({ decrementUsage }: ChatProps) => {
         const backupModels = [
           { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'Google最新一代大语言模型' },
           { id: 'claude-3.5-haiku', name: 'Claude 3.5 Haiku', description: 'Anthropic最新高效模型' },
-          { id: 'deepseek-v3-0324', name: 'DeepSeek-V3-0324', description: '国产顶尖大语言模型' },
+          { id: 'deepseek-r1-full', name: 'DeepSeek R1 Full', description: 'DeepSeek完整大语言模型' },
           { id: 'gpt-4o', name: 'GPT-4o', description: 'OpenAI多模态大语言模型' },
           { id: 'gpt-4.1-nano', name: 'GPT-4.1-nano', description: 'OpenAI新一代大语言模型' },
           { id: 'llama-3.3-70b-instruct', name: 'Llama 3.3 70B', description: 'Meta开源大语言模型' },
-          { id: 'gemini-2.5-flash-preview-04-17', name: 'Gemini 2.5 Flash', description: 'Google闪电版模型' },
-          { id: 'mistral-small-3.1-24b-instruct-2503', name: 'Mistral Small 3.1', description: 'Mistral AI模型' },
+          { id: 'gemini-2.5-flash-preview', name: 'Gemini 2.5 Flash', description: 'Google闪电版模型' },
+          { id: 'mistral-small-3.1-24b-instruct', name: 'Mistral Small 3.1', description: 'Mistral AI模型' },
           { id: 'phi-4-instruct', name: 'Phi-4 Instruct', description: 'Microsoft Phi-4模型' },
-          { id: 'qwen2.5-coder-32b-instruct', name: 'Qwen 2.5 Coder', description: 'Qwen编程专用模型' }
+          { id: 'searchgpt', name: 'SearchGPT', description: '网络搜索增强语言模型' },
         ];
         
         setAvailableModels(backupModels);
-        setSelectedModel('gpt-4o');
+        setSelectedModel('gemini-2.5-pro');
         setModelsFetched(true);
       }
     };

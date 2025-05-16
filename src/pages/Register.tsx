@@ -11,8 +11,7 @@ const Register = () => {
   const { register, loading } = useAuth();
   const navigate = useNavigate();
   
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [account, setAccount] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -28,7 +27,8 @@ const Register = () => {
     
     setPasswordError('');
     
-    if (await register(name, email, password)) {
+    // Use account as both name and email
+    if (await register(account, account, password)) {
       navigate('/');
     }
   };
@@ -44,31 +44,16 @@ const Register = () => {
             
             <form onSubmit={handleRegister} className="space-y-6">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-white mb-2">
-                  姓名
+                <label htmlFor="account" className="block text-sm font-medium text-white mb-2">
+                  账号
                 </label>
                 <Input
-                  id="name"
+                  id="account"
                   type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={account}
+                  onChange={(e) => setAccount(e.target.value)}
                   className="bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
-                  placeholder="输入您的姓名"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
-                  邮箱
-                </label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
-                  placeholder="输入您的邮箱"
+                  placeholder="手机号/邮箱"
                   required
                 />
               </div>

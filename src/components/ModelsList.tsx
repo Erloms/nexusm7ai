@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowUpRight, Sparkles, Star, Volume2, Zap } from "lucide-react";
@@ -226,7 +227,7 @@ const ModelsList: React.FC = () => {
                   className="w-full px-6 py-3 bg-gradient-to-r from-nexus-blue to-nexus-cyan text-white rounded-md flex items-center justify-center font-medium hover:opacity-90 transition-all group"
                   onClick={handleStartClick}
                 >
-                  {!isAuthenticated ? "立即注册体验" : 
+                  {!isAuthenticated ? "立即注册" : 
                    !checkPaymentStatus() ? "立即升级会员" : 
                    "开始使用AI能力"}
                   <ArrowUpRight className="ml-2 h-5 w-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />

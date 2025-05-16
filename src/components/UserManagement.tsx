@@ -15,7 +15,7 @@ import {
   TabsList, 
   TabsTrigger 
 } from "@/components/ui/tabs";
-import { Check, X, ChevronUp, ChevronDown, Search } from 'lucide-react';
+import { Check, X, ChevronUp, ChevronDown, Search, Phone, Mail } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,7 @@ interface User {
   email: string;
   isVip: boolean;
   registrationDate: string;
+  contactType?: 'email' | 'phone';
 }
 
 const UserManagement: React.FC = () => {
@@ -42,24 +43,27 @@ const UserManagement: React.FC = () => {
     const mockUsers: User[] = [
       { 
         id: '1', 
-        name: '张三', 
-        email: 'zhangsan@example.com',
+        name: '13800138000', 
+        email: '13800138000',
         isVip: true,
-        registrationDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
+        registrationDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+        contactType: 'phone'
       },
       { 
         id: '2', 
-        name: '李四', 
-        email: '13800138000',
+        name: 'user123@example.com', 
+        email: 'user123@example.com',
         isVip: false,
-        registrationDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+        registrationDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+        contactType: 'email'
       },
       { 
         id: '3', 
-        name: '王五', 
-        email: 'wangwu@example.com',
+        name: '13900139000', 
+        email: '13900139000',
         isVip: false,
-        registrationDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+        registrationDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        contactType: 'phone'
       },
       // 加载本地存储的用户
       ...JSON.parse(localStorage.getItem('registeredUsers') || '[]')
@@ -87,7 +91,7 @@ const UserManagement: React.FC = () => {
     // 显示操作成功通知
     toast({
       title: makeVip ? "VIP权限已开通" : "VIP权限已取消",
-      description: `已${makeVip ? '开通' : '取消'}ID为 ${id} 的用户的VIP权限`,
+      description: `已${makeVip ? '开通' : '取消'}用户 ${users.find(u => u.id === id)?.name} 的VIP权限`,
     });
   };
 
@@ -99,6 +103,11 @@ const UserManagement: React.FC = () => {
       setSortBy(column);
       setSortDirection('asc');
     }
+  };
+
+  // 判断是否是邮箱
+  const isEmail = (text: string): boolean => {
+    return /\S+@\S+\.\S+/.test(text);
   };
 
   // 过滤和排序用户
@@ -130,7 +139,7 @@ const UserManagement: React.FC = () => {
           <TableRow>
             <TableHead className="text-white cursor-pointer" onClick={() => toggleSort('name')}>
               <div className="flex items-center">
-                用户名/联系方式
+                账号信息
                 {sortBy === 'name' && (
                   sortDirection === 'asc' ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />
                 )}
@@ -152,8 +161,13 @@ const UserManagement: React.FC = () => {
             usersList.map(user => (
               <TableRow key={user.id}>
                 <TableCell className="font-medium text-white">
-                  <div>{user.name}</div>
-                  <div className="text-white/70 text-sm">{user.email}</div>
+                  <div className="flex items-center">
+                    {isEmail(user.name) ? 
+                      <Mail className="w-4 h-4 mr-2 text-nexus-cyan" /> : 
+                      <Phone className="w-4 h-4 mr-2 text-nexus-blue" />
+                    }
+                    <span>{user.name}</span>
+                  </div>
                 </TableCell>
                 <TableCell className="text-white">
                   {new Date(user.registrationDate).toLocaleString()}
@@ -211,7 +225,7 @@ const UserManagement: React.FC = () => {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 h-4 w-4" />
           <Input
-            placeholder="搜索用户名或联系方式"
+            placeholder="搜索账号"
             className="pl-10 bg-nexus-dark/50 border-nexus-blue/30 text-white w-64"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
