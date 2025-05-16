@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { toast } from "@/components/ui/use-toast";
 
@@ -20,6 +19,7 @@ interface AuthContextType {
   setUserAsPaid: () => void;
 }
 
+// Create the context with a default undefined value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -183,26 +183,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
+  const contextValue: AuthContextType = {
+    user,
+    isAuthenticated: !!user,
+    loading,
+    login,
+    register,
+    logout,
+    checkPaymentStatus,
+    setUserAsPaid
+  };
+
   return (
-    <AuthContext.Provider value={{
-      user,
-      isAuthenticated: !!user,
-      loading,
-      login,
-      register,
-      logout,
-      checkPaymentStatus,
-      setUserAsPaid
-    }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 };
 
+// Updated useAuth hook with better error handling
 export const useAuth = () => {
   const context = useContext(AuthContext);
+  
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
+  
   return context;
 };
