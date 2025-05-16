@@ -12,11 +12,11 @@ import {
 export function Toaster() {
   const { toasts } = useToast()
 
-  // Since we're using Sonner under the hood, this component doesn't actually 
-  // render toasts - it's just here for compatibility
+  // Since we're using Sonner under the hood, we need to ensure toasts is always
+  // defined to prevent the "Cannot read properties of undefined (reading 'map')" error
   return (
     <ToastProvider>
-      {toasts && toasts.map(function ({ id, title, description, action, variant, ...props }) {
+      {toasts && Array.isArray(toasts) && toasts.map(function ({ id, title, description, action, variant, ...props }) {
         return (
           <Toast key={id} {...props}>
             <div className="grid gap-1">

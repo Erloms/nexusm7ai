@@ -11,10 +11,9 @@ interface PaymentCheckProps {
 }
 
 const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
-  const { isAuthenticated, user, checkPaymentStatus, loginAsGuest } = useAuth();
+  const { isAuthenticated, user, checkPaymentStatus } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [guestLoading, setGuestLoading] = useState(false);
   
   // Get usage counts from localStorage or initialize them
   const [usageRemaining, setUsageRemaining] = useState(() => {
@@ -48,13 +47,6 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
           voice: 10
         };
         
-        // For guest users, use different limits
-        if (user.isGuest) {
-          initialRemaining.chat = 15;
-          initialRemaining.image = 30;
-          initialRemaining.voice = 10;
-        }
-        
         localStorage.setItem(`nexusAi_${featureType}_usage_${user.id}`, JSON.stringify({
           remaining: initialRemaining[featureType as keyof typeof initialRemaining]
         }));
@@ -63,9 +55,6 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
       }
     }
   }, [isAuthenticated, user?.id, featureType]);
-
-  // Guest mode support
-  const isGuest = user?.isGuest === true;
 
   // Function to be called when a feature is used
   const decrementUsage = () => {
@@ -78,18 +67,6 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
     }
   };
 
-  // Handle guest login
-  const handleGuestLogin = async () => {
-    setGuestLoading(true);
-    try {
-      if (await loginAsGuest()) {
-        navigate(window.location.pathname);
-      }
-    } finally {
-      setGuestLoading(false);
-    }
-  };
-
   if (!isAuthenticated) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center py-20">
@@ -98,11 +75,12 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
           <p className="text-white/80 mb-6">您需要登录后才能使用此功能</p>
           
           <div className="bg-nexus-dark/40 p-4 border border-nexus-blue/30 rounded-lg mb-4">
-            <h3 className="font-medium text-white text-center mb-2">游客快速体验</h3>
+            <h3 className="font-medium text-white text-center mb-2">注册免费体验</h3>
             <p className="text-xs text-white/70 text-center mb-4">
-              账号：guest@nexusai.com<br />
-              密码：guest123<br />
-              <span className="text-nexus-cyan">（可享受15次AI对话、30次图像生成、10次语音合成）</span>
+              新用户注册即可获得：<br />
+              <span className="text-nexus-cyan">
+                {featureType === 'chat' ? '5次AI对话' : featureType === 'image' ? '10次图像生成' : '10次语音合成'}
+              </span>
             </p>
           </div>
           
@@ -115,14 +93,13 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
             </Button>
             
             <Button
-              onClick={handleGuestLogin}
+              onClick={() => navigate('/register')}
               variant="outline"
               className="border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-dark/50"
-              disabled={guestLoading}
             >
-              {guestLoading ? '创建游客账号...' : '游客体验'}
+              免费注册
               <span className="ml-2 text-xs px-2 py-0.5 bg-nexus-blue/20 rounded-full">
-                {featureType === 'chat' ? '15次' : featureType === 'image' ? '30次' : '10次'}
+                {featureType === 'chat' ? '5次' : featureType === 'image' ? '10次' : '10次'}
               </span>
             </Button>
           </div>
@@ -138,10 +115,7 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
           <h2 className="text-2xl font-bold text-gradient mb-4">免费体验次数已用完</h2>
           <p className="text-white/80 mb-6">
             您已用完免费体验次数
-            （{isGuest ? 
-              (featureType === 'chat' ? '15次对话' : featureType === 'image' ? '30次图像生成' : '10次语音合成') :
-              (featureType === 'chat' ? '5次对话' : featureType === 'image' ? '10次图像生成' : '10次语音合成')
-            }）
+            （{featureType === 'chat' ? '5次对话' : featureType === 'image' ? '10次图像生成' : '10次语音合成'}）
           </p>
           <p className="text-lg text-gradient-gold font-bold mb-6">
             只需 ¥299 即可永久使用所有功能！
@@ -165,7 +139,6 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
         <div className="bg-nexus-blue/20 text-white text-center py-2 px-4 mb-4 rounded-md">
           <p>您正在使用免费体验，还剩 <span className="font-bold text-nexus-cyan">{usageRemaining}</span> 次
             {featureType === 'chat' ? '对话' : featureType === 'image' ? '图像生成' : '语音合成'}机会
-            {isGuest && <span className="ml-2 text-xs">(游客模式)</span>}
           </p>
         </div>
         {React.cloneElement(children as React.ReactElement, { decrementUsage })}

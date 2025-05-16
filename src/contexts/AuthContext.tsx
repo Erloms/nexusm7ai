@@ -7,7 +7,6 @@ interface User {
   email: string;
   name: string;
   isVip: boolean;
-  isGuest?: boolean;
 }
 
 interface AuthContextType {
@@ -15,7 +14,6 @@ interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
   login: (emailOrUsername: string, password: string) => Promise<boolean>;
-  loginAsGuest: () => Promise<boolean>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
   checkPaymentStatus: () => boolean;
@@ -65,61 +63,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Guest login function
-  const loginAsGuest = async (): Promise<boolean> => {
-    setLoading(true);
-    
-    try {
-      // 使用固定的游客账号信息
-      const guestUser = {
-        id: 'guest-user',
-        email: 'guest@nexusai.com',
-        name: '游客用户',
-        isVip: false,
-        isGuest: true
-      };
-      
-      setUser(guestUser);
-      localStorage.setItem('nexusAiUser', JSON.stringify(guestUser));
-      
-      // Initialize usage counts for guest user
-      localStorage.setItem(`nexusAi_chat_usage_${guestUser.id}`, JSON.stringify({ remaining: 15 }));
-      localStorage.setItem(`nexusAi_image_usage_${guestUser.id}`, JSON.stringify({ remaining: 30 }));
-      localStorage.setItem(`nexusAi_voice_usage_${guestUser.id}`, JSON.stringify({ remaining: 10 }));
-      
-      toast({
-        title: "游客模式",
-        description: "您正在使用游客模式，享有有限的免费使用次数",
-        duration: 5000,
-      });
-      
-      return true;
-    } catch (error) {
-      console.error("Guest login error:", error);
-      toast({
-        title: "登录失败",
-        description: "无法创建游客账号，请稍后再试",
-        variant: "destructive",
-        duration: 3000,
-      });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Login function - now accepts either email or username
+  // Login function - accepts either email or username
   const login = async (emailOrUsername: string, password: string): Promise<boolean> => {
     setLoading(true);
     
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Special case for guest account
-      if ((emailOrUsername === 'guest@nexusai.com' || emailOrUsername === '游客用户') && password === 'guest123') {
-        return await loginAsGuest();
-      }
       
       // Simple validation for demo purposes
       if (emailOrUsername && password.length >= 6) {
@@ -168,7 +118,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Mock register function
+  // Register function
   const register = async (name: string, email: string, password: string): Promise<boolean> => {
     setLoading(true);
     
@@ -195,8 +145,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         toast({
           title: "注册成功",
-          description: "欢迎加入 Nexus AI！",
-          duration: 3000,
+          description: "欢迎加入 Nexus AI！您有5次AI对话、10次图像生成、10次语音合成的免费体验额度。",
+          duration: 5000,
         });
         
         return true;
@@ -239,7 +189,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isAuthenticated: !!user,
       loading,
       login,
-      loginAsGuest,
       register,
       logout,
       checkPaymentStatus,

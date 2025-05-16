@@ -177,8 +177,14 @@ function useToast() {
     };
   }, [state]);
 
-  return {
+  // Ensure toasts is always an array for safe mapping
+  const safeState = {
     ...state,
+    toasts: state.toasts || []
+  };
+
+  return {
+    ...safeState,
     toast,
     dismiss: (toastId?: string) => dispatch({
       type: actionTypes.DISMISS_TOAST,

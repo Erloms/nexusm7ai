@@ -8,26 +8,17 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
 const Login = () => {
-  const { login, loginAsGuest, loading } = useAuth();
+  const { login, loading } = useAuth();
   const navigate = useNavigate();
   
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [guestLoading, setGuestLoading] = useState(false);
   
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (await login(emailOrUsername, password)) {
       navigate('/');
     }
-  };
-  
-  const handleGuestLogin = async () => {
-    setGuestLoading(true);
-    if (await loginAsGuest()) {
-      navigate('/');
-    }
-    setGuestLoading(false);
   };
   
   return (
@@ -94,19 +85,17 @@ const Login = () => {
               </div>
               
               <div className="bg-nexus-dark/40 p-4 border border-nexus-blue/30 rounded-lg">
-                <h3 className="font-medium text-white text-center mb-2">游客快速体验</h3>
+                <h3 className="font-medium text-white text-center mb-2">免费注册体验</h3>
                 <p className="text-xs text-white/70 text-center mb-4">
-                  账号：guest@nexusai.com<br />
-                  密码：guest123<br />
-                  <span className="text-nexus-cyan">（可享受15次AI对话、30次图像生成、10次语音合成）</span>
+                  新用户注册即可获得：<br />
+                  <span className="text-nexus-cyan">5次AI对话、10次图像生成、10次语音合成</span>
                 </p>
                 <Button
                   type="button"
-                  onClick={handleGuestLogin}
+                  onClick={() => navigate('/register')}
                   className="w-full bg-nexus-dark border border-nexus-blue/50 hover:bg-nexus-blue/20 text-nexus-cyan"
-                  disabled={guestLoading}
                 >
-                  {guestLoading ? '正在创建游客账号...' : '以游客身份体验'}
+                  免费注册
                 </Button>
               </div>
             </form>

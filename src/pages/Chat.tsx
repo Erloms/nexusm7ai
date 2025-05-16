@@ -19,7 +19,6 @@ interface Model {
   id: string;
   name: string;
   description: string;
-  group: string;
 }
 
 interface ChatProps {
@@ -35,7 +34,7 @@ const Chat = ({ decrementUsage }: ChatProps) => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [availableModels, setAvailableModels] = useState<Record<string, Model[]>>({});
+  const [availableModels, setAvailableModels] = useState<Model[]>([]);
   const [modelsFetched, setModelsFetched] = useState(false);
 
   // 获取最新可用的API模型
@@ -46,99 +45,74 @@ const Chat = ({ decrementUsage }: ChatProps) => {
         if (response.ok) {
           const modelsList = await response.json();
           
-          // 整理模型列表
-          const organizedModels: Record<string, Model[]> = {
-            'OpenAI': [],
-            'Gemini': [],
-            'Meta': [],
-            'DeepSeek': [],
-            'Mistral': [],
-            'Anthropic': [],
-            'Other': []
-          };
+          // 处理API返回的模型数据并整理
+          const processedModels: Model[] = [];
           
-          // 处理API返回的模型数据
+          // 优先添加这些热门模型
+          const priorityModels = [
+            'gemini', 
+            'deepseek', 
+            'gpt-4o', 
+            'gpt-4.1'
+          ];
+          
+          // 处理模型列表
           modelsList.forEach((model: any) => {
             // 使用模型完整名称
             const modelId = model.name || model;
             const modelName = model.description || model;
             const provider = model.provider || '';
             
-            // 根据模型名称或提供商分组
-            let group = 'Other';
-            
-            if (modelId.toLowerCase().includes('gpt') || provider.toLowerCase().includes('openai') || provider.toLowerCase().includes('azure')) {
-              group = 'OpenAI';
-            } else if (modelId.toLowerCase().includes('gemini') || provider.toLowerCase().includes('google')) {
-              group = 'Gemini';
-            } else if (modelId.toLowerCase().includes('llama') || provider.toLowerCase().includes('meta') || modelId.toLowerCase().includes('llamascout')) {
-              group = 'Meta';
-            } else if (modelId.toLowerCase().includes('deepseek')) {
-              group = 'DeepSeek';
-            } else if (modelId.toLowerCase().includes('mistral')) {
-              group = 'Mistral';
-            } else if (modelId.toLowerCase().includes('claude')) {
-              group = 'Anthropic';
-            }
-            
-            organizedModels[group].push({
+            // 创建模型对象
+            const modelObj = {
               id: modelId,
               name: modelName,
               description: `${provider ? provider + ' ' : ''}${modelName}`,
-              group: group
-            });
+            };
+            
+            processedModels.push(modelObj);
           });
           
-          // 过滤掉空分组
-          const filteredModels: Record<string, Model[]> = {};
-          Object.keys(organizedModels).forEach(group => {
-            if (organizedModels[group].length > 0) {
-              filteredModels[group] = organizedModels[group];
-            }
+          // 对模型进行排序，优先展示Gemini、DeepSeek和GPT-4系列
+          processedModels.sort((a, b) => {
+            const aHasPriority = priorityModels.some(pm => a.id.toLowerCase().includes(pm.toLowerCase()));
+            const bHasPriority = priorityModels.some(pm => b.id.toLowerCase().includes(pm.toLowerCase()));
+            
+            if (aHasPriority && !bHasPriority) return -1;
+            if (!aHasPriority && bHasPriority) return 1;
+            return 0;
           });
           
-          setAvailableModels(filteredModels);
-          setModelsFetched(true);
+          setAvailableModels(processedModels);
           
-          // 默认选择OpenAI组中的第一个模型（如果有）
-          if (filteredModels['OpenAI'] && filteredModels['OpenAI'].length > 0) {
-            setSelectedModel(filteredModels['OpenAI'][0].id);
+          // 默认选择gpt-4o-mini或列表中的第一个模型
+          const gpt4oMini = processedModels.find(m => m.id === 'gpt-4o-mini');
+          if (gpt4oMini) {
+            setSelectedModel(gpt4oMini.id);
+          } else if (processedModels.length > 0) {
+            setSelectedModel(processedModels[0].id);
           }
+          
+          setModelsFetched(true);
         }
       } catch (error) {
         console.error('获取模型列表失败:', error);
         // 加载失败时使用备用模型列表
-        setAvailableModels({
-          'OpenAI': [
-            { id: 'gpt-4o-mini', name: 'GPT-4o-mini', description: 'OpenAI GPT-4o-mini 多模态模型', group: 'OpenAI' },
-            { id: 'gpt-4o', name: 'GPT-4o', description: 'OpenAI GPT-4o 多模态大语言模型', group: 'OpenAI' },
-            { id: 'o1-mini', name: 'o1-mini', description: 'OpenAI o1-mini 轻量级大语言模型', group: 'OpenAI' },
-            { id: 'gpt-4.1-nano', name: 'GPT-4.1-nano', description: 'OpenAI GPT-4.1-nano 新一代大语言模型', group: 'OpenAI' },
-            { id: 'gpt-4.1-mini', name: 'GPT-4.1-mini', description: 'OpenAI GPT-4.1-mini 新一代大语言模型', group: 'OpenAI' }
-          ],
-          'Gemini': [
-            { id: 'gemini-2.5-pro-exp-03-25', name: 'Gemini 2.5 Pro (exp-03-25)', description: 'Google最新一代大语言模型', group: 'Gemini' },
-            { id: 'gemini-2.5-flash-preview-04-17', name: 'Gemini 2.5 Flash (preview-04-17)', description: 'Google Gemini 2.5 系列闪电版', group: 'Gemini' }
-          ],
-          'Meta': [
-            { id: 'llama-3.3-70b-instruct', name: 'Llama 3.3 70B Instruct', description: 'Meta开源大模型最新版', group: 'Meta' },
-            { id: '@cf/meta/llama-3.1-8b-instruct', name: '@cf/meta/llama-3.1-8b-instruct', description: 'Meta轻量级开源大模型', group: 'Meta' }
-          ],
-          'DeepSeek': [
-            { id: 'DeepSeek-V3-0324', name: 'DeepSeek-V3-0324', description: '国产大模型DeepSeek最新版', group: 'DeepSeek' },
-            { id: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', name: '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', description: 'DeepSeek精华版32B大模型', group: 'DeepSeek' }
-          ],
-          'Mistral': [
-            { id: 'mistral-small-3.1-24b-instruct-2503', name: 'Mistral Small 3.1 24B Instruct 2503', description: 'Mistral最新指令微调模型', group: 'Mistral' }
-          ],
-          'Anthropic': [
-            { id: 'claude-3.5-haiku', name: 'Claude 3.5 Haiku', description: 'Anthropic Claude 3.5 系列轻量模型', group: 'Anthropic' }
-          ],
-          'Other': [
-            { id: 'qwen2.5-coder-32b-instruct', name: 'Qwen 2.5 Coder 32B Instruct', description: 'Qwen 2.5 编程专用模型', group: 'Qwen' },
-            { id: 'phi-4-instruct', name: 'Phi-4 Instruct', description: 'Microsoft Phi-4 指令微调模型', group: 'Microsoft' }
-          ]
-        });
+        const backupModels = [
+          { id: 'gemini-2.5-pro-exp-03-25', name: 'Gemini 2.5 Pro', description: 'Google最新一代大语言模型' },
+          { id: 'deepseek-v3-0324', name: 'DeepSeek-V3-0324', description: '国产顶尖大语言模型' },
+          { id: 'gpt-4o', name: 'GPT-4o', description: 'OpenAI多模态大语言模型' },
+          { id: 'gpt-4.1-nano', name: 'GPT-4.1-nano', description: 'OpenAI新一代大语言模型' },
+          { id: 'llama-3.3-70b-instruct', name: 'Llama 3.3 70B', description: 'Meta开源大语言模型' },
+          { id: 'claude-3.5-haiku', name: 'Claude 3.5 Haiku', description: 'Anthropic高效模型' },
+          { id: 'gemini-2.5-flash-preview-04-17', name: 'Gemini 2.5 Flash', description: 'Google闪电版模型' },
+          { id: 'mistral-small-3.1-24b-instruct-2503', name: 'Mistral Small 3.1', description: 'Mistral AI模型' },
+          { id: 'phi-4-instruct', name: 'Phi-4 Instruct', description: 'Microsoft Phi-4模型' },
+          { id: 'qwen2.5-coder-32b-instruct', name: 'Qwen 2.5 Coder', description: 'Qwen编程专用模型' }
+        ];
+        
+        setAvailableModels(backupModels);
+        setSelectedModel('gpt-4o');
         setModelsFetched(true);
       }
     };
@@ -247,9 +221,6 @@ const Chat = ({ decrementUsage }: ChatProps) => {
     "解释量子计算的基本原理"
   ];
 
-  // 获取所有模型的平面数组，用于显示
-  const allModels = Object.values(availableModels).flat();
-
   return (
     <div className="min-h-screen bg-nexus-dark flex flex-col">
       <Navigation />
@@ -332,7 +303,7 @@ const Chat = ({ decrementUsage }: ChatProps) => {
                           <User className="w-5 h-5 mr-2" />
                         )}
                         <p className="font-medium text-sm">
-                          {msg.role === 'assistant' ? allModels.find(m => m.id === selectedModel)?.name || 'AI助手' : '你'}
+                          {msg.role === 'assistant' ? availableModels.find(m => m.id === selectedModel)?.name || 'AI助手' : '你'}
                         </p>
                       </div>
                       
@@ -356,7 +327,7 @@ const Chat = ({ decrementUsage }: ChatProps) => {
                   <div className="max-w-[75%] rounded-2xl p-4 bg-nexus-dark/80 border border-nexus-blue/20 text-white rounded-tl-none animate-pulse">
                     <div className="flex items-center mb-2">
                       <Bot className="w-5 h-5 mr-2 text-nexus-cyan" />
-                      <p className="font-medium text-sm">{allModels.find(m => m.id === selectedModel)?.name || 'AI助手'}</p>
+                      <p className="font-medium text-sm">{availableModels.find(m => m.id === selectedModel)?.name || 'AI助手'}</p>
                     </div>
                     <div className="flex space-x-2">
                       <div className="h-2 w-2 bg-nexus-cyan/60 rounded-full animate-bounce"></div>
@@ -385,25 +356,20 @@ const Chat = ({ decrementUsage }: ChatProps) => {
                       <SelectValue placeholder="选择AI模型" />
                     </SelectTrigger>
                     <SelectContent className="bg-nexus-dark border-nexus-blue/30 max-h-[300px]">
-                      {Object.entries(availableModels).map(([group, groupModels]) => (
-                        <div key={group} className="p-1">
-                          <h3 className="text-xs text-nexus-blue uppercase font-bold px-2 py-1">{group}</h3>
-                          {groupModels.map((model) => (
-                            <SelectItem 
-                              key={model.id} 
-                              value={model.id}
-                              className="text-white hover:bg-nexus-blue/20"
-                            >
-                              {model.name}
-                            </SelectItem>
-                          ))}
-                        </div>
+                      {availableModels.map((model) => (
+                        <SelectItem 
+                          key={model.id} 
+                          value={model.id}
+                          className="text-white hover:bg-nexus-blue/20"
+                        >
+                          {model.name}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="w-full lg:w-auto text-white/60 text-xs">
-                  {allModels.find(m => m.id === selectedModel)?.description || '加载模型中...'}
+                  {availableModels.find(m => m.id === selectedModel)?.description || '加载模型中...'}
                 </div>
               </div>
               

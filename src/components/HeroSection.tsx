@@ -17,7 +17,7 @@ const HeroSection = () => {
           <span className="text-gradient">解锁</span> <span className="text-gradient-reverse">AI</span> <span className="text-gradient">超能力</span>
         </h1>
         <h2 className="text-2xl md:text-4xl font-bold mb-8">
-          <span className="text-white">对话、创想、发声，一站搞定！</span>
+          <span className="text-white">AI创作助手，智能高效，一键生成</span>
         </h2>
         <p className="text-lg md:text-xl text-white/80 mb-8 max-w-2xl mx-auto">
           <span className="text-gradient-gold font-bold text-2xl">￥299元</span>，<span className="font-bold">一次付费，终身使用！</span>

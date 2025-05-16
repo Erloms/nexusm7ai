@@ -119,7 +119,7 @@ const Payment = () => {
             
             <div className="flex flex-col md:flex-row gap-8">
               {/* Payment Info Section - Made wider */}
-              <div className="flex-1 md:flex-[1.2]">
+              <div className="flex-1 md:flex-[1.5]">
                 <div className="bg-gradient-to-br from-nexus-dark/50 to-nexus-purple/20 rounded-lg p-6 backdrop-blur-sm border border-nexus-blue/30">
                   <h2 className="text-2xl font-bold text-gradient-gold mb-4">终身会员特权</h2>
                   
@@ -128,7 +128,7 @@ const Payment = () => {
                       <div className="mr-3 bg-gradient-to-r from-nexus-blue to-nexus-cyan w-6 h-6 flex items-center justify-center rounded-full flex-shrink-0 mt-1">
                         <span className="text-sm">✓</span>
                       </div>
-                      <span>使用全部最先进的AI大模型，GPT-4o、GPT-4.1、Gemini等一应俱全</span>
+                      <span>使用全部最先进的AI大模型，GPT-4o、Gemini 2.5、DeepSeek等顶级模型一应俱全</span>
                     </li>
                     <li className="flex items-start">
                       <div className="mr-3 bg-gradient-to-r from-nexus-blue to-nexus-cyan w-6 h-6 flex items-center justify-center rounded-full flex-shrink-0 mt-1">
@@ -157,7 +157,7 @@ const Payment = () => {
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-white font-bold">Nexus AI 特惠价</span>
-                      <div className="text-gradient-gold text-3xl font-bold">¥299/永久</div>
+                      <div className="text-gradient-gold text-3xl font-bold whitespace-nowrap">¥299/永久</div>
                     </div>
                     <div className="text-white/70 text-sm mt-2">* 一次付款，终身使用</div>
                   </div>
@@ -168,7 +168,7 @@ const Payment = () => {
               <div className="flex-1 md:flex-[0.8] flex flex-col items-center justify-center">
                 <div className="bg-white p-4 rounded-xl mb-4 w-64 h-64 flex items-center justify-center">
                   <img 
-                    src="/lovable-uploads/57dcc2a2-00e1-41ff-8247-2ae008afe9d8.png" 
+                    src="/lovable-uploads/d5c7e918-5e1e-45fb-acb5-76d47e11da41.png" 
                     alt="支付宝收款码" 
                     className="max-w-full max-h-full"
                   />
@@ -178,13 +178,13 @@ const Payment = () => {
                   <p className="text-white font-bold mb-2">请使用支付宝扫码支付</p>
                   <p className="text-white/70 text-sm mb-4">
                     <span className="text-red-500 font-bold">重要：</span> 
-                    请在下方输入支付宝订单号后四位和联系方式
+                    请在下方输入订单信息
                   </p>
                   
                   <div className="flex flex-col space-y-3 mb-4">
                     <div>
                       <label htmlFor="order-number" className="block text-sm font-medium text-white mb-1">
-                        请输入订单号后四位
+                        请输入订单号后四位+联系方式（邮箱或手机号，作为登录账号）
                       </label>
                       <Input
                         id="order-number"
@@ -197,15 +197,12 @@ const Payment = () => {
                     </div>
                     
                     <div>
-                      <label htmlFor="contact-info" className="block text-sm font-medium text-white mb-1">
-                        请输入联系方式（邮箱或手机号，作为登录账号）
-                      </label>
                       <Input
                         id="contact-info"
                         value={contactInfo}
                         onChange={(e) => setContactInfo(e.target.value)}
                         className="bg-nexus-dark/50 border-nexus-blue/30 text-white"
-                        placeholder="用于确认支付和账号登录"
+                        placeholder="邮箱或手机号，用于确认支付和账号登录"
                       />
                     </div>
                   </div>
