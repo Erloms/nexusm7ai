@@ -18,6 +18,7 @@ interface PaymentRequest {
   orderNumber: string;
   timestamp: string;
   status: 'pending' | 'approved' | 'rejected';
+  userId?: string;
 }
 
 const PaymentRequests = () => {
@@ -25,42 +26,37 @@ const PaymentRequests = () => {
   const [requests, setRequests] = useState<PaymentRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 模拟从后端加载支付请求
+  // 从本地存储加载支付请求
   useEffect(() => {
-    // 在实际应用中，这里应该从API加载数据
-    const mockRequests: PaymentRequest[] = [
-      { 
-        id: '1', 
-        contactInfo: 'user1@example.com', 
-        orderNumber: '1234', 
-        timestamp: new Date().toISOString(),
-        status: 'pending' 
-      },
-      { 
-        id: '2', 
-        contactInfo: '13800138000', 
-        orderNumber: '5678', 
-        timestamp: new Date(Date.now() - 3600000).toISOString(),
-        status: 'pending' 
-      },
-      // 如果有本地存储的请求，可以从这里加载
-      ...JSON.parse(localStorage.getItem('paymentRequests') || '[]')
-    ];
-    
-    setRequests(mockRequests);
+    const storedRequests = JSON.parse(localStorage.getItem('paymentRequests') || '[]');
+    setRequests(storedRequests);
     setLoading(false);
   }, []);
 
   // 处理请求的批准或拒绝
   const handleRequest = (id: string, approved: boolean) => {
     setRequests(prev => {
-      const updated = prev.map(req => 
-        req.id === id 
-          ? { ...req, status: approved ? 'approved' as const : 'rejected' as const } 
-          : req
-      );
+      const updated = prev.map(req => {
+        if (req.id === id) {
+          const newStatus = approved ? 'approved' as const : 'rejected' as const;
+          
+          // 如果批准，更新用户的会员状态
+          if (approved && req.userId) {
+            // 在实际应用中，这应该调用后端API来更新用户状态
+            // 这里我们使用本地存储模拟
+            const vipUsers = JSON.parse(localStorage.getItem('vipUsers') || '[]');
+            if (!vipUsers.includes(req.userId)) {
+              vipUsers.push(req.userId);
+              localStorage.setItem('vipUsers', JSON.stringify(vipUsers));
+            }
+          }
+          
+          return { ...req, status: newStatus };
+        }
+        return req;
+      });
       
-      // 保存到本地存储（在实际应用中，还应该调用API更新）
+      // 保存到本地存储
       localStorage.setItem('paymentRequests', JSON.stringify(updated));
       
       return updated;
@@ -69,23 +65,7 @@ const PaymentRequests = () => {
     // 显示操作成功通知
     toast({
       title: approved ? "已批准支付" : "已拒绝支付",
-      description: `已${approved ? '批准' : '拒绝'}ID为 ${id} 的支付请求`,
-    });
-  };
-
-  // 添加新的支付请求（用于模拟演示）
-  const addNewRequest = (paymentRequest: Omit<PaymentRequest, 'id' | 'timestamp' | 'status'>) => {
-    const newRequest: PaymentRequest = {
-      id: `${Date.now()}`, 
-      timestamp: new Date().toISOString(),
-      status: 'pending',
-      ...paymentRequest
-    };
-    
-    setRequests(prev => {
-      const updated = [...prev, newRequest];
-      localStorage.setItem('paymentRequests', JSON.stringify(updated));
-      return updated;
+      description: `已${approved ? '批准' : '拒绝'}ID为 ${id} 的支付请求${approved ? '，用户已获得VIP权限' : ''}`,
     });
   };
 

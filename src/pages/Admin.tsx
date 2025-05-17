@@ -20,7 +20,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
 } from "@/components/ui/sidebar";
-import { User, CreditCard, Settings, Users } from 'lucide-react';
+import { User, CreditCard, Settings, Users, BarChart3 } from 'lucide-react';
 
 const Admin = () => {
   const { user } = useAuth();
@@ -118,14 +118,14 @@ const Admin = () => {
     <div className="min-h-screen bg-nexus-dark flex flex-col">
       <Navigation />
       
-      <div className="flex-grow container mx-auto py-20">
+      <div className="flex-grow container mx-auto py-20 px-4">
         <SidebarProvider>
           <div className="flex w-full min-h-[600px] bg-nexus-dark/80 border border-nexus-blue/30 rounded-lg overflow-hidden">
             <Sidebar className="w-64 border-r border-nexus-blue/30 bg-nexus-dark/50">
               <SidebarHeader className="p-4 border-b border-nexus-blue/30">
                 <div className="flex items-center space-x-2">
                   <User className="h-5 w-5 text-nexus-cyan" />
-                  <span className="text-lg font-medium text-white">管理员面板</span>
+                  <span className="text-lg font-medium text-white">管理员控制台</span>
                 </div>
               </SidebarHeader>
               
@@ -134,6 +134,17 @@ const Admin = () => {
                   <div className="p-4">
                     <h3 className="text-sm font-medium text-white/70 mb-3">管理功能</h3>
                     <SidebarMenu>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton 
+                          className={activeTab === 'dashboard' ? "bg-nexus-blue/20" : ""}
+                          onClick={() => setActiveTab('dashboard')}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <BarChart3 className="h-4 w-4 text-nexus-cyan" />
+                            <span>仪表板</span>
+                          </div>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
                       <SidebarMenuItem>
                         <SidebarMenuButton 
                           className={activeTab === 'users' ? "bg-nexus-blue/20" : ""}
@@ -184,6 +195,25 @@ const Admin = () => {
               </div>
               
               <div className="space-y-6">
+                {activeTab === 'dashboard' && (
+                  <div>
+                    <h2 className="text-xl font-bold mb-4 text-white">系统概览</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg p-4">
+                        <div className="text-nexus-cyan text-sm mb-1">总用户数</div>
+                        <div className="text-2xl font-bold text-white">124</div>
+                      </div>
+                      <div className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg p-4">
+                        <div className="text-nexus-cyan text-sm mb-1">VIP会员</div>
+                        <div className="text-2xl font-bold text-white">45</div>
+                      </div>
+                      <div className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg p-4">
+                        <div className="text-nexus-cyan text-sm mb-1">待处理支付</div>
+                        <div className="text-2xl font-bold text-white">3</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {activeTab === 'users' && <UserManagement />}
                 {activeTab === 'payments' && <PaymentRequests />}
                 {activeTab === 'settings' && (

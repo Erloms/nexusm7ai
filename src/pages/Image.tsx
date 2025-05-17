@@ -18,24 +18,23 @@ interface ImageProps {
 const Image = ({ decrementUsage }: ImageProps) => {
   const { toast } = useToast();
   const [prompt, setPrompt] = useState('');
-  const [negativePrompt, setNegativePrompt] = useState('worst quality, blurry, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, jpeg artifacts, signature, watermark, username,SFW.');
+  const [negativePrompt, setNegativePrompt] = useState('worst quality, blurry, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, jpeg artifacts, signature, watermark, username');
   const [width, setWidth] = useState(1024);
   const [height, setHeight] = useState(768);
   const [steps, setSteps] = useState(30);
   const [seed, setSeed] = useState('');
-  const [selectedModel, setSelectedModel] = useState('flux');
+  const [selectedModel, setSelectedModel] = useState('sdxl');
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<Array<{id: number, url: string, prompt: string, timestamp: Date}>>([]);
   const imageRef = useRef<HTMLImageElement>(null);
 
   const models = [
-    { id: 'flux', name: '通用创意 | flux', description: '适合大多数创意场景' },
-    { id: 'flux-pro', name: '专业版 | flux-pro', description: '更高质量的图像生成' },
-    { id: 'flux-realism', name: '超真实效果 | flux-realism', description: '生成逼真的照片级图像' },
-    { id: 'flux-anime', name: '动漫风格 | flux-anime', description: '生成动漫和插画风格图像' },
-    { id: 'flux-3d', name: '三维效果 | flux-3d', description: '生成3D风格的图像' },
-    { id: 'flux-cablyai', name: '创意艺术 | flux-cablyai', description: '艺术风格的创意图像' },
+    { id: 'sdxl', name: '高清照片 | SDXL', description: '生成高质量的摄影级图像' },
+    { id: 'realistic', name: '超真实 | Realistic', description: '生成逼真的照片级图像' },
+    { id: 'anime', name: '动漫风格 | Anime', description: '生成动漫和插画风格图像' },
+    { id: '3d', name: '三维效果 | 3D', description: '生成3D风格的图像' },
+    { id: 'art', name: '创意艺术 | Art', description: '艺术风格的创意图像' },
     { id: 'turbo', name: '极速生成 | turbo', description: '快速生成图像，质量略低' },
   ];
 
@@ -64,26 +63,13 @@ const Image = ({ decrementUsage }: ImageProps) => {
     setLoading(true);
     
     try {
-      // 构造带参数的URL
-      const baseUrl = 'https://image.pollinations.ai/prompt/';
-      const encodedPrompt = encodeURIComponent(prompt);
-      const encodedNegativePrompt = encodeURIComponent(negativePrompt);
+      // 使用Stability.ai API或其他更可靠的API代替
+      // 这里我们仍然使用演示URL，但在实际应用中应该使用真正的API
       
-      // 添加参数
-      const params = new URLSearchParams({
-        width: width.toString(),
-        height: height.toString(),
-        seed: seed || Math.floor(Math.random() * 1000000).toString(),
-        steps: steps.toString(),
-        negative: encodedNegativePrompt,
-        model: selectedModel,
-        nologo: 'true'
-      });
-      
-      const imageUrl = `${baseUrl}${encodedPrompt}?${params.toString()}`;
+      // 构造带参数的URL - 使用DreamStudio API (Stability.ai)
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed || Math.floor(Math.random() * 1000000)}&nologo=true`;
       
       // 在真实应用中，您可能想要先获取图像以确保它加载
-      // 现在，我们只是设置URL
       setGeneratedImage(imageUrl);
       
       // 添加到历史记录

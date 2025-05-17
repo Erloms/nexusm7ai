@@ -1,208 +1,199 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { MessageSquare, Image, Volume2, Rocket, User } from 'lucide-react';
-import { Progress } from "@/components/ui/progress";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate, Link } from 'react-router-dom';
+import { 
+  MessageSquare, 
+  Image as ImageIcon, 
+  Volume2, 
+  User, 
+  Settings, 
+  LogOut,
+  BarChart3
+} from 'lucide-react';
 
 const Dashboard = () => {
-  const { user, isAuthenticated, checkPaymentStatus } = useAuth();
+  const { user, logout, checkPaymentStatus } = useAuth();
   const navigate = useNavigate();
-  const [usageStats, setUsageStats] = React.useState({
-    chat: { used: 0, total: 10 },
-    image: { used: 0, total: 10 },
-    voice: { used: 0, total: 10 }
-  });
-
-  // 如果用户未登录，重定向到登录页面
-  React.useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-    }
-  }, [isAuthenticated, navigate]);
-
-  React.useEffect(() => {
-    if (user) {
-      // 从本地存储获取使用统计
-      try {
-        const chatUsage = JSON.parse(localStorage.getItem(`nexusAi_chat_usage_${user.id}`) || '{"remaining": 10}');
-        const imageUsage = JSON.parse(localStorage.getItem(`nexusAi_image_usage_${user.id}`) || '{"remaining": 10}');
-        const voiceUsage = JSON.parse(localStorage.getItem(`nexusAi_voice_usage_${user.id}`) || '{"remaining": 10}');
-        
-        setUsageStats({
-          chat: { used: 10 - chatUsage.remaining, total: 10 },
-          image: { used: 10 - imageUsage.remaining, total: 10 },
-          voice: { used: 10 - voiceUsage.remaining, total: 10 }
-        });
-      } catch (error) {
-        console.error("Error loading usage stats:", error);
-      }
-    }
-  }, [user]);
-
-  const calculatePercentage = (used: number, total: number) => {
-    return Math.min(Math.round((used / total) * 100), 100);
-  };
-
-  const handleUpgrade = () => {
-    navigate('/payment');
-  };
-
-  if (!isAuthenticated) {
+  
+  if (!user) {
+    navigate('/login');
     return null;
   }
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
+  const isAdmin = user.name === '管理员';
+
+  // 获取用户的使用额度信息
+  const getUsageData = () => {
+    if (checkPaymentStatus()) {
+      // VIP用户无限制
+      return {
+        chat: { used: 0, total: '无限制' },
+        image: { used: 0, total: '无限制' },
+        voice: { used: 0, total: '无限制' },
+      };
+    }
+    
+    const getServiceUsage = (serviceType: string) => {
+      const usageData = localStorage.getItem(`nexusAi_${serviceType}_usage_${user.id}`);
+      if (usageData) {
+        const { remaining } = JSON.parse(usageData);
+        // 计算已使用量（总量 - 剩余量）
+        return { used: 10 - remaining, total: 10 };
+      }
+      return { used: 0, total: 10 };
+    };
+    
+    return {
+      chat: getServiceUsage('chat'),
+      image: getServiceUsage('image'),
+      voice: getServiceUsage('voice'),
+    };
+  };
+
+  const usageData = getUsageData();
 
   return (
     <div className="min-h-screen bg-nexus-dark flex flex-col">
       <Navigation />
       
-      <div className="flex-grow container mx-auto py-20">
-        <SidebarProvider>
-          <div className="flex w-full min-h-[600px] bg-nexus-dark/80 border border-nexus-blue/30 rounded-lg overflow-hidden">
-            <Sidebar className="w-64 border-r border-nexus-blue/30 bg-nexus-dark/50">
-              <SidebarHeader className="p-4 border-b border-nexus-blue/30">
-                <div className="flex items-center space-x-2">
-                  <User className="h-5 w-5 text-nexus-cyan" />
-                  <span className="text-lg font-medium text-white">{user?.name}</span>
+      <div className="flex-grow container mx-auto my-20 px-4">
+        <div className="flex flex-col md:flex-row gap-6 min-h-[70vh]">
+          {/* 侧边栏 */}
+          <div className="w-full md:w-64 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-5">
+            <div className="text-center mb-8">
+              <div className="h-20 w-20 rounded-full bg-gradient-to-br from-nexus-blue to-nexus-cyan mx-auto flex items-center justify-center">
+                <User className="h-10 w-10 text-white" />
+              </div>
+              <h3 className="mt-4 text-xl font-bold text-white">{user.name}</h3>
+              <div className="mt-2 text-sm text-white/70">{user.email || '未设置邮箱'}</div>
+              {checkPaymentStatus() && (
+                <div className="mt-2 bg-nexus-blue/20 text-nexus-cyan px-3 py-1 rounded-full text-xs inline-flex items-center">
+                  VIP会员
                 </div>
-              </SidebarHeader>
-              
-              <SidebarContent>
-                <SidebarGroup>
-                  <div className="p-4">
-                    <h3 className="text-sm font-medium text-white/70 mb-3">AI服务</h3>
-                    <SidebarMenu>
-                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild>
-                          <a href="/chat" className="flex items-center space-x-2">
-                            <MessageSquare className="h-4 w-4 text-nexus-cyan" />
-                            <span>AI对话</span>
-                          </a>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild>
-                          <a href="/image" className="flex items-center space-x-2">
-                            <Image className="h-4 w-4 text-nexus-cyan" />
-                            <span>AI图像生成</span>
-                          </a>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild>
-                          <a href="/voice" className="flex items-center space-x-2">
-                            <Volume2 className="h-4 w-4 text-nexus-cyan" />
-                            <span>AI语音合成</span>
-                          </a>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    </SidebarMenu>
-                  </div>
-                </SidebarGroup>
-              </SidebarContent>
-              
-              <SidebarFooter className="p-4 border-t border-nexus-blue/30">
-                {!checkPaymentStatus() && (
-                  <>
-                    <div className="mb-3 px-2">
-                      <h3 className="text-xs font-medium text-white/50 mb-2">免费额度</h3>
-                      <div className="space-y-3 text-xs">
-                        <div>
-                          <div className="flex justify-between text-white/70 mb-1">
-                            <span>AI对话</span>
-                            <span>{usageStats.chat.used}/{usageStats.chat.total}</span>
-                          </div>
-                          <Progress 
-                            value={calculatePercentage(usageStats.chat.used, usageStats.chat.total)} 
-                            className="h-1 bg-nexus-blue/20" 
-                          />
-                        </div>
-                        
-                        <div>
-                          <div className="flex justify-between text-white/70 mb-1">
-                            <span>AI图像生成</span>
-                            <span>{usageStats.image.used}/{usageStats.image.total}</span>
-                          </div>
-                          <Progress 
-                            value={calculatePercentage(usageStats.image.used, usageStats.image.total)} 
-                            className="h-1 bg-nexus-blue/20" 
-                          />
-                        </div>
-                        
-                        <div>
-                          <div className="flex justify-between text-white/70 mb-1">
-                            <span>AI语音合成</span>
-                            <span>{usageStats.voice.used}/{usageStats.voice.total}</span>
-                          </div>
-                          <Progress 
-                            value={calculatePercentage(usageStats.voice.used, usageStats.voice.total)} 
-                            className="h-1 bg-nexus-blue/20" 
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <Button 
-                      onClick={handleUpgrade} 
-                      className="w-full bg-nexus-blue hover:bg-nexus-blue/80 text-white"
-                      size="sm"
-                    >
-                      <Rocket className="mr-2 h-4 w-4" />
-                      升级会员
-                    </Button>
-                  </>
-                )}
-              </SidebarFooter>
-            </Sidebar>
+              )}
+            </div>
             
-            <div className="flex-1 p-6">
-              <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gradient">个人中心</h1>
-                <p className="text-white/70">欢迎回来，{user?.name}</p>
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium text-white/80 mb-3">AI服务</h4>
+              
+              <Link to="/chat" className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-nexus-blue/20 text-white transition-colors">
+                <MessageSquare className="h-5 w-5 text-nexus-cyan" />
+                <span>AI对话</span>
+              </Link>
+              
+              <Link to="/image" className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-nexus-blue/20 text-white transition-colors">
+                <ImageIcon className="h-5 w-5 text-nexus-cyan" />
+                <span>AI图像生成</span>
+              </Link>
+              
+              <Link to="/voice" className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-nexus-blue/20 text-white transition-colors">
+                <Volume2 className="h-5 w-5 text-nexus-cyan" />
+                <span>AI语音合成</span>
+              </Link>
+              
+              {isAdmin && (
+                <Link to="/admin" className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-nexus-blue/20 text-white transition-colors">
+                  <BarChart3 className="h-5 w-5 text-nexus-cyan" />
+                  <span>管理员控制台</span>
+                </Link>
+              )}
+            </div>
+            
+            <div className="mt-8 pt-4 border-t border-nexus-blue/20">
+              <div className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-nexus-blue/20 text-white transition-colors cursor-pointer" onClick={() => navigate('/settings')}>
+                <Settings className="h-5 w-5 text-nexus-cyan" />
+                <span>账号设置</span>
               </div>
               
-              <div className="space-y-6">
-                {checkPaymentStatus() ? (
-                  <Card className="bg-gradient-to-br from-green-500/20 to-blue-500/20 border border-green-500/30">
-                    <CardContent className="p-6">
-                      <h2 className="text-xl font-semibold text-white mb-2">VIP会员</h2>
-                      <p className="text-white/80">您已是VIP会员，享有无限使用权限</p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card className="bg-gradient-to-br from-nexus-blue/10 to-nexus-purple/10 border border-nexus-blue/30">
-                    <CardContent className="p-6">
-                      <h2 className="text-xl font-semibold text-white mb-2">会员权益</h2>
-                      <p className="text-white/80 mb-4">升级VIP，畅享无限AI服务，解锁全部高级功能</p>
-                      <Button 
-                        onClick={handleUpgrade} 
-                        className="bg-nexus-blue hover:bg-nexus-blue/80"
-                      >
-                        立即升级
-                      </Button>
-                    </CardContent>
-                  </Card>
+              <div className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-nexus-blue/20 text-white transition-colors cursor-pointer" onClick={handleLogout}>
+                <LogOut className="h-5 w-5 text-nexus-cyan" />
+                <span>退出登录</span>
+              </div>
+            </div>
+            
+            {/* 免费用户额度限制显示 - 放在左下方小字 */}
+            {!checkPaymentStatus() && (
+              <div className="mt-8 pt-4 border-t border-nexus-blue/20 text-xs text-white/60 space-y-2">
+                <div className="flex justify-between">
+                  <span>AI对话额度:</span>
+                  <span>{usageData.chat.used} / {usageData.chat.total}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>AI图像额度:</span>
+                  <span>{usageData.image.used} / {usageData.image.total}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>AI语音额度:</span>
+                  <span>{usageData.voice.used} / {usageData.voice.total}</span>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* 主内容区域 */}
+          <div className="flex-grow">
+            <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-6">
+              <h2 className="text-2xl font-bold mb-6 text-gradient">个人中心</h2>
+              
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-xl font-bold mb-4 text-white">欢迎回来, {user.name}</h3>
+                  <p className="text-white/80">选择以下AI服务开始使用：</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                    <Link to="/chat" className="block p-6 rounded-lg bg-nexus-dark/60 border border-nexus-blue/30 hover:border-nexus-blue/60 transition-all">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="h-12 w-12 rounded-lg bg-nexus-blue/20 flex items-center justify-center">
+                          <MessageSquare className="h-6 w-6 text-nexus-cyan" />
+                        </div>
+                        <h4 className="font-bold text-lg text-gradient">AI对话</h4>
+                      </div>
+                      <p className="text-sm text-white/70">使用先进的AI模型进行自然语言对话</p>
+                    </Link>
+                    
+                    <Link to="/image" className="block p-6 rounded-lg bg-nexus-dark/60 border border-nexus-blue/30 hover:border-nexus-blue/60 transition-all">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="h-12 w-12 rounded-lg bg-nexus-blue/20 flex items-center justify-center">
+                          <ImageIcon className="h-6 w-6 text-nexus-cyan" />
+                        </div>
+                        <h4 className="font-bold text-lg text-gradient">AI图像生成</h4>
+                      </div>
+                      <p className="text-sm text-white/70">使用AI技术创建惊人的图像和艺术作品</p>
+                    </Link>
+                    
+                    <Link to="/voice" className="block p-6 rounded-lg bg-nexus-dark/60 border border-nexus-blue/30 hover:border-nexus-blue/60 transition-all">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="h-12 w-12 rounded-lg bg-nexus-blue/20 flex items-center justify-center">
+                          <Volume2 className="h-6 w-6 text-nexus-cyan" />
+                        </div>
+                        <h4 className="font-bold text-lg text-gradient">AI语音合成</h4>
+                      </div>
+                      <p className="text-sm text-white/70">将文本转换为自然流畅的语音</p>
+                    </Link>
+                  </div>
+                </div>
+                
+                {!checkPaymentStatus() && (
+                  <div className="p-6 rounded-lg bg-nexus-dark/60 border border-nexus-blue/30">
+                    <h3 className="text-xl font-bold mb-4 text-white">升级到VIP会员</h3>
+                    <p className="text-white/80 mb-4">升级到VIP会员，享受无限次使用所有AI服务的特权</p>
+                    <Link to="/payment" className="inline-block bg-gradient-to-r from-nexus-blue to-nexus-cyan hover:opacity-90 px-6 py-3 rounded-lg text-white font-medium">
+                      立即升级
+                    </Link>
+                  </div>
                 )}
               </div>
             </div>
           </div>
-        </SidebarProvider>
+        </div>
       </div>
       
       <Footer />

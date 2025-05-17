@@ -25,11 +25,11 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
       return remaining;
     }
     
-    // Default free usage limits
+    // Default free usage limits - all set to 10
     const defaultLimits = {
-      chat: 5,   // 5 free chat interactions 
-      image: 10, // 10 free image generations
-      voice: 10  // 10 free voice generations
+      chat: 10,   // 10 free chat interactions 
+      image: 10,  // 10 free image generations
+      voice: 10   // 10 free voice generations
     };
     
     return defaultLimits[featureType];
@@ -40,9 +40,9 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
     if (isAuthenticated && user?.id) {
       const usageData = localStorage.getItem(`nexusAi_${featureType}_usage_${user.id}`);
       if (!usageData) {
-        // Initialize free usage allowance
+        // Initialize free usage allowance - all set to 10
         const initialRemaining = {
-          chat: 5,
+          chat: 10,
           image: 10,
           voice: 10
         };
@@ -74,16 +74,6 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
           <h2 className="text-2xl font-bold text-gradient mb-4">需要登录</h2>
           <p className="text-white/80 mb-6">您需要登录后才能使用此功能</p>
           
-          <div className="bg-nexus-dark/40 p-4 border border-nexus-blue/30 rounded-lg mb-4">
-            <h3 className="font-medium text-white text-center mb-2">注册免费体验</h3>
-            <p className="text-xs text-white/70 text-center mb-4">
-              新用户注册即可获得：<br />
-              <span className="text-nexus-cyan">
-                {featureType === 'chat' ? '5次AI对话' : featureType === 'image' ? '10次图像生成' : '10次语音合成'}
-              </span>
-            </p>
-          </div>
-          
           <div className="flex flex-col gap-3">
             <Button 
               onClick={() => navigate('/login')}
@@ -98,9 +88,6 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
               className="border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-dark/50"
             >
               免费注册
-              <span className="ml-2 text-xs px-2 py-0.5 bg-nexus-blue/20 rounded-full">
-                {featureType === 'chat' ? '5次' : featureType === 'image' ? '10次' : '10次'}
-              </span>
             </Button>
           </div>
         </div>
@@ -115,7 +102,6 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
           <h2 className="text-2xl font-bold text-gradient mb-4">免费体验次数已用完</h2>
           <p className="text-white/80 mb-6">
             您已用完免费体验次数
-            （{featureType === 'chat' ? '5次对话' : featureType === 'image' ? '10次图像生成' : '10次语音合成'}）
           </p>
           <p className="text-lg text-gradient-gold font-bold mb-6">
             只需 ¥299 即可永久使用所有功能！
