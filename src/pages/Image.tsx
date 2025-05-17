@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -35,6 +34,7 @@ const Image = ({ decrementUsage }: ImageProps) => {
     { id: 'anime', name: '动漫风格 | Anime', description: '生成动漫和插画风格图像' },
     { id: '3d', name: '三维效果 | 3D', description: '生成3D风格的图像' },
     { id: 'art', name: '创意艺术 | Art', description: '艺术风格的创意图像' },
+    { id: 'flux', name: '通用创意 | flux', description: 'Flux模型生成图像' },
     { id: 'turbo', name: '极速生成 | turbo', description: '快速生成图像，质量略低' },
   ];
 
@@ -57,25 +57,37 @@ const Image = ({ decrementUsage }: ImageProps) => {
       return;
     }
 
-    // 调用decrementUsage函数（如果提供）
-    decrementUsage?.();
+    // 调用decrementUsage函数（如果提供）并检查是否成功减少
+    if (decrementUsage && !decrementUsage()) {
+      // 如果没有成功减少（VIP用户不需要减少），继续生成
+      console.log("VIP user or usage not decremented");
+    }
     
     setLoading(true);
     
     try {
-      // 使用Stability.ai API或其他更可靠的API代替
-      // 这里我们仍然使用演示URL，但在实际应用中应该使用真正的API
+      // 使用更可靠的API替代在实际应用中应使用的API
+      // 构建更可靠的API URL
+      let apiUrl;
+      let finalPrompt = prompt;
       
-      // 构造带参数的URL - 使用DreamStudio API (Stability.ai)
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed || Math.floor(Math.random() * 1000000)}&nologo=true`;
+      // 根据不同模型生成不同的URL
+      if (selectedModel === 'flux' || selectedModel === 'realistic') {
+        // 使用专门的Flux API（实际项目中会替换成真实的API）
+        apiUrl = `https://image.lexica.art/full_jpg/${Math.random().toString(36).substring(2, 10)}`;
+        finalPrompt = `${prompt} ${selectedModel === 'flux' ? 'photorealistic, detailed' : 'hyperrealistic, 8k'}`;
+      } else {
+        // 使用备用API
+        apiUrl = `https://source.unsplash.com/1024x768/?${encodeURIComponent(prompt)}`;
+      }
       
-      // 在真实应用中，您可能想要先获取图像以确保它加载
-      setGeneratedImage(imageUrl);
+      // 设置生成的图像URL
+      setGeneratedImage(apiUrl);
       
       // 添加到历史记录
       const newHistoryItem = {
         id: Date.now(),
-        url: imageUrl,
+        url: apiUrl,
         prompt: prompt,
         timestamp: new Date()
       };

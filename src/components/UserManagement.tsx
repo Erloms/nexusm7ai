@@ -29,13 +29,24 @@ interface User {
   contactType?: 'email' | 'phone';
 }
 
+interface PaymentRequest {
+  id: string;
+  contactInfo: string;
+  orderNumber: string;
+  timestamp: string;
+  status: 'pending' | 'completed' | 'rejected';
+  userId: string;
+}
+
 const UserManagement: React.FC = () => {
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
+  const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'date'>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [activeTab, setActiveTab] = useState('all');
 
   // 模拟从后端加载用户数据
   useEffect(() => {
@@ -69,6 +80,10 @@ const UserManagement: React.FC = () => {
       ...JSON.parse(localStorage.getItem('registeredUsers') || '[]')
     ];
     
+    // 加载支付请求
+    const storedPaymentRequests = JSON.parse(localStorage.getItem('paymentRequests') || '[]');
+    setPaymentRequests(storedPaymentRequests);
+    
     setUsers(mockUsers);
     setLoading(false);
   }, []);
@@ -83,7 +98,16 @@ const UserManagement: React.FC = () => {
       );
       
       // 保存到本地存储（在实际应用中，还应该调用API更新）
-      localStorage.setItem('registeredUsers', JSON.stringify(updated));
+      localStorage.setItem('registeredUsers', JSON.stringify(
+        updated.filter(user => !['1', '2', '3'].includes(user.id))
+      ));
+      
+      // 更新登录用户的VIP状态
+      const loggedInUser = JSON.parse(localStorage.getItem('nexusAiUser') || '{}');
+      if (loggedInUser.id === id) {
+        loggedInUser.isVip = makeVip;
+        localStorage.setItem('nexusAiUser', JSON.stringify(loggedInUser));
+      }
       
       return updated;
     });
@@ -93,6 +117,43 @@ const UserManagement: React.FC = () => {
       title: makeVip ? "VIP权限已开通" : "VIP权限已取消",
       description: `已${makeVip ? '开通' : '取消'}用户 ${users.find(u => u.id === id)?.name} 的VIP权限`,
     });
+  };
+
+  // 处理支付请求审批
+  const handlePaymentRequestApproval = (requestId: string, approve: boolean) => {
+    // 查找请求
+    const request = paymentRequests.find(req => req.id === requestId);
+    if (!request) return;
+    
+    // 更新请求状态
+    const updatedRequests = paymentRequests.map(req => 
+      req.id === requestId 
+        ? { ...req, status: approve ? 'completed' : 'rejected' } 
+        : req
+    );
+    
+    setPaymentRequests(updatedRequests);
+    localStorage.setItem('paymentRequests', JSON.stringify(updatedRequests));
+    
+    // 如果批准，为用户开通VIP
+    if (approve) {
+      // 查找相关用户
+      const user = users.find(u => u.id === request.userId);
+      if (user) {
+        handleVipStatusChange(user.id, true);
+      }
+      
+      toast({
+        title: "支付已确认",
+        description: `已确认支付并为用户开通VIP权限`,
+      });
+    } else {
+      toast({
+        title: "支付已拒绝",
+        description: `已拒绝支付请求`,
+        variant: "destructive",
+      });
+    }
   };
 
   // 排序功能
@@ -131,6 +192,9 @@ const UserManagement: React.FC = () => {
   // 按VIP状态过滤用户
   const vipUsers = filteredAndSortedUsers.filter(user => user.isVip);
   const regularUsers = filteredAndSortedUsers.filter(user => !user.isVip);
+  
+  // 过滤挂起的支付请求
+  const pendingPaymentRequests = paymentRequests.filter(req => req.status === 'pending');
 
   const renderUserTable = (usersList: User[]) => (
     <div className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg overflow-hidden">
@@ -211,6 +275,63 @@ const UserManagement: React.FC = () => {
     </div>
   );
 
+  const renderPaymentRequests = () => (
+    <div className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="text-white">订单号</TableHead>
+            <TableHead className="text-white">联系方式</TableHead>
+            <TableHead className="text-white">提交时间</TableHead>
+            <TableHead className="text-white">操作</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {pendingPaymentRequests.length > 0 ? (
+            pendingPaymentRequests.map(request => (
+              <TableRow key={request.id}>
+                <TableCell className="font-medium text-white">
+                  {request.orderNumber}
+                </TableCell>
+                <TableCell className="text-white">
+                  {request.contactInfo}
+                </TableCell>
+                <TableCell className="text-white">
+                  {new Date(request.timestamp).toLocaleString()}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="default" 
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => handlePaymentRequestApproval(request.id, true)}
+                    >
+                      <Check className="w-4 h-4 mr-1" /> 确认支付
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="destructive"
+                      onClick={() => handlePaymentRequestApproval(request.id, false)}
+                    >
+                      <X className="w-4 h-4 mr-1" /> 拒绝
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center text-white/70 py-6">
+                没有待处理的支付请求
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
   if (loading) {
     return <div className="p-8 text-center text-white">正在加载用户数据...</div>;
   }
@@ -220,7 +341,7 @@ const UserManagement: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-white">用户管理</h2>
-          <p className="text-white/70">管理系统用户、分配VIP权限</p>
+          <p className="text-white/70">管理系统用户、处理支付请求、分配VIP权限</p>
         </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 h-4 w-4" />
@@ -233,7 +354,7 @@ const UserManagement: React.FC = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="all" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-nexus-dark/50 border border-nexus-blue/30 mb-6">
           <TabsTrigger value="all" className="data-[state=active]:bg-nexus-blue text-white">
             全部用户 ({filteredAndSortedUsers.length})
@@ -243,6 +364,9 @@ const UserManagement: React.FC = () => {
           </TabsTrigger>
           <TabsTrigger value="regular" className="data-[state=active]:bg-nexus-blue text-white">
             普通用户 ({regularUsers.length})
+          </TabsTrigger>
+          <TabsTrigger value="payments" className="data-[state=active]:bg-nexus-blue text-white">
+            支付请求 ({pendingPaymentRequests.length})
           </TabsTrigger>
         </TabsList>
             
@@ -256,6 +380,10 @@ const UserManagement: React.FC = () => {
         
         <TabsContent value="regular" className="mt-6">
           {renderUserTable(regularUsers)}
+        </TabsContent>
+        
+        <TabsContent value="payments" className="mt-6">
+          {renderPaymentRequests()}
         </TabsContent>
       </Tabs>
     </div>

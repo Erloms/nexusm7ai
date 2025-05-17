@@ -64,7 +64,9 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
         remaining: newRemaining
       }));
       setUsageRemaining(newRemaining);
+      return true; // Return true to indicate successful decrement
     }
+    return false; // Return false if not decremented (VIP user or not authenticated)
   };
 
   if (!isAuthenticated) {

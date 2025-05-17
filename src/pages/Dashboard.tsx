@@ -11,7 +11,8 @@ import {
   User, 
   Settings, 
   LogOut,
-  BarChart3
+  BarChart3,
+  Users
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -28,12 +29,12 @@ const Dashboard = () => {
     navigate('/login');
   };
 
-  const isAdmin = user.name === '管理员';
+  const isAdmin = user.email === 'admin@nexusai.com' || user.name === '管理员';
 
   // 获取用户的使用额度信息
   const getUsageData = () => {
-    if (checkPaymentStatus()) {
-      // VIP用户无限制
+    if (checkPaymentStatus() || isAdmin) {
+      // VIP用户或管理员无限制
       return {
         chat: { used: 0, total: '无限制' },
         image: { used: 0, total: '无限制' },
@@ -79,6 +80,11 @@ const Dashboard = () => {
                   VIP会员
                 </div>
               )}
+              {isAdmin && (
+                <div className="mt-2 bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-xs inline-flex items-center">
+                  管理员
+                </div>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -100,10 +106,17 @@ const Dashboard = () => {
               </Link>
               
               {isAdmin && (
-                <Link to="/admin" className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-nexus-blue/20 text-white transition-colors">
-                  <BarChart3 className="h-5 w-5 text-nexus-cyan" />
-                  <span>管理员控制台</span>
-                </Link>
+                <>
+                  <h4 className="text-sm font-medium text-white/80 mb-2 mt-4 pt-4 border-t border-nexus-blue/20">管理员功能</h4>
+                  <Link to="/admin" className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-nexus-blue/20 text-white transition-colors">
+                    <BarChart3 className="h-5 w-5 text-red-400" />
+                    <span>控制台</span>
+                  </Link>
+                  <Link to="/admin/users" className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-nexus-blue/20 text-white transition-colors">
+                    <Users className="h-5 w-5 text-red-400" />
+                    <span>用户管理</span>
+                  </Link>
+                </>
               )}
             </div>
             
@@ -120,7 +133,7 @@ const Dashboard = () => {
             </div>
             
             {/* 免费用户额度限制显示 - 放在左下方小字 */}
-            {!checkPaymentStatus() && (
+            {!checkPaymentStatus() && !isAdmin && (
               <div className="mt-8 pt-4 border-t border-nexus-blue/20 text-xs text-white/60 space-y-2">
                 <div className="flex justify-between">
                   <span>AI对话额度:</span>
@@ -141,12 +154,12 @@ const Dashboard = () => {
           {/* 主内容区域 */}
           <div className="flex-grow">
             <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-6">
-              <h2 className="text-2xl font-bold mb-6 text-gradient">个人中心</h2>
+              <h2 className="text-2xl font-bold mb-6 text-gradient">{isAdmin ? '管理员控制台' : '个人中心'}</h2>
               
               <div className="space-y-8">
                 <div>
-                  <h3 className="text-xl font-bold mb-4 text-white">欢迎回来, {user.name}</h3>
-                  <p className="text-white/80">选择以下AI服务开始使用：</p>
+                  <h3 className="text-xl font-bold mb-4 text-white">欢迎{isAdmin ? '管理员' : ''}, {user.name}</h3>
+                  <p className="text-white/80">{isAdmin ? '管理系统与用户' : '选择以下AI服务开始使用：'}</p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                     <Link to="/chat" className="block p-6 rounded-lg bg-nexus-dark/60 border border-nexus-blue/30 hover:border-nexus-blue/60 transition-all">
@@ -181,7 +194,7 @@ const Dashboard = () => {
                   </div>
                 </div>
                 
-                {!checkPaymentStatus() && (
+                {!checkPaymentStatus() && !isAdmin && (
                   <div className="p-6 rounded-lg bg-nexus-dark/60 border border-nexus-blue/30">
                     <h3 className="text-xl font-bold mb-4 text-white">升级到VIP会员</h3>
                     <p className="text-white/80 mb-4">升级到VIP会员，享受无限次使用所有AI服务的特权</p>
