@@ -10,6 +10,18 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import PaymentRequests from '@/components/PaymentRequests';
 import UserManagement from '@/components/UserManagement';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+} from "@/components/ui/sidebar";
+import { User, CreditCard, Settings, Users } from 'lucide-react';
 
 const Admin = () => {
   const { user } = useAuth();
@@ -19,6 +31,7 @@ const Admin = () => {
   const [password, setPassword] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [activeTab, setActiveTab] = useState('users');
 
   // 处理管理员登录
   const handleAdminLogin = () => {
@@ -106,38 +119,83 @@ const Admin = () => {
     <div className="min-h-screen bg-nexus-dark flex flex-col">
       <Navigation />
       
-      <div className="flex-grow px-4 py-20">
-        <div className="container mx-auto">
-          <h1 className="text-3xl font-bold mb-8 text-gradient">管理员控制面板</h1>
-          
-          <Tabs defaultValue="users" className="w-full">
-            <TabsList className="bg-nexus-dark/50 border border-nexus-blue/30 mb-6">
-              <TabsTrigger value="users" className="data-[state=active]:bg-nexus-blue text-white">
-                用户管理
-              </TabsTrigger>
-              <TabsTrigger value="payments" className="data-[state=active]:bg-nexus-blue text-white">
-                支付管理
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="data-[state=active]:bg-nexus-blue text-white">
-                系统设置
-              </TabsTrigger>
-            </TabsList>
+      <div className="flex-grow container mx-auto py-20">
+        <SidebarProvider>
+          <div className="flex w-full min-h-[600px] bg-nexus-dark/80 border border-nexus-blue/30 rounded-lg overflow-hidden">
+            <Sidebar className="w-64 border-r border-nexus-blue/30 bg-nexus-dark/50">
+              <SidebarHeader className="p-4 border-b border-nexus-blue/30">
+                <div className="flex items-center space-x-2">
+                  <User className="h-5 w-5 text-nexus-cyan" />
+                  <span className="text-lg font-medium text-white">管理员面板</span>
+                </div>
+              </SidebarHeader>
+              
+              <SidebarContent>
+                <SidebarGroup>
+                  <div className="p-4">
+                    <h3 className="text-sm font-medium text-white/70 mb-3">管理功能</h3>
+                    <SidebarMenu>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton 
+                          className={activeTab === 'users' ? "bg-nexus-blue/20" : ""}
+                          onClick={() => setActiveTab('users')}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <Users className="h-4 w-4 text-nexus-cyan" />
+                            <span>用户管理</span>
+                          </div>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton 
+                          className={activeTab === 'payments' ? "bg-nexus-blue/20" : ""}
+                          onClick={() => setActiveTab('payments')}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <CreditCard className="h-4 w-4 text-nexus-cyan" />
+                            <span>支付管理</span>
+                          </div>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton 
+                          className={activeTab === 'settings' ? "bg-nexus-blue/20" : ""}
+                          onClick={() => setActiveTab('settings')}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <Settings className="h-4 w-4 text-nexus-cyan" />
+                            <span>系统设置</span>
+                          </div>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </SidebarMenu>
+                  </div>
+                </SidebarGroup>
+              </SidebarContent>
+              
+              <SidebarFooter className="p-4 border-t border-nexus-blue/30 text-xs text-white/50">
+                管理员版本 v1.0
+              </SidebarFooter>
+            </Sidebar>
             
-            <TabsContent value="users" className="mt-6">
-              <UserManagement />
-            </TabsContent>
-            
-            <TabsContent value="payments" className="mt-6">
-              <PaymentRequests />
-            </TabsContent>
-            
-            <TabsContent value="settings" className="mt-6">
-              <div className="p-8 text-center text-white bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg">
-                系统设置功能正在开发中...
+            <div className="flex-1 p-6">
+              <div className="mb-6">
+                <h1 className="text-2xl font-bold text-gradient">管理员控制面板</h1>
+                <p className="text-white/70">系统管理与运营控制</p>
               </div>
-            </TabsContent>
-          </Tabs>
-        </div>
+              
+              <div className="space-y-6">
+                {activeTab === 'users' && <UserManagement />}
+                {activeTab === 'payments' && <PaymentRequests />}
+                {activeTab === 'settings' && (
+                  <div className="p-8 text-center text-white bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg">
+                    系统设置功能正在开发中...
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </SidebarProvider>
       </div>
       
       <Footer />

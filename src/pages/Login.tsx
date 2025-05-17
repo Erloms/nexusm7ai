@@ -33,19 +33,16 @@ const Login = () => {
             <form onSubmit={handleLogin} className="space-y-6">
               <div>
                 <label htmlFor="emailOrUsername" className="block text-sm font-medium text-white mb-2">
-                  用户名或邮箱
+                  账号
                 </label>
                 <Input
                   id="emailOrUsername"
                   value={emailOrUsername}
                   onChange={(e) => setEmailOrUsername(e.target.value)}
                   className="bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
-                  placeholder="输入用户名或邮箱"
+                  placeholder="手机号/邮箱"
                   required
                 />
-                <p className="text-xs text-white/60 mt-1">
-                  可使用用户名或邮箱登录
-                </p>
               </div>
               
               <div>
@@ -76,27 +73,6 @@ const Login = () => {
                 <Link to="/register" className="text-nexus-cyan hover:underline">
                   注册
                 </Link>
-              </div>
-              
-              <div className="relative flex py-4 items-center">
-                <div className="flex-grow border-t border-white/20"></div>
-                <span className="flex-shrink mx-4 text-white/40">或</span>
-                <div className="flex-grow border-t border-white/20"></div>
-              </div>
-              
-              <div className="bg-nexus-dark/40 p-4 border border-nexus-blue/30 rounded-lg">
-                <h3 className="font-medium text-white text-center mb-2">免费注册体验</h3>
-                <p className="text-xs text-white/70 text-center mb-4">
-                  新用户注册即可获得：<br />
-                  <span className="text-nexus-cyan">5次AI对话、10次图像生成、10次语音合成</span>
-                </p>
-                <Button
-                  type="button"
-                  onClick={() => navigate('/register')}
-                  className="w-full bg-nexus-dark border border-nexus-blue/50 hover:bg-nexus-blue/20 text-nexus-cyan"
-                >
-                  免费注册
-                </Button>
               </div>
             </form>
           </div>
