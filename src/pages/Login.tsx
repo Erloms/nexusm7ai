@@ -11,12 +11,12 @@ const Login = () => {
   const { login, loading } = useAuth();
   const navigate = useNavigate();
   
-  const [emailOrUsername, setEmailOrUsername] = useState('');
+  const [account, setAccount] = useState('');
   const [password, setPassword] = useState('');
   
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (await login(emailOrUsername, password)) {
+    if (await login(account, password)) {
       navigate('/');
     }
   };
@@ -32,13 +32,13 @@ const Login = () => {
             
             <form onSubmit={handleLogin} className="space-y-6">
               <div>
-                <label htmlFor="emailOrUsername" className="block text-sm font-medium text-white mb-2">
+                <label htmlFor="account" className="block text-sm font-medium text-white mb-2">
                   账号
                 </label>
                 <Input
-                  id="emailOrUsername"
-                  value={emailOrUsername}
-                  onChange={(e) => setEmailOrUsername(e.target.value)}
+                  id="account"
+                  value={account}
+                  onChange={(e) => setAccount(e.target.value)}
                   className="bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
                   placeholder="手机号/邮箱"
                   required

@@ -80,14 +80,14 @@ const ModelCarousel: React.FC = () => {
     }
   };
   
-  // 确保包含Gemini2.5 Pro和Claude3.5等最新模型
   const featuredModels = [
     { name: "Gemini 2.5 Pro", description: "Google最新一代大语言模型，专业推理能力出色", category: 'text' as const, highlight: true },
     { name: "Claude 3.5 Haiku", description: "Anthropic最新小型模型，速度快且高效精准", category: 'text' as const, highlight: true },
     { name: "DeepSeek R1 Full", description: "DeepSeek最新大语言模型，全面理解能力强大", category: 'text' as const, highlight: true },
     { name: "GPT-4o", description: "OpenAI最强大的多模态大语言模型，支持图像理解", category: 'text' as const, highlight: true },
-    { name: "GPT-4.1-nano", description: "OpenAI最新一代GPT-4.1系列紧凑高效版模型", category: 'text' as const, highlight: true },
-    { name: "Llama 3.3 70B", description: "Meta开发的开源大语言模型，强大的上下文理解力", category: 'text' as const, highlight: true },
+    { name: "Gemini 2.0 Flash", description: "Google轻量级模型，响应速度快，适合日常使用", category: 'text' as const, highlight: true },
+    { name: "DeepSeek Chat V3", description: "DeepSeek最新对话模型，上下文理解能力强", category: 'text' as const, highlight: true },
+    { name: "Kimi VL A3B Thinking", description: "Moonshot AI视觉语言模型，思考能力强大", category: 'text' as const, highlight: true },
     { name: "flux-pro", description: "专业版图像生成模型，画面细节丰富，质量超群", category: 'image' as const, highlight: true },
     { name: "flux-realism", description: "超真实效果图像生成，精准捕捉现实世界细节", category: 'image' as const, highlight: true },
     { name: "Nova", description: "友好专业的AI语音，适合商业解说和教育内容", category: 'voice' as const, highlight: true },

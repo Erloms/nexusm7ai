@@ -24,6 +24,10 @@ const Navigation = () => {
     navigate('/');
   };
 
+  const handleUserClick = () => {
+    navigate('/dashboard');
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-nexus-dark/80 to-nexus-purple/80 backdrop-blur-md border-b border-nexus-blue/20 px-4 md:px-8">
       <div className="mx-auto max-w-7xl flex items-center justify-between py-4">
@@ -40,13 +44,7 @@ const Navigation = () => {
           <Link to="/chat" className="text-white/80 hover:text-white hover:text-nexus-cyan transition">AI 对话</Link>
           <Link to="/image" className="text-white/80 hover:text-white hover:text-nexus-cyan transition">AI 图像生成</Link>
           <Link to="/voice" className="text-white/80 hover:text-white hover:text-nexus-cyan transition">AI 语音合成</Link>
-          
-          {isAuthenticated && (
-            <Link to="/dashboard" className="text-white/80 hover:text-white hover:text-nexus-cyan transition">
-              个人中心
-            </Link>
-          )}
-          
+                    
           {isAuthenticated && !checkPaymentStatus() && (
             <div className="ml-4 border-l border-nexus-blue/30 pl-4">
               <Button 
@@ -77,7 +75,7 @@ const Navigation = () => {
               <Button 
                 variant="ghost"
                 className="text-white hover:bg-nexus-blue/20 flex items-center"
-                onClick={() => navigate('/dashboard')}
+                onClick={handleUserClick}
               >
                 <User className="h-4 w-4 mr-2" />
                 {user?.name || user?.email}
@@ -117,13 +115,6 @@ const Navigation = () => {
             <Link to="/chat" className="text-white py-2 hover:text-nexus-cyan transition">AI 对话</Link>
             <Link to="/image" className="text-white py-2 hover:text-nexus-cyan transition">AI 图像生成</Link>
             <Link to="/voice" className="text-white py-2 hover:text-nexus-cyan transition">AI 语音合成</Link>
-            
-            {isAuthenticated && (
-              <Link to="/dashboard" className="text-white py-2 hover:text-nexus-cyan transition flex items-center">
-                <User className="h-4 w-4 mr-2" />
-                个人中心
-              </Link>
-            )}
             
             {isAuthenticated && !checkPaymentStatus() && (
               <div className="pt-2 border-t border-nexus-blue/30">

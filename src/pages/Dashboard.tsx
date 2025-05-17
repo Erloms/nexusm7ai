@@ -25,7 +25,7 @@ const Dashboard = () => {
   const { user, isAuthenticated, checkPaymentStatus } = useAuth();
   const navigate = useNavigate();
   const [usageStats, setUsageStats] = React.useState({
-    chat: { used: 0, total: 5 },
+    chat: { used: 0, total: 10 },
     image: { used: 0, total: 10 },
     voice: { used: 0, total: 10 }
   });
@@ -41,12 +41,12 @@ const Dashboard = () => {
     if (user) {
       // 从本地存储获取使用统计
       try {
-        const chatUsage = JSON.parse(localStorage.getItem(`nexusAi_chat_usage_${user.id}`) || '{"remaining": 5}');
+        const chatUsage = JSON.parse(localStorage.getItem(`nexusAi_chat_usage_${user.id}`) || '{"remaining": 10}');
         const imageUsage = JSON.parse(localStorage.getItem(`nexusAi_image_usage_${user.id}`) || '{"remaining": 10}');
         const voiceUsage = JSON.parse(localStorage.getItem(`nexusAi_voice_usage_${user.id}`) || '{"remaining": 10}');
         
         setUsageStats({
-          chat: { used: 5 - chatUsage.remaining, total: 5 },
+          chat: { used: 10 - chatUsage.remaining, total: 10 },
           image: { used: 10 - imageUsage.remaining, total: 10 },
           voice: { used: 10 - voiceUsage.remaining, total: 10 }
         });
@@ -115,59 +115,58 @@ const Dashboard = () => {
                     </SidebarMenu>
                   </div>
                 </SidebarGroup>
-                
-                <SidebarGroup>
-                  <div className="px-4 py-2">
-                    <h3 className="text-xs font-medium text-white/50 mb-2">免费额度</h3>
-                    
-                    <div className="space-y-3 text-xs">
-                      <div>
-                        <div className="flex justify-between text-white/70 mb-1">
-                          <span>AI对话</span>
-                          <span>{usageStats.chat.used}/{usageStats.chat.total}</span>
-                        </div>
-                        <Progress 
-                          value={calculatePercentage(usageStats.chat.used, usageStats.chat.total)} 
-                          className="h-1 bg-nexus-blue/20" 
-                        />
-                      </div>
-                      
-                      <div>
-                        <div className="flex justify-between text-white/70 mb-1">
-                          <span>AI图像生成</span>
-                          <span>{usageStats.image.used}/{usageStats.image.total}</span>
-                        </div>
-                        <Progress 
-                          value={calculatePercentage(usageStats.image.used, usageStats.image.total)} 
-                          className="h-1 bg-nexus-blue/20" 
-                        />
-                      </div>
-                      
-                      <div>
-                        <div className="flex justify-between text-white/70 mb-1">
-                          <span>AI语音合成</span>
-                          <span>{usageStats.voice.used}/{usageStats.voice.total}</span>
-                        </div>
-                        <Progress 
-                          value={calculatePercentage(usageStats.voice.used, usageStats.voice.total)} 
-                          className="h-1 bg-nexus-blue/20" 
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </SidebarGroup>
               </SidebarContent>
               
               <SidebarFooter className="p-4 border-t border-nexus-blue/30">
                 {!checkPaymentStatus() && (
-                  <Button 
-                    onClick={handleUpgrade} 
-                    className="w-full bg-nexus-blue hover:bg-nexus-blue/80 text-white"
-                    size="sm"
-                  >
-                    <Rocket className="mr-2 h-4 w-4" />
-                    升级会员
-                  </Button>
+                  <>
+                    <div className="mb-3 px-2">
+                      <h3 className="text-xs font-medium text-white/50 mb-2">免费额度</h3>
+                      <div className="space-y-3 text-xs">
+                        <div>
+                          <div className="flex justify-between text-white/70 mb-1">
+                            <span>AI对话</span>
+                            <span>{usageStats.chat.used}/{usageStats.chat.total}</span>
+                          </div>
+                          <Progress 
+                            value={calculatePercentage(usageStats.chat.used, usageStats.chat.total)} 
+                            className="h-1 bg-nexus-blue/20" 
+                          />
+                        </div>
+                        
+                        <div>
+                          <div className="flex justify-between text-white/70 mb-1">
+                            <span>AI图像生成</span>
+                            <span>{usageStats.image.used}/{usageStats.image.total}</span>
+                          </div>
+                          <Progress 
+                            value={calculatePercentage(usageStats.image.used, usageStats.image.total)} 
+                            className="h-1 bg-nexus-blue/20" 
+                          />
+                        </div>
+                        
+                        <div>
+                          <div className="flex justify-between text-white/70 mb-1">
+                            <span>AI语音合成</span>
+                            <span>{usageStats.voice.used}/{usageStats.voice.total}</span>
+                          </div>
+                          <Progress 
+                            value={calculatePercentage(usageStats.voice.used, usageStats.voice.total)} 
+                            className="h-1 bg-nexus-blue/20" 
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button 
+                      onClick={handleUpgrade} 
+                      className="w-full bg-nexus-blue hover:bg-nexus-blue/80 text-white"
+                      size="sm"
+                    >
+                      <Rocket className="mr-2 h-4 w-4" />
+                      升级会员
+                    </Button>
+                  </>
                 )}
               </SidebarFooter>
             </Sidebar>

@@ -37,11 +37,11 @@ const ModelsList: React.FC = () => {
     },
     {
       name: 'DeepSeek',
-      items: ['DeepSeek-V3', 'DeepSeek R1 Full', 'DeepSeek-R1 Distill Qwen 32B']
+      items: ['DeepSeek-V3', 'DeepSeek R1 Full', 'DeepSeek Chat V3', 'DeepSeek Prover V2']
     },
     {
       name: 'Other',
-      items: ['Mistral Nemo', 'Qwen 2.5 Coder 32B', 'Phi-4 Multimodal Instruct', 'SearchGPT']
+      items: ['Mistral Nemo', 'Qwen 2.5 Coder 32B', 'Phi-4 Multimodal Instruct', 'SearchGPT', 'Kimi VL A3B Thinking']
     }
   ];
 
