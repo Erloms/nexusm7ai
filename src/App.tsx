@@ -13,6 +13,7 @@ import Image from "./pages/Image";
 import Voice from "./pages/Voice";
 import Payment from "./pages/Payment";
 import Admin from "./pages/Admin";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/voice" element={<Voice />} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Toaster />

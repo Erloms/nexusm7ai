@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { Diamond, Menu, X } from 'lucide-react';
+import { Diamond, Menu, User, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Navigation = () => {
@@ -41,6 +41,12 @@ const Navigation = () => {
           <Link to="/image" className="text-white/80 hover:text-white hover:text-nexus-cyan transition">AI 图像生成</Link>
           <Link to="/voice" className="text-white/80 hover:text-white hover:text-nexus-cyan transition">AI 语音合成</Link>
           
+          {isAuthenticated && (
+            <Link to="/dashboard" className="text-white/80 hover:text-white hover:text-nexus-cyan transition">
+              个人中心
+            </Link>
+          )}
+          
           {isAuthenticated && !checkPaymentStatus() && (
             <div className="ml-4 border-l border-nexus-blue/30 pl-4">
               <Button 
@@ -68,7 +74,14 @@ const Navigation = () => {
           
           {isAuthenticated ? (
             <div className="flex items-center space-x-3">
-              <span className="text-white">{user?.name || user?.email}</span>
+              <Button 
+                variant="ghost"
+                className="text-white hover:bg-nexus-blue/20 flex items-center"
+                onClick={() => navigate('/dashboard')}
+              >
+                <User className="h-4 w-4 mr-2" />
+                {user?.name || user?.email}
+              </Button>
               <Button 
                 variant="default" 
                 className="bg-nexus-blue hover:bg-nexus-blue/80 text-white"
@@ -104,6 +117,13 @@ const Navigation = () => {
             <Link to="/chat" className="text-white py-2 hover:text-nexus-cyan transition">AI 对话</Link>
             <Link to="/image" className="text-white py-2 hover:text-nexus-cyan transition">AI 图像生成</Link>
             <Link to="/voice" className="text-white py-2 hover:text-nexus-cyan transition">AI 语音合成</Link>
+            
+            {isAuthenticated && (
+              <Link to="/dashboard" className="text-white py-2 hover:text-nexus-cyan transition flex items-center">
+                <User className="h-4 w-4 mr-2" />
+                个人中心
+              </Link>
+            )}
             
             {isAuthenticated && !checkPaymentStatus() && (
               <div className="pt-2 border-t border-nexus-blue/30">
