@@ -2,74 +2,72 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
-import { MessageSquare, Image, Mic } from 'lucide-react';
+import { Star } from 'lucide-react';
 
 const FeaturesSection = () => {
-  const features = [
-    {
-      title: 'AI智能对话',
-      description: '强大的AI聊天助手，可以回答问题、提供创意建议、编写文本，甚至帮您解决复杂问题。',
-      icon: <MessageSquare className="h-12 w-12 text-nexus-blue" />,
-      color: 'from-blue-500/20 to-cyan-400/20',
-      hoverColor: 'from-blue-500/30 to-cyan-400/30',
-      path: '/chat',
-      buttonText: '开始对话'
-    },
-    {
-      title: 'AI图像生成',
-      description: '将你的想法转化为视觉艺术，只需输入文本描述，AI将为你创造令人惊叹的图像。',
-      icon: <Image className="h-12 w-12 text-nexus-cyan" />,
-      color: 'from-cyan-400/20 to-purple-500/20',
-      hoverColor: 'from-cyan-400/30 to-purple-500/30',
-      path: '/image',
-      buttonText: '生成图像'
-    },
-    {
-      title: 'AI语音合成',
-      description: '将文本转换为自然流畅的语音，支持多种声音风格，适用于创作内容、教育材料或个人使用。',
-      icon: <Mic className="h-12 w-12 text-nexus-accent" />,
-      color: 'from-purple-500/20 to-pink-500/20',
-      hoverColor: 'from-purple-500/30 to-pink-500/30',
-      path: '/voice',
-      buttonText: '转换语音'
-    }
-  ];
-  
   return (
-    <section id="features" className="py-20 px-4">
-      <div className="max-w-7xl mx-auto">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">
-          <span className="text-gradient">三大超能力</span>
-          <span className="text-white">，一次拥有</span>
-        </h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <div 
-              key={index}
-              className={`card-glowing group p-6 flex flex-col items-center transition duration-300 hover:translate-y-[-5px]`}
-            >
-              <div className={`w-20 h-20 rounded-full mb-6 flex items-center justify-center bg-gradient-to-br ${feature.color} group-hover:${feature.hoverColor} transition duration-300 animate-float`}>
-                {feature.icon}
-              </div>
-              
-              <h3 className="text-xl md:text-2xl font-bold mb-4 text-white">{feature.title}</h3>
-              
-              <p className="text-white/70 text-center mb-8">
-                {feature.description}
+    <section id="features" className="py-20 px-4 relative overflow-hidden">
+      {/* Background elements */}
+      <div className="absolute inset-0 bg-grid-pattern bg-[length:30px_30px] opacity-10 z-0"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-nexus-cyan/10 rounded-full blur-[80px] z-0"></div>
+      
+      <div className="max-w-4xl mx-auto relative z-10">
+        <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 p-8 md:p-12 rounded-2xl border border-nexus-blue/30 backdrop-blur-md">
+          <div className="flex items-center justify-center mb-6">
+            <Star className="h-8 w-8 text-nexus-cyan mr-3" />
+            <h2 className="text-3xl md:text-4xl font-bold text-gradient">AI智能助手，助您高效创作</h2>
+          </div>
+          
+          {/* 核心价值主张 */}
+          <div className="text-center mb-10">
+            <div className="text-lg md:text-xl text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed">
+              <p className="mb-4">
+                <span className="font-bold text-gradient-gold">告别月月付费，拒绝年年涨价！</span>
               </p>
-              
-              <div className="mt-auto">
-                <Link to={feature.path}>
-                  <Button 
-                    className="bg-nexus-dark border border-nexus-blue/50 hover:bg-nexus-blue/20 text-nexus-blue hover:text-white transition-all"
-                  >
-                    {feature.buttonText}
-                  </Button>
-                </Link>
-              </div>
+              <p className="mb-4">
+                <span className="text-gradient-gold font-bold text-2xl">Nexus AI 只需799元，买断！终身！</span> 
+                <span className="text-white"> 并享有30%代理分成收益，多一份副业收入。</span>
+              </p>
+              <p className="mb-4">
+                <span className="font-bold">GPT-4级对话、Gemini 2.0 Pro、DeepSeek R1，Claude...顶级大模型随便撩！</span>
+              </p>
+              <p className="mb-4">
+                <span className="font-bold">Flux全系列AI创作工具，无限畅用！</span>
+              </p>
+              <p className="text-gradient font-bold text-xl">
+                成年人不做选择，Nexus AI 让你全都要！
+              </p>
             </div>
-          ))}
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+            <div className="text-center">
+              <h3 className="text-xl font-bold text-gradient-gold mb-4">价格优势</h3>
+              <p className="text-white/80 mb-4">
+                无需为昂贵的大模型付费，只需 <span className="text-gradient-gold font-bold text-xl">799元永久使用</span> 顶尖AI模型
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <h3 className="text-xl font-bold text-gradient-gold mb-4">功能全面</h3>
+              <p className="text-white/80 mb-4">
+                集成文本生成、图像创作与语音合成于一体，满足您所有AI创作需求
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <h3 className="text-xl font-bold text-gradient-gold mb-4">持续更新</h3>
+              <p className="text-white/80 mb-4">
+                我们不断引入最新的AI模型，确保您始终用着最前沿的人工智能技术
+              </p>
+            </div>
+          </div>
+          
+          <div className="text-center">
+            <Button size="lg" asChild className="bg-nexus-blue hover:bg-nexus-blue/80 text-white text-lg px-8 py-4 mr-4">
+              <Link to="/payment">立即升级会员</Link>
+            </Button>
+          </div>
         </div>
       </div>
     </section>
