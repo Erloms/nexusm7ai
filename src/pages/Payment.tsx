@@ -138,7 +138,7 @@ const Payment = () => {
                   <div className="text-center">
                     <h3 className="text-lg font-bold text-white">年度会员</h3>
                     <div className="text-2xl font-bold text-gradient-gold">¥199/年</div>
-                    <p className="text-sm text-white/70 mt-2">30%代理分成收益</p>
+                    <p className="text-sm text-white/70 mt-2">专业功能无限使用</p>
                   </div>
                 </div>
                 
@@ -187,12 +187,14 @@ const Payment = () => {
                       </div>
                       <span>专业AI语音合成，多种音色任选</span>
                     </li>
-                    <li className="flex items-start">
-                      <div className="mr-3 bg-gradient-to-r from-nexus-blue to-nexus-cyan w-6 h-6 flex items-center justify-center rounded-full flex-shrink-0 mt-1">
-                        <span className="text-sm">✓</span>
-                      </div>
-                      <span>30%代理分成收益，多一份副业收入</span>
-                    </li>
+                    {selectedPlan === 'lifetime' && (
+                      <li className="flex items-start">
+                        <div className="mr-3 bg-gradient-to-r from-nexus-blue to-nexus-cyan w-6 h-6 flex items-center justify-center rounded-full flex-shrink-0 mt-1">
+                          <span className="text-sm">✓</span>
+                        </div>
+                        <span>30%代理分成收益，多一份副业收入</span>
+                      </li>
+                    )}
                     <li className="flex items-start">
                       <div className="mr-3 bg-gradient-to-r from-nexus-blue to-nexus-cyan w-6 h-6 flex items-center justify-center rounded-full flex-shrink-0 mt-1">
                         <span className="text-sm">✓</span>
@@ -208,7 +210,7 @@ const Payment = () => {
                         ¥{planDetails[selectedPlan].price}{planDetails[selectedPlan].period}
                       </div>
                       <div className="text-white/70 text-sm mt-2">
-                        {selectedPlan === 'lifetime' ? '* 一次付款，终身使用' : '* 年度订阅，自动续费'}
+                        {selectedPlan === 'lifetime' ? '* 一次付款，终身使用 + 30%代理分成' : '* 年度订阅，专业功能无限使用'}
                       </div>
                     </div>
                   </div>
