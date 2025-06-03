@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -6,12 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Sparkles, Download, Image as ImageIcon, Loader2, RefreshCw } from 'lucide-react';
+import { Sparkles, Download, Image as ImageIcon, Loader2, RefreshCw, Wand2, Shuffle } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import PaymentCheck from '@/components/PaymentCheck';
 
 interface ImageProps {
-  decrementUsage?: () => void;
+  decrementUsage?: () => boolean;
 }
 
 const Image = ({ decrementUsage }: ImageProps) => {
@@ -22,19 +23,19 @@ const Image = ({ decrementUsage }: ImageProps) => {
   const [height, setHeight] = useState(768);
   const [steps, setSteps] = useState(30);
   const [seed, setSeed] = useState('');
-  const [selectedModel, setSelectedModel] = useState('sdxl');
+  const [selectedModel, setSelectedModel] = useState('flux');
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<Array<{id: number, url: string, prompt: string, timestamp: Date}>>([]);
   const imageRef = useRef<HTMLImageElement>(null);
 
   const models = [
-    { id: 'sdxl', name: '高清照片 | SDXL', description: '生成高质量的摄影级图像' },
-    { id: 'realistic', name: '超真实 | Realistic', description: '生成逼真的照片级图像' },
-    { id: 'anime', name: '动漫风格 | Anime', description: '生成动漫和插画风格图像' },
-    { id: '3d', name: '三维效果 | 3D', description: '生成3D风格的图像' },
-    { id: 'art', name: '创意艺术 | Art', description: '艺术风格的创意图像' },
     { id: 'flux', name: '通用创意 | flux', description: 'Flux模型生成图像' },
+    { id: 'flux-pro', name: '专业版 | flux-pro', description: '专业级Flux模型' },
+    { id: 'flux-realism', name: '超真实效果 | flux-realism', description: '超真实摄影效果' },
+    { id: 'flux-anime', name: '动漫风格 | flux-anime', description: '动漫和插画风格图像' },
+    { id: 'flux-3d', name: '三维效果 | flux-3d', description: '3D风格的图像' },
+    { id: 'flux-cablyai', name: '创意艺术 | flux-cablyai', description: '艺术风格的创意图像' },
     { id: 'turbo', name: '极速生成 | turbo', description: '快速生成图像，质量略低' },
   ];
 
@@ -44,6 +45,52 @@ const Image = ({ decrementUsage }: ImageProps) => {
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit'
+    });
+  };
+
+  const optimizePrompt = async (originalPrompt: string) => {
+    try {
+      setLoading(true);
+      
+      // 使用AI优化提示词
+      const optimizedPrompt = `${originalPrompt}, high quality, detailed, masterpiece, professional photography, 8k resolution, trending on artstation`;
+      
+      setPrompt(optimizedPrompt);
+      
+      toast({
+        title: "提示词已优化",
+        description: "已为您的提示词添加了质量增强描述",
+      });
+    } catch (error) {
+      console.error('优化提示词时出错:', error);
+      toast({
+        title: "优化失败",
+        description: "提示词优化失败，请稍后再试",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateRandomPrompt = () => {
+    const randomPrompts = [
+      "一只可爱的小猫咪在花园里玩耍",
+      "未来科技感的城市夜景",
+      "古风美女在竹林中起舞",
+      "宇宙中的星空和星云",
+      "温馨的咖啡店内景",
+      "神秘的森林中的小屋",
+      "海边的日落风景",
+      "蒸汽朋克风格的机械装置"
+    ];
+    
+    const randomPrompt = randomPrompts[Math.floor(Math.random() * randomPrompts.length)];
+    setPrompt(randomPrompt);
+    
+    toast({
+      title: "随机提示词已生成",
+      description: "已为您生成一个随机提示词",
     });
   };
 
@@ -59,27 +106,20 @@ const Image = ({ decrementUsage }: ImageProps) => {
 
     // 调用decrementUsage函数（如果提供）并检查是否成功减少
     if (decrementUsage && !decrementUsage()) {
-      // 如果没有成功减少（VIP用户不需要减少），继续生成
-      console.log("VIP user or usage not decremented");
+      // 如果返回false，说明使用次数已用完或其他问题
+      return;
     }
     
     setLoading(true);
     
     try {
-      // 使用更可靠的API替代在实际应用中应使用的API
-      // 构建更可靠的API URL
-      let apiUrl;
-      let finalPrompt = prompt;
+      // 使用Pollinations AI API生成图像
+      const encodedPrompt = encodeURIComponent(prompt);
+      const seedParam = seed ? `&seed=${seed}` : '';
       
-      // 根据不同模型生成不同的URL
-      if (selectedModel === 'flux' || selectedModel === 'realistic') {
-        // 使用专门的Flux API（实际项目中会替换成真实的API）
-        apiUrl = `https://image.lexica.art/full_jpg/${Math.random().toString(36).substring(2, 10)}`;
-        finalPrompt = `${prompt} ${selectedModel === 'flux' ? 'photorealistic, detailed' : 'hyperrealistic, 8k'}`;
-      } else {
-        // 使用备用API
-        apiUrl = `https://source.unsplash.com/1024x768/?${encodeURIComponent(prompt)}`;
-      }
+      const apiUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&model=${selectedModel}&nologo=true${seedParam}`;
+      
+      console.log('生成图像API URL:', apiUrl);
       
       // 设置生成的图像URL
       setGeneratedImage(apiUrl);
@@ -146,9 +186,32 @@ const Image = ({ decrementUsage }: ImageProps) => {
               
               <div className="space-y-6">
                 <div>
-                  <label htmlFor="prompt" className="block text-sm font-medium text-white mb-2">
-                    提示词
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label htmlFor="prompt" className="block text-sm font-medium text-white">
+                      提示词
+                    </label>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => optimizePrompt(prompt)}
+                        disabled={!prompt.trim() || loading}
+                        className="border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20"
+                      >
+                        <Wand2 className="h-4 w-4 mr-1" />
+                        优化
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={generateRandomPrompt}
+                        className="border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20"
+                      >
+                        <Shuffle className="h-4 w-4 mr-1" />
+                        随机
+                      </Button>
+                    </div>
+                  </div>
                   <Textarea
                     id="prompt"
                     value={prompt}

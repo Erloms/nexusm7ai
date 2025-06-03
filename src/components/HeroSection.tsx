@@ -19,10 +19,27 @@ const HeroSection = () => {
         <h2 className="text-2xl md:text-4xl font-bold mb-8">
           <span className="text-white">AI创作助手，智能高效，一键生成</span>
         </h2>
+        
+        {/* 核心亮点展示 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 max-w-4xl mx-auto">
+          <div className="bg-nexus-dark/50 p-4 rounded-lg border border-nexus-blue/20">
+            <h3 className="text-lg font-bold text-nexus-cyan mb-2">顶级对话模型套装</h3>
+            <p className="text-sm text-white/80">GPT-4o、Claude-3.5、DeepSeek-R1等顶级模型无限使用</p>
+          </div>
+          <div className="bg-nexus-dark/50 p-4 rounded-lg border border-nexus-blue/20">
+            <h3 className="text-lg font-bold text-nexus-cyan mb-2">FLUX全家桶绘画</h3>
+            <p className="text-sm text-white/80">Flux-Pro、Flux-Realism等专业绘画模型无限生成</p>
+          </div>
+          <div className="bg-nexus-dark/50 p-4 rounded-lg border border-nexus-blue/20">
+            <h3 className="text-lg font-bold text-nexus-cyan mb-2">AI配音 + 代理分成</h3>
+            <p className="text-sm text-white/80">专业AI语音合成 + 40%代理分成收益</p>
+          </div>
+        </div>
+        
         <p className="text-lg md:text-xl text-white/80 mb-8 max-w-2xl mx-auto">
-          <span className="text-gradient-gold font-bold text-2xl">￥299元</span>，<span className="font-bold">一次付费，终身使用！</span>
+          <span className="text-gradient-gold font-bold text-2xl">￥199/年</span> 或 <span className="text-gradient-gold font-bold text-2xl">￥799永久</span>
           <br/>
-          <span className="font-bold">拥有顶级模型不是梦，Nexus AI让科技触手可及！</span>
+          <span className="font-bold">顶级AI模型触手可及，一次投资终身受益！</span>
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">

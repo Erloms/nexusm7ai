@@ -9,7 +9,7 @@ const CTASection = () => {
     "永久使用所有AI功能，无需额外付费",
     "不限次数使用AI对话、图像生成、语音合成",
     "持续更新最新AI模型，体验前沿技术",
-    "优先获得客户支持服务"
+    "优先获得客户支持 + 40%代理分成收益"
   ];
   
   return (
@@ -25,7 +25,7 @@ const CTASection = () => {
           </h2>
           
           <p className="text-xl text-center text-white/80 mb-10 max-w-2xl mx-auto">
-            只需<span className="text-gradient-gold font-bold text-2xl">￥299元</span>，即可永久使用全部功能，无需订阅，没有隐藏费用。
+            <span className="text-gradient-gold font-bold text-2xl">￥199/年</span> 或 <span className="text-gradient-gold font-bold text-2xl">￥799永久</span>，即可永久使用全部功能，无需订阅，没有隐藏费用。
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
@@ -44,11 +44,16 @@ const CTASection = () => {
             <div className="flex flex-col justify-center items-center bg-nexus-dark/50 p-6 rounded-xl border border-nexus-blue/20">
               <h3 className="text-2xl font-bold text-nexus-cyan mb-4">立即加入</h3>
               <p className="text-white/80 mb-6 text-center">
-                加入成为会员，立即解锁所有AI功能
+                加入成为会员，立即解锁所有AI功能 + 代理分成收益
               </p>
-              <Button size="lg" asChild className="bg-nexus-blue hover:bg-nexus-blue/80 text-white w-full text-lg py-6">
-                <Link to="/payment">立即购买会员</Link>
-              </Button>
+              <div className="flex flex-col gap-3 w-full">
+                <Button size="lg" asChild className="bg-nexus-blue hover:bg-nexus-blue/80 text-white w-full text-lg py-6">
+                  <Link to="/payment">￥199/年 立即购买</Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild className="border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20 w-full text-lg py-6">
+                  <Link to="/payment">￥799 永久会员</Link>
+                </Button>
+              </div>
               <p className="text-white/60 text-sm mt-4">
                 支持微信、支付宝、信用卡等多种支付方式
               </p>
