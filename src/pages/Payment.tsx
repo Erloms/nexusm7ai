@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -221,7 +220,7 @@ const Payment = () => {
               <div className="flex-1 md:flex-[0.8] flex flex-col items-center justify-center">
                 <div className="bg-white p-4 rounded-xl mb-4 w-64 h-64 flex items-center justify-center">
                   <img 
-                    src="/lovable-uploads/f151f215-7e14-47fe-9daa-23c4f6d6afb0.png" 
+                    src="/lovable-uploads/23b7f565-a745-4241-b9fc-17e2db0aedea.png" 
                     alt="支付宝收款码" 
                     className="max-w-full max-h-full"
                   />

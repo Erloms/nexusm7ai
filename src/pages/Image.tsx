@@ -52,14 +52,14 @@ const Image = ({ decrementUsage }: ImageProps) => {
     try {
       setLoading(true);
       
-      // 使用AI优化提示词
-      const optimizedPrompt = `${originalPrompt}, high quality, detailed, masterpiece, professional photography, 8k resolution, trending on artstation`;
+      // 智能提示词优化规则
+      const optimizedPrompt = enhancePrompt(originalPrompt);
       
       setPrompt(optimizedPrompt);
       
       toast({
         title: "提示词已优化",
-        description: "已为您的提示词添加了质量增强描述",
+        description: "已为您扩写和优化了提示词内容",
       });
     } catch (error) {
       console.error('优化提示词时出错:', error);
@@ -71,6 +71,55 @@ const Image = ({ decrementUsage }: ImageProps) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const enhancePrompt = (originalPrompt: string): string => {
+    if (!originalPrompt.trim()) return originalPrompt;
+
+    // 检测提示词类型并添加相应的优化描述
+    let enhanced = originalPrompt;
+
+    // 检测是否包含人物
+    if (/人|女|男|girl|boy|woman|man|person|people/i.test(originalPrompt)) {
+      enhanced += ', beautiful detailed face, perfect skin, realistic lighting, detailed eyes, natural expression';
+    }
+
+    // 检测是否包含动物
+    if (/猫|狗|鸟|动物|cat|dog|bird|animal/i.test(originalPrompt)) {
+      enhanced += ', detailed fur texture, expressive eyes, natural pose, wildlife photography style';
+    }
+
+    // 检测是否包含风景
+    if (/风景|山|海|天空|森林|landscape|mountain|sea|sky|forest/i.test(originalPrompt)) {
+      enhanced += ', breathtaking vista, dramatic lighting, golden hour, panoramic view, natural beauty';
+    }
+
+    // 检测是否包含建筑
+    if (/建筑|房子|城市|building|house|city|architecture/i.test(originalPrompt)) {
+      enhanced += ', architectural details, professional architectural photography, structural beauty, urban design';
+    }
+
+    // 检测是否包含科幻元素
+    if (/科幻|未来|机器人|太空|sci-fi|future|robot|space/i.test(originalPrompt)) {
+      enhanced += ', futuristic design, advanced technology, cyberpunk aesthetic, neon lighting, high-tech details';
+    }
+
+    // 检测是否包含艺术风格
+    if (/艺术|绘画|插画|art|painting|illustration/i.test(originalPrompt)) {
+      enhanced += ', artistic masterpiece, vibrant colors, creative composition, expressive brushstrokes';
+    }
+
+    // 添加通用质量增强词
+    enhanced += ', high quality, detailed, masterpiece, professional photography, 8k resolution, sharp focus, vivid colors';
+
+    // 检测特定场景并添加环境描述
+    if (/室内|indoor/i.test(originalPrompt)) {
+      enhanced += ', interior lighting, cozy atmosphere';
+    } else if (/户外|outdoor/i.test(originalPrompt)) {
+      enhanced += ', natural outdoor lighting, environmental depth';
+    }
+
+    return enhanced;
   };
 
   const generateRandomPrompt = () => {
@@ -199,7 +248,7 @@ const Image = ({ decrementUsage }: ImageProps) => {
                         className="border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20"
                       >
                         <Wand2 className="h-4 w-4 mr-1" />
-                        优化
+                        智能优化
                       </Button>
                       <Button
                         variant="outline"
