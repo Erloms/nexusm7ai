@@ -9,7 +9,7 @@ const CTASection = () => {
     "永久使用所有AI功能，无需额外付费",
     "不限次数使用AI对话、图像生成、语音合成",
     "持续更新最新AI模型，体验前沿技术",
-    "优先获得客户支持 + 40%代理分成收益"
+    "30%代理分成收益，多一份副业收入"
   ];
   
   return (
@@ -30,7 +30,7 @@ const CTASection = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
             <div className="bg-nexus-dark/50 p-6 rounded-xl border border-nexus-blue/20">
-              <h3 className="text-2xl font-bold text-nexus-cyan mb-4">永久会员特权</h3>
+              <h3 className="text-2xl font-bold text-nexus-cyan mb-4">会员特权</h3>
               <ul className="space-y-3">
                 {benefits.map((item, index) => (
                   <li key={index} className="flex items-start">

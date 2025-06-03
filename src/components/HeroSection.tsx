@@ -31,8 +31,8 @@ const HeroSection = () => {
             <p className="text-sm text-white/80">Flux-Pro、Flux-Realism等专业绘画模型无限生成</p>
           </div>
           <div className="bg-nexus-dark/50 p-4 rounded-lg border border-nexus-blue/20">
-            <h3 className="text-lg font-bold text-nexus-cyan mb-2">AI配音 + 代理分成</h3>
-            <p className="text-sm text-white/80">专业AI语音合成 + 40%代理分成收益</p>
+            <h3 className="text-lg font-bold text-nexus-cyan mb-2">专业配音 + 代理分成</h3>
+            <p className="text-sm text-white/80">AI语音合成 + 30%代理分成，多一份副业收入</p>
           </div>
         </div>
         
