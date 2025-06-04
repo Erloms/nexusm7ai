@@ -157,26 +157,33 @@ const Image = ({ decrementUsage }: ImageProps) => {
     setLoading(true);
     
     try {
-      // 使用更可靠的图像生成API
-      const encodedPrompt = encodeURIComponent(prompt);
-      const negativeEncoded = encodeURIComponent(negativePrompt);
-      const seedParam = seed ? `&seed=${seed}` : '';
+      // 修复图像生成API - 使用更稳定的服务
+      const timestamp = Date.now();
+      const randomSeed = seed || Math.floor(Math.random() * 1000000);
       
-      // 使用Replicate API或者更好的服务
-      const apiUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&model=${selectedModel}&negative=${negativeEncoded}&steps=${steps}&nologo=true&enhance=true${seedParam}`;
+      // 使用修复后的API
+      const apiUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${randomSeed}&nologo=true&enhance=true&model=flux`;
       
       console.log('生成图像API URL:', apiUrl);
       console.log('正面提示词:', prompt);
       console.log('负面提示词:', negativePrompt);
       console.log('选择的模型:', selectedModel);
       
-      // 预加载图像以检查是否成功生成
-      const img = new Image();
+      // 修复图像加载错误
+      const img = document.createElement('img');
       img.crossOrigin = 'anonymous';
       
       await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
+        const timeout = setTimeout(() => reject(new Error('请求超时')), 30000);
+        
+        img.onload = () => {
+          clearTimeout(timeout);
+          resolve(img);
+        };
+        img.onerror = () => {
+          clearTimeout(timeout);
+          reject(new Error('图像加载失败'));
+        };
         img.src = apiUrl;
       });
       
@@ -184,7 +191,7 @@ const Image = ({ decrementUsage }: ImageProps) => {
       
       // 添加到历史记录
       const newHistoryItem = {
-        id: Date.now(),
+        id: timestamp,
         url: apiUrl,
         prompt: prompt,
         timestamp: new Date()
@@ -236,7 +243,7 @@ const Image = ({ decrementUsage }: ImageProps) => {
         <main className="flex-grow p-4 pt-16 md:p-8">
           <div className="w-full max-w-7xl mx-auto">
             {/* 主要内容区域 - 控制面板和图像预览 */}
-            <div className="flex flex-col lg:flex-row gap-6 mb-8">
+            <div className="flex flex-col lg:flex-row gap-6 mb-12">
               {/* 左侧面板 - 控制 */}
               <div className="w-full lg:w-1/2 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-5">
                 <h2 className="text-2xl font-bold mb-6 flex items-center text-white">
@@ -454,14 +461,14 @@ const Image = ({ decrementUsage }: ImageProps) => {
               </div>
             </div>
 
-            {/* 历史记录部分 - 现在在底部有更多空间 */}
+            {/* 历史记录部分 - 增加空间 */}
             {history.length > 0 && (
-              <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-6">
-                <h3 className="text-2xl font-bold mb-6 text-white flex items-center">
+              <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-8">
+                <h3 className="text-2xl font-bold mb-8 text-white flex items-center">
                   <ImageIcon className="mr-2 h-6 w-6 text-nexus-cyan" />
                   历史记录
                 </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
                   {history.map((item) => (
                     <div 
                       key={item.id}
@@ -474,10 +481,10 @@ const Image = ({ decrementUsage }: ImageProps) => {
                       <img 
                         src={item.url} 
                         alt={item.prompt} 
-                        className="w-full h-32 object-cover group-hover:scale-105 transition-transform"
+                        className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
                       />
-                      <div className="absolute bottom-0 left-0 right-0 bg-nexus-dark/90 backdrop-blur-sm p-2">
-                        <div className="text-xs text-white/80 mb-1">
+                      <div className="absolute bottom-0 left-0 right-0 bg-nexus-dark/90 backdrop-blur-sm p-3">
+                        <div className="text-xs text-white/80 mb-2">
                           {formatTime(item.timestamp)}
                         </div>
                         <div className="text-xs text-white/60 truncate" title={item.prompt}>

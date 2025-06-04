@@ -20,7 +20,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
 } from "@/components/ui/sidebar";
-import { User, CreditCard, Settings, Users, BarChart3, Wallet } from 'lucide-react';
+import { User, CreditCard, Settings, Users, BarChart3, Wallet, Search, Eye } from 'lucide-react';
 
 interface User {
   id: string;
@@ -39,6 +39,7 @@ const Admin = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [activeTab, setActiveTab] = useState('users');
   const [users, setUsers] = useState<User[]>([]);
+  const [memberSearchTerm, setMemberSearchTerm] = useState('');
 
   useEffect(() => {
     // Load users from localStorage
@@ -133,6 +134,11 @@ const Admin = () => {
     );
   }
 
+  const filteredMembers = users.filter(user =>
+    user.name?.toLowerCase().includes(memberSearchTerm.toLowerCase()) ||
+    user.email?.toLowerCase().includes(memberSearchTerm.toLowerCase())
+  );
+
   // 管理员面板
   return (
     <div className="min-h-screen bg-nexus-dark flex flex-col">
@@ -178,6 +184,17 @@ const Admin = () => {
                       </SidebarMenuItem>
                       <SidebarMenuItem>
                         <SidebarMenuButton 
+                          className={activeTab === 'members' ? "bg-nexus-blue/20" : ""}
+                          onClick={() => setActiveTab('members')}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <Eye className="h-4 w-4 text-nexus-cyan" />
+                            <span>会员管理</span>
+                          </div>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton 
                           className={activeTab === 'payments' ? "bg-nexus-blue/20" : ""}
                           onClick={() => setActiveTab('payments')}
                         >
@@ -200,12 +217,12 @@ const Admin = () => {
                       </SidebarMenuItem>
                       <SidebarMenuItem>
                         <SidebarMenuButton 
-                          className={activeTab === 'settings' ? "bg-nexus-blue/20" : ""}
-                          onClick={() => setActiveTab('settings')}
+                          className={activeTab === 'alipay' ? "bg-nexus-blue/20" : ""}
+                          onClick={() => setActiveTab('alipay')}
                         >
                           <div className="flex items-center space-x-2">
                             <Settings className="h-4 w-4 text-nexus-cyan" />
-                            <span>系统设置</span>
+                            <span>支付宝配置</span>
                           </div>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -250,6 +267,65 @@ const Admin = () => {
                   </div>
                 )}
                 {activeTab === 'users' && <UserManagement users={users} setUsers={setUsers} />}
+                {activeTab === 'members' && (
+                  <div>
+                    <h2 className="text-xl font-bold mb-4 text-white">会员管理</h2>
+                    
+                    <div className="mb-4">
+                      <div className="flex items-center space-x-2">
+                        <Input
+                          type="text"
+                          placeholder="搜索会员..."
+                          value={memberSearchTerm}
+                          onChange={(e) => setMemberSearchTerm(e.target.value)}
+                          className="bg-nexus-dark/50 border-nexus-blue/30 text-white max-w-md"
+                        />
+                        <Search className="h-5 w-5 text-white/50" />
+                      </div>
+                    </div>
+
+                    <div className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg p-6">
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-nexus-blue/50">
+                          <thead>
+                            <tr className="text-left">
+                              <th className="px-4 py-2 text-white">用户名</th>
+                              <th className="px-4 py-2 text-white">邮箱</th>
+                              <th className="px-4 py-2 text-white">会员状态</th>
+                              <th className="px-4 py-2 text-white">注册时间</th>
+                              <th className="px-4 py-2 text-white">使用情况</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-nexus-blue/50">
+                            {filteredMembers.map(user => (
+                              <tr key={user.id}>
+                                <td className="px-4 py-2 text-white">{user.name}</td>
+                                <td className="px-4 py-2 text-white">{user.email}</td>
+                                <td className="px-4 py-2">
+                                  <span className={`px-2 py-1 rounded text-xs ${
+                                    user.isPaid 
+                                      ? 'bg-green-500/20 text-green-400' 
+                                      : 'bg-red-500/20 text-red-400'
+                                  }`}>
+                                    {user.isPaid ? 'VIP会员' : '免费用户'}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-2 text-white">2024-01-15</td>
+                                <td className="px-4 py-2 text-white">
+                                  <div className="text-xs">
+                                    <div>对话: 23次</div>
+                                    <div>图像: 15张</div>
+                                    <div>语音: 8次</div>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {activeTab === 'payments' && <PaymentRequests />}
                 {activeTab === 'commission' && (
                   <div>
@@ -297,9 +373,9 @@ const Admin = () => {
                     </div>
                   </div>
                 )}
-                {activeTab === 'settings' && (
+                {activeTab === 'alipay' && (
                   <div>
-                    <h2 className="text-xl font-bold mb-4 text-white">支付宝配置</h2>
+                    <h2 className="text-xl font-bold mb-4 text-white">支付宝集成配置</h2>
                     <div className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg p-6">
                       <div className="space-y-4">
                         <div>

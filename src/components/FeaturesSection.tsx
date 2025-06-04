@@ -15,27 +15,25 @@ const FeaturesSection = () => {
         <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 p-8 md:p-12 rounded-2xl border border-nexus-blue/30 backdrop-blur-md">
           <div className="flex items-center justify-center mb-6">
             <Star className="h-8 w-8 text-nexus-cyan mr-3" />
-            <h2 className="text-3xl md:text-4xl font-bold text-gradient">AI智能助手，助您高效创作</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-gradient">一次付费，终身使用</h2>
           </div>
           
-          {/* 核心价值主张 - 红框标注位置的内容 */}
           <div className="text-center mb-10">
             <div className="text-lg md:text-xl text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed">
               <p className="mb-4">
-                <span className="font-bold text-gradient-gold">告别月月付费，拒绝年年涨价！</span>
+                <span className="text-gradient-gold font-bold text-2xl">只需 299元消费订阅机</span>
               </p>
               <p className="mb-4">
-                <span className="text-gradient-gold font-bold text-2xl">Nexus AI 只需799元，买断！终身！</span> 
-                <span className="text-white"> 并享有30%代理分成收益，多一份副业收入。</span>
+                <span className="font-bold">顶级模型集成体验</span>
               </p>
               <p className="mb-4">
-                <span className="font-bold">GPT-4级对话、Gemini 2.0 Pro、DeepSeek R1，Claude...顶级大模型随便撩！</span>
+                <span className="font-bold">集成Gemini 2.5、Claude 3.5、GPT-4o、DeepSeek R1等多款全球顶级AI模型</span>
               </p>
               <p className="mb-4">
-                <span className="font-bold">Flux全系列AI创作工具，无限畅用！</span>
+                <span className="font-bold">创意无限可能</span>
               </p>
-              <p className="text-gradient font-bold text-xl">
-                成年人不做选择，Nexus AI 让你全都要！
+              <p className="text-white font-bold">
+                文本创作、图像生成、语音合成，释放您的创造力
               </p>
             </div>
           </div>
