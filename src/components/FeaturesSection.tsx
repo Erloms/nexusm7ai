@@ -18,7 +18,7 @@ const FeaturesSection = () => {
             <h2 className="text-3xl md:text-4xl font-bold text-gradient">AI智能助手，助您高效创作</h2>
           </div>
           
-          {/* 核心价值主张 */}
+          {/* 核心价值主张 - 红框标注位置的内容 */}
           <div className="text-center mb-10">
             <div className="text-lg md:text-xl text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed">
               <p className="mb-4">
@@ -36,29 +36,6 @@ const FeaturesSection = () => {
               </p>
               <p className="text-gradient font-bold text-xl">
                 成年人不做选择，Nexus AI 让你全都要！
-              </p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-            <div className="text-center">
-              <h3 className="text-xl font-bold text-gradient-gold mb-4">价格优势</h3>
-              <p className="text-white/80 mb-4">
-                无需为昂贵的大模型付费，只需 <span className="text-gradient-gold font-bold text-xl">799元永久使用</span> 顶尖AI模型
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <h3 className="text-xl font-bold text-gradient-gold mb-4">功能全面</h3>
-              <p className="text-white/80 mb-4">
-                集成文本生成、图像创作与语音合成于一体，满足您所有AI创作需求
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <h3 className="text-xl font-bold text-gradient-gold mb-4">持续更新</h3>
-              <p className="text-white/80 mb-4">
-                我们不断引入最新的AI模型，确保您始终用着最前沿的人工智能技术
               </p>
             </div>
           </div>

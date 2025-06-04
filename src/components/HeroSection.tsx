@@ -20,25 +20,6 @@ const HeroSection = () => {
           <span className="text-white">对话、创想、发声，一站搞定！</span>
         </h2>
         
-        <div className="text-lg md:text-xl text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed">
-          <p className="mb-4">
-            <span className="font-bold text-gradient-gold">告别月月付费，拒绝年年涨价！</span>
-          </p>
-          <p className="mb-4">
-            <span className="text-gradient-gold font-bold text-2xl">Nexus AI 只需799元，买断！终身！</span> 
-            <span className="text-white"> 并享有30%代理分成收益，多一份副业收入。</span>
-          </p>
-          <p className="mb-4">
-            <span className="font-bold">GPT-4级对话、Gemini 2.0 Pro、DeepSeek R1，Claude...顶级大模型随便撩！</span>
-          </p>
-          <p className="mb-4">
-            <span className="font-bold">Flux全系列AI创作工具，无限畅用！</span>
-          </p>
-          <p className="text-gradient font-bold text-xl">
-            成年人不做选择，Nexus AI 让你全都要！
-          </p>
-        </div>
-        
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
           <Button size="lg" asChild className="bg-nexus-blue hover:bg-nexus-blue/80 text-white text-lg px-8 py-6">
             <Link to="/chat">立即体验</Link>
