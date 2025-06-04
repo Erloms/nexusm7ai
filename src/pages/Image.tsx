@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -30,11 +29,16 @@ const Image = ({ decrementUsage }: ImageProps) => {
   const imageRef = useRef<HTMLImageElement>(null);
 
   const models = [
-    { id: 'flux-schnell', name: '极速生成 | FLUX Schnell', description: 'FLUX Schnell - 快速高质量生成' },
-    { id: 'flux-dev', name: '开发版 | FLUX Dev', description: 'FLUX Dev - 平衡质量和速度' },
-    { id: 'flux-pro', name: '专业版 | FLUX Pro', description: 'FLUX Pro - 最高质量专业版' },
-    { id: 'stable-diffusion-3', name: 'SD3 | Stable Diffusion 3', description: 'Stable Diffusion 3 - 经典稳定' },
-    { id: 'stable-diffusion-xl', name: 'SDXL | Stable Diffusion XL', description: 'SDXL - 超高分辨率' },
+    { id: 'flux-schnell', name: 'FLUX Schnell', description: 'FLUX Schnell - 极速生成，4步出图' },
+    { id: 'flux-dev', name: 'FLUX Dev', description: 'FLUX Dev - 开发版本，质量平衡' },
+    { id: 'flux-pro', name: 'FLUX Pro', description: 'FLUX Pro - 专业版本，最高质量' },
+    { id: 'flux-pro-ultra', name: 'FLUX Pro Ultra', description: 'FLUX Pro Ultra - 超级版本，极致细节' },
+    { id: 'flux-1.1-pro', name: 'FLUX 1.1 Pro', description: 'FLUX 1.1 Pro - 最新升级版本' },
+    { id: 'flux-realism', name: 'FLUX Realism', description: 'FLUX Realism - 写实风格专用' },
+    { id: 'flux-anime', name: 'FLUX Anime', description: 'FLUX Anime - 动漫风格专用' },
+    { id: 'dalle-3', name: 'DALL-E 3', description: 'OpenAI DALL-E 3 - 创意生成' },
+    { id: 'midjourney', name: 'Midjourney v6', description: 'Midjourney v6 - 艺术风格' },
+    { id: 'stable-diffusion-3', name: 'Stable Diffusion 3', description: 'SD3 - 经典稳定模型' },
   ];
 
   const formatTime = (date: Date): string => {
@@ -243,7 +247,7 @@ const Image = ({ decrementUsage }: ImageProps) => {
         <main className="flex-grow p-4 pt-16 md:p-8">
           <div className="w-full max-w-7xl mx-auto">
             {/* 主要内容区域 - 控制面板和图像预览 */}
-            <div className="flex flex-col lg:flex-row gap-6 mb-12">
+            <div className="flex flex-col lg:flex-row gap-6 mb-8">
               {/* 左侧面板 - 控制 */}
               <div className="w-full lg:w-1/2 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-5">
                 <h2 className="text-2xl font-bold mb-6 flex items-center text-white">
@@ -461,14 +465,14 @@ const Image = ({ decrementUsage }: ImageProps) => {
               </div>
             </div>
 
-            {/* 历史记录部分 - 增加空间 */}
+            {/* 历史记录部分 - 增大显示区域 */}
             {history.length > 0 && (
               <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-8">
                 <h3 className="text-2xl font-bold mb-8 text-white flex items-center">
                   <ImageIcon className="mr-2 h-6 w-6 text-nexus-cyan" />
                   历史记录
                 </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8">
                   {history.map((item) => (
                     <div 
                       key={item.id}
@@ -481,9 +485,9 @@ const Image = ({ decrementUsage }: ImageProps) => {
                       <img 
                         src={item.url} 
                         alt={item.prompt} 
-                        className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
+                        className="w-full h-56 object-cover group-hover:scale-105 transition-transform"
                       />
-                      <div className="absolute bottom-0 left-0 right-0 bg-nexus-dark/90 backdrop-blur-sm p-3">
+                      <div className="absolute bottom-0 left-0 right-0 bg-nexus-dark/90 backdrop-blur-sm p-4">
                         <div className="text-xs text-white/80 mb-2">
                           {formatTime(item.timestamp)}
                         </div>

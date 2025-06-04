@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -22,16 +21,20 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('gpt-4');
+  const [selectedModel, setSelectedModel] = useState('gpt-4o');
   const [usageCount, setUsageCount] = useState(0);
   const [maxUsage] = useState(5);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const models = [
-    { id: 'gpt-4', name: 'GPT-4o', description: 'OpenAI最新模型' },
-    { id: 'claude-3.5', name: 'Claude 3.5 Haiku', description: 'Anthropic最新小型模型' },
-    { id: 'gemini-2.5', name: 'Gemini 2.5 Pro', description: 'Google最新一代大语言模型' },
-    { id: 'deepseek-r1', name: 'DeepSeek R1', description: 'DeepSeek最新大语言模型' },
+    { id: 'gpt-4o', name: 'GPT-4o', description: 'OpenAI最新旗舰模型' },
+    { id: 'gpt-4o-mini', name: 'GPT-4o Mini', description: 'OpenAI高效轻量模型' },
+    { id: 'claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', description: 'Anthropic最强推理模型' },
+    { id: 'claude-3.5-haiku', name: 'Claude 3.5 Haiku', description: 'Anthropic快速响应模型' },
+    { id: 'gemini-2.0-pro', name: 'Gemini 2.0 Pro', description: 'Google最新一代大语言模型' },
+    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Google长上下文模型' },
+    { id: 'deepseek-r1', name: 'DeepSeek R1', description: 'DeepSeek最新推理模型' },
+    { id: 'deepseek-v3', name: 'DeepSeek V3', description: 'DeepSeek开源旗舰模型' },
   ];
 
   // 检查是否为付费用户
