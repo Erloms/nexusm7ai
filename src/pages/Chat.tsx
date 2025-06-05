@@ -22,20 +22,27 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('gpt-4o');
+  const [selectedModel, setSelectedModel] = useState('openai');
   const [usageCount, setUsageCount] = useState(0);
   const [maxUsage] = useState(10);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // 真实的Pollinations.ai支持的模型
   const models = [
-    { id: 'gpt-4o', name: 'GPT-4o', description: 'OpenAI最新旗舰模型' },
-    { id: 'gpt-4o-mini', name: 'GPT-4o Mini', description: 'OpenAI高效轻量模型' },
-    { id: 'claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', description: 'Anthropic最强推理模型' },
-    { id: 'claude-3.5-haiku', name: 'Claude 3.5 Haiku', description: 'Anthropic快速响应模型' },
-    { id: 'gemini-2.0-pro', name: 'Gemini 2.0 Pro', description: 'Google最新一代大语言模型' },
-    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Google长上下文模型' },
-    { id: 'deepseek-r1', name: 'DeepSeek R1', description: 'DeepSeek最新推理模型' },
-    { id: 'deepseek-v3', name: 'DeepSeek V3', description: 'DeepSeek开源旗舰模型' },
+    { id: 'openai', name: 'OpenAI GPT-4o-mini', description: 'OpenAI高效模型' },
+    { id: 'openai-large', name: 'OpenAI GPT-4o', description: 'OpenAI旗舰模型' },
+    { id: 'openai-reasoning', name: 'OpenAI o1-mini', description: 'OpenAI推理模型' },
+    { id: 'llama', name: 'Llama 3.3 70B', description: 'Meta最新大模型' },
+    { id: 'llamalight', name: 'Llama 3.1 8B Instruct', description: 'Meta轻量模型' },
+    { id: 'mistral', name: 'Mistral Nemo', description: 'Mistral高效模型' },
+    { id: 'deepseek', name: 'DeepSeek-V3', description: 'DeepSeek旗舰模型' },
+    { id: 'deepseek-r1', name: 'DeepSeek-R1', description: 'DeepSeek推理模型' },
+    { id: 'deepseek-reasoner', name: 'DeepSeek R1 Full', description: 'DeepSeek完整推理模型' },
+    { id: 'claude', name: 'Claude 3.5 Haiku', description: 'Anthropic快速模型' },
+    { id: 'gemini', name: 'Gemini 2.0 Flash', description: 'Google最新模型' },
+    { id: 'gemini-thinking', name: 'Gemini 2.0 Flash Thinking', description: 'Google思考模型' },
+    { id: 'phi', name: 'Phi-4 Multimodal', description: 'Microsoft多模态模型' },
+    { id: 'qwen-coder', name: 'Qwen 2.5 Coder 32B', description: 'Qwen代码专用模型' },
   ];
 
   // 检查是否为付费用户
@@ -58,6 +65,41 @@ const Chat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // 调用真实的Pollinations.ai API
+  const callPollinationsAPI = async (prompt: string, modelId: string) => {
+    try {
+      console.log(`正在调用模型: ${modelId}, 提示词: ${prompt}`);
+      
+      // 编码提示词用于URL
+      const encodedPrompt = encodeURIComponent(prompt);
+      const apiUrl = `https://text.pollinations.ai/${encodedPrompt}?model=${modelId}`;
+      
+      console.log(`API URL: ${apiUrl}`);
+      
+      // 发起请求
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'text/plain',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API响应错误: ${response.status} ${response.statusText}`);
+      }
+      
+      // 读取响应文本
+      const responseText = await response.text();
+      console.log(`API响应: ${responseText}`);
+      
+      return responseText || '抱歉，模型没有返回有效响应。';
+      
+    } catch (error) {
+      console.error('API调用错误:', error);
+      throw error;
+    }
+  };
+
   // 快速开始功能
   const handleQuickStart = (type: string) => {
     let prompt = '';
@@ -66,15 +108,15 @@ const Chat = () => {
     switch (type) {
       case 'news':
         prompt = '请为我介绍今天最新的科技热点资讯，包括人工智能、科技公司动态等重要新闻。';
-        model = 'gemini-2.0-pro'; // 使用Gemini进行实时搜索
+        model = 'gemini'; // 使用Gemini进行搜索
         break;
       case 'code':
         prompt = '我需要一个代码助手，请告诉我你可以帮助我解决哪些编程问题，比如代码生成、bug修复、代码优化等。';
-        model = 'gpt-4o'; // 使用GPT-4o进行代码生成
+        model = 'qwen-coder'; // 使用专用代码模型
         break;
       case 'analysis':
         prompt = '请为我分析当前全球热点事件，包括政治、经济、社会等各个方面的重要动态。';
-        model = 'claude-3.5-sonnet'; // 使用Claude进行深度分析
+        model = 'deepseek-reasoner'; // 使用推理模型进行深度分析
         break;
       default:
         return;
@@ -127,25 +169,38 @@ const Chat = () => {
     }
 
     try {
-      // 模拟AI回复
-      setTimeout(() => {
-        const aiMessage: Message = {
-          id: Date.now() + 1,
-          text: `这是来自${models.find(m => m.id === currentModel)?.name}的回复。您说："${messageText}"。我理解您的需求，这里是我的回应...`,
-          isUser: false,
-          timestamp: new Date(),
-        };
-        
-        const finalMessages = [...updatedMessages, aiMessage];
-        setMessages(finalMessages);
-        setIsTyping(false);
-      }, 2000);
+      // 调用真实的AI API
+      const aiResponseText = await callPollinationsAPI(messageText, currentModel);
+      
+      const aiMessage: Message = {
+        id: Date.now() + 1,
+        text: aiResponseText,
+        isUser: false,
+        timestamp: new Date(),
+      };
+      
+      const finalMessages = [...updatedMessages, aiMessage];
+      setMessages(finalMessages);
+      setIsTyping(false);
+      
     } catch (error) {
       console.error('发送消息失败:', error);
       setIsTyping(false);
+      
+      // 添加错误消息
+      const errorMessage: Message = {
+        id: Date.now() + 1,
+        text: '抱歉，AI服务暂时不可用，请稍后再试。',
+        isUser: false,
+        timestamp: new Date(),
+      };
+      
+      const finalMessages = [...updatedMessages, errorMessage];
+      setMessages(finalMessages);
+      
       toast({
         title: "发送失败",
-        description: "消息发送失败，请稍后再试",
+        description: "AI服务暂时不可用，请稍后再试",
         variant: "destructive",
       });
     }
@@ -164,7 +219,7 @@ const Chat = () => {
       
       <main className="flex-grow flex flex-col pt-16">
         {/* 主聊天区域 */}
-        <div className="flex-grow flex flex-col max-w-6xl mx-auto w-full px-4 py-6">
+        <div className="flex-grow flex flex-col max-w-4xl mx-auto w-full px-4 py-6">
           
           {/* 欢迎界面 - 无消息时显示 */}
           {messages.length === 0 && (
@@ -216,7 +271,7 @@ const Chat = () => {
                 >
                   <Sparkles className="h-8 w-8 text-nexus-cyan mx-auto mb-4 group-hover:scale-110 transition-transform" />
                   <h3 className="text-white font-bold text-lg mb-3">热点解读</h3>
-                  <p className="text-white/60">智能解读全网热点，一键掌握什么全金！</p>
+                  <p className="text-white/60">智能解读全网热点，一键掌握全球动态！</p>
                 </div>
               </div>
               
