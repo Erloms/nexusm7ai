@@ -15,7 +15,7 @@ const Settings = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [formData, setFormData] = useState({
-    username: user?.user_metadata?.username || '',
+    username: user?.name || '',
     email: user?.email || '',
     currentPassword: '',
     newPassword: '',
