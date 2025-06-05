@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -7,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Send, Bot, User, Loader2, MessageSquare } from 'lucide-react';
+import { Send, Bot, User, Loader2, MessageSquare, Sparkles, Zap, Image, Volume2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Message {
@@ -185,59 +186,121 @@ const Chat = () => {
 
         {/* Main Chat Area */}
         <div className="flex-grow flex flex-col max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-6 mb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <MessageSquare className="mr-3 h-6 w-6 text-nexus-cyan" />
-                <h1 className="text-2xl font-bold text-gradient">AI 智能对话</h1>
+          {/* Welcome Section - Show when no messages */}
+          {messages.length === 0 && (
+            <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-8 mb-6">
+              <div className="text-center mb-8">
+                <div className="flex items-center justify-center mb-6">
+                  <div className="bg-gradient-to-r from-nexus-blue to-nexus-cyan p-4 rounded-full">
+                    <Bot className="h-8 w-8 text-white" />
+                  </div>
+                </div>
+                <h1 className="text-3xl font-bold text-gradient mb-4">世界在提问时，请直己写好答案～</h1>
+                <p className="text-white/70 text-lg mb-6">解锁AI超能力：对话、创想、发声，一站搞定！</p>
+                
+                {/* Feature Cards */}
+                <div className="grid md:grid-cols-3 gap-4 mb-8">
+                  <div className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg p-4 hover:bg-nexus-blue/10 transition-colors">
+                    <MessageSquare className="h-6 w-6 text-nexus-cyan mx-auto mb-2" />
+                    <h3 className="text-white font-semibold mb-1">AI对话</h3>
+                    <p className="text-white/60 text-sm">最新科技热点资讯，一键了解！</p>
+                  </div>
+                  
+                  <div className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg p-4 hover:bg-nexus-blue/10 transition-colors">
+                    <Image className="h-6 w-6 text-nexus-cyan mx-auto mb-2" />
+                    <h3 className="text-white font-semibold mb-1">代码生成</h3>
+                    <p className="text-white/60 text-sm">代码助手上线，轻松撸定开发难题！</p>
+                  </div>
+                  
+                  <div className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg p-4 hover:bg-nexus-blue/10 transition-colors">
+                    <Sparkles className="h-6 w-6 text-nexus-cyan mx-auto mb-2" />
+                    <h3 className="text-white font-semibold mb-1">热点解读</h3>
+                    <p className="text-white/60 text-sm">智能解读全网热点，一键掌握什么全金！</p>
+                  </div>
+                </div>
               </div>
               
-              <div className="flex items-center gap-3">
-                <Button 
-                  onClick={startNewChat}
-                  variant="outline"
-                  size="sm"
-                  className="border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20"
-                >
-                  新对话
-                </Button>
-                
-                {/* Usage count display for non-paid users */}
-                {!isPaidUser && (
-                  <div className="flex items-center bg-nexus-dark/50 rounded-lg px-4 py-2 border border-nexus-blue/30">
-                    <span className="text-white/80 text-sm mr-2">今日使用:</span>
-                    <span className={`font-bold ${usageCount >= maxUsage ? 'text-red-400' : 'text-nexus-cyan'}`}>
-                      {usageCount}/{maxUsage}
-                    </span>
-                  </div>
-                )}
+              {/* Model Selection */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-white mb-2">选择模型</label>
+                <Select value={selectedModel} onValueChange={setSelectedModel}>
+                  <SelectTrigger className="bg-nexus-dark/50 border-nexus-blue/30 text-white">
+                    <SelectValue placeholder="选择AI模型" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-nexus-dark border-nexus-blue/30 z-50">
+                    {models.map((model) => (
+                      <SelectItem 
+                        key={model.id} 
+                        value={model.id}
+                        className="text-white hover:bg-nexus-blue/20"
+                      >
+                        <div>
+                          <div>{model.name}</div>
+                          <div className="text-xs text-white/60">{model.description}</div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-            
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-white mb-2">选择模型</label>
-              <Select value={selectedModel} onValueChange={setSelectedModel}>
-                <SelectTrigger className="bg-nexus-dark/50 border-nexus-blue/30 text-white max-w-md">
-                  <SelectValue placeholder="选择AI模型" />
-                </SelectTrigger>
-                <SelectContent className="bg-nexus-dark border-nexus-blue/30">
-                  {models.map((model) => (
-                    <SelectItem 
-                      key={model.id} 
-                      value={model.id}
-                      className="text-white hover:bg-nexus-blue/20"
-                    >
-                      <div>
-                        <div>{model.name}</div>
-                        <div className="text-xs text-white/60">{model.description}</div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          )}
+
+          {/* Header - Show when there are messages */}
+          {messages.length > 0 && (
+            <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-6 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <MessageSquare className="mr-3 h-6 w-6 text-nexus-cyan" />
+                  <h1 className="text-2xl font-bold text-gradient">AI 智能对话</h1>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <Button 
+                    onClick={startNewChat}
+                    variant="outline"
+                    size="sm"
+                    className="border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20"
+                  >
+                    新对话
+                  </Button>
+                  
+                  {/* Usage count display for non-paid users */}
+                  {!isPaidUser && (
+                    <div className="flex items-center bg-nexus-dark/50 rounded-lg px-4 py-2 border border-nexus-blue/30">
+                      <span className="text-white/80 text-sm mr-2">今日使用:</span>
+                      <span className={`font-bold ${usageCount >= maxUsage ? 'text-red-400' : 'text-nexus-cyan'}`}>
+                        {usageCount}/{maxUsage}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-white mb-2">选择模型</label>
+                <Select value={selectedModel} onValueChange={setSelectedModel}>
+                  <SelectTrigger className="bg-nexus-dark/50 border-nexus-blue/30 text-white max-w-md">
+                    <SelectValue placeholder="选择AI模型" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-nexus-dark border-nexus-blue/30 z-50">
+                    {models.map((model) => (
+                      <SelectItem 
+                        key={model.id} 
+                        value={model.id}
+                        className="text-white hover:bg-nexus-blue/20"
+                      >
+                        <div>
+                          <div>{model.name}</div>
+                          <div className="text-xs text-white/60">{model.description}</div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Messages Area */}
           <div className="flex-grow bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-6 mb-6 overflow-hidden flex flex-col">
@@ -289,14 +352,16 @@ const Chat = () => {
               
               <div ref={messagesEndRef} />
             </div>
-            
-            {/* Input Area */}
+          </div>
+
+          {/* Input Area */}
+          <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-4">
             <div className="flex space-x-2">
               <Input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="输入您的消息..."
+                placeholder="和我聊聊天吧"
                 className="flex-grow bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50"
                 disabled={isTyping || (!isPaidUser && usageCount >= maxUsage)}
               />
