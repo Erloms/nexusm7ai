@@ -80,44 +80,88 @@ const Image = ({ decrementUsage }: ImageProps) => {
 
     let enhanced = originalPrompt;
 
-    // 智能分析原始提示词并进行详细扩写
-    
+    // 检测风格意图 - 优先检查艺术风格关键词
+    const isArtStyle = /艺术|绘画|插画|动漫|卡通|手绘|art|painting|illustration|drawing|anime|cartoon|sketch|digital art|concept art|artwork/i.test(originalPrompt);
+    const isRealisticStyle = /真实|现实|照片|摄影|realistic|real|photo|photography|photorealistic/i.test(originalPrompt);
+    const isFantasyStyle = /幻想|魔法|科幻|梦幻|fantasy|magic|sci-fi|surreal|dreamy|mystical/i.test(originalPrompt);
+    const is3DStyle = /3d|三维|建模|渲染|blender|cinema4d|3d render|3d model/i.test(originalPrompt);
+
     // 检测人物相关
     if (/人|女|男|girl|boy|woman|man|person|people|character/i.test(originalPrompt)) {
-      enhanced += ', highly detailed portrait, beautiful facial features, expressive eyes, perfect skin texture, professional portrait photography, studio lighting, sharp focus on face, realistic hair texture, natural expression, high resolution';
+      if (isArtStyle) {
+        enhanced += ', beautiful character design, expressive eyes, detailed facial features, digital art style, professional illustration, sharp details';
+      } else if (isFantasyStyle) {
+        enhanced += ', fantasy character, magical appearance, ethereal beauty, enchanted features, mystical atmosphere';
+      } else if (!isRealisticStyle) {
+        enhanced += ', detailed portrait, beautiful facial features, expressive eyes, professional artwork, high quality rendering';
+      } else {
+        enhanced += ', highly detailed portrait, beautiful facial features, expressive eyes, perfect skin texture, professional portrait photography, studio lighting, sharp focus on face, realistic hair texture, natural expression, high resolution';
+      }
     }
 
     // 检测动物相关
     if (/猫|狗|鸟|动物|cat|dog|bird|animal|pet/i.test(originalPrompt)) {
-      enhanced += ', highly detailed animal photography, natural fur/feather texture, expressive animal eyes, wildlife photography style, natural habitat, professional animal portrait, sharp details, realistic lighting';
+      if (isArtStyle) {
+        enhanced += ', cute animal illustration, artistic style, detailed fur/feather texture, expressive animal eyes, digital art';
+      } else if (isFantasyStyle) {
+        enhanced += ', magical creature, fantasy animal, mystical features, enchanted appearance';
+      } else if (!isRealisticStyle) {
+        enhanced += ', detailed animal art, natural features, high quality illustration';
+      } else {
+        enhanced += ', highly detailed animal photography, natural fur/feather texture, expressive animal eyes, wildlife photography style, natural habitat, professional animal portrait, sharp details, realistic lighting';
+      }
     }
 
     // 检测风景相关
     if (/风景|山|海|天空|森林|landscape|mountain|sea|sky|forest|nature/i.test(originalPrompt)) {
-      enhanced += ', breathtaking landscape photography, dramatic sky, golden hour lighting, wide angle view, high dynamic range, vivid natural colors, professional landscape photography, stunning vista, detailed foreground and background';
+      if (isArtStyle) {
+        enhanced += ', artistic landscape, painted style, beautiful scenery, digital landscape art, artistic composition';
+      } else if (isFantasyStyle) {
+        enhanced += ', fantasy landscape, magical scenery, enchanted environment, mystical atmosphere, otherworldly beauty';
+      } else if (!isRealisticStyle) {
+        enhanced += ', beautiful landscape art, scenic view, detailed environment, artistic rendering';
+      } else {
+        enhanced += ', breathtaking landscape photography, dramatic sky, golden hour lighting, wide angle view, high dynamic range, vivid natural colors, professional landscape photography, stunning vista, detailed foreground and background';
+      }
     }
 
     // 检测建筑相关
     if (/建筑|房子|城市|building|house|city|architecture|tower/i.test(originalPrompt)) {
-      enhanced += ', architectural photography, detailed building structure, modern/classic design elements, professional architectural shot, perfect perspective, sharp geometric lines, urban photography style, detailed facade';
+      if (isArtStyle) {
+        enhanced += ', architectural art, artistic building design, illustrated architecture, concept art style';
+      } else if (isFantasyStyle) {
+        enhanced += ', fantasy architecture, magical buildings, enchanted structures, mystical design';
+      } else if (is3DStyle) {
+        enhanced += ', 3d architectural visualization, detailed 3d model, professional rendering, clean topology';
+      } else if (!isRealisticStyle) {
+        enhanced += ', detailed architectural design, beautiful building structure, artistic composition';
+      } else {
+        enhanced += ', architectural photography, detailed building structure, modern/classic design elements, professional architectural shot, perfect perspective, sharp geometric lines, urban photography style, detailed facade';
+      }
     }
 
-    // 检测艺术风格
-    if (/艺术|绘画|插画|art|painting|illustration|drawing/i.test(originalPrompt)) {
+    // 根据检测到的风格添加对应的质量增强词
+    if (isArtStyle) {
       enhanced += ', digital art masterpiece, highly detailed illustration, vibrant color palette, artistic composition, professional digital painting, creative artwork, trending on artstation, award winning art';
+    } else if (isFantasyStyle) {
+      enhanced += ', fantasy art, magical atmosphere, enchanted scene, mystical lighting, otherworldly beauty, fantasy masterpiece, detailed fantasy illustration';
+    } else if (is3DStyle) {
+      enhanced += ', high quality 3d render, detailed 3d model, professional 3d visualization, clean topology, perfect lighting, 3d masterpiece';
+    } else if (isRealisticStyle || (!isArtStyle && !isFantasyStyle && !is3DStyle)) {
+      // 只有在明确要求真实风格或没有其他风格指示时才添加真实照片相关词汇
+      if (isRealisticStyle) {
+        enhanced += ', masterpiece, best quality, ultra detailed, 8k resolution, photorealistic, professional photography, sharp focus, perfect lighting, vivid colors, highly detailed, award winning photo';
+      } else {
+        enhanced += ', masterpiece, best quality, ultra detailed, high resolution, sharp focus, perfect composition, vivid colors, highly detailed';
+      }
     }
 
-    // 检测科幻/未来主题
+    // 检测科幻/未来主题（保持原有逻辑）
     if (/科幻|未来|机器人|太空|sci-fi|future|robot|space|cyberpunk/i.test(originalPrompt)) {
-      enhanced += ', futuristic design, advanced technology, cyberpunk aesthetic, neon lighting effects, high-tech details, science fiction concept art, digital art, detailed mechanical parts, glowing elements';
-    }
-
-    // 添加通用质量增强
-    enhanced += ', masterpiece, best quality, ultra detailed, 8k resolution, photorealistic, professional photography, sharp focus, perfect lighting, vivid colors, highly detailed, award winning photo';
-
-    // 检测并添加风格描述符
-    if (!/photorealistic|realistic|photo/i.test(enhanced) && !/anime|cartoon|illustration|art/i.test(enhanced)) {
-      enhanced += ', photorealistic style';
+      enhanced += ', futuristic design, advanced technology, high-tech details, science fiction concept art, detailed mechanical parts, glowing elements';
+      if (!isArtStyle && !isRealisticStyle) {
+        enhanced += ', digital art';
+      }
     }
 
     return enhanced;
