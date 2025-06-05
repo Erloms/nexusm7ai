@@ -2,13 +2,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-import ChatHistory from '@/components/ChatHistory';
-import UsageTracker from '@/components/UsageTracker';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Send, Bot, User, Loader2, MessageSquare, Sparkles, Zap, Image, Volume2 } from 'lucide-react';
+import { Send, Bot, User, Loader2, MessageSquare, Sparkles, Code, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Message {
@@ -16,14 +14,6 @@ interface Message {
   text: string;
   isUser: boolean;
   timestamp: Date;
-}
-
-interface ChatSession {
-  id: string;
-  title: string;
-  timestamp: Date;
-  messages: Message[];
-  model: string;
 }
 
 const Chat = () => {
@@ -35,13 +25,6 @@ const Chat = () => {
   const [selectedModel, setSelectedModel] = useState('gpt-4o');
   const [usageCount, setUsageCount] = useState(0);
   const [maxUsage] = useState(10);
-  const [currentSession, setCurrentSession] = useState<ChatSession>({
-    id: `session_${Date.now()}`,
-    title: '',
-    timestamp: new Date(),
-    messages: [],
-    model: 'gpt-4o'
-  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const models = [
@@ -75,8 +58,42 @@ const Chat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
+  // 快速开始功能
+  const handleQuickStart = (type: string) => {
+    let prompt = '';
+    let model = selectedModel;
+    
+    switch (type) {
+      case 'news':
+        prompt = '请为我介绍今天最新的科技热点资讯，包括人工智能、科技公司动态等重要新闻。';
+        model = 'gemini-2.0-pro'; // 使用Gemini进行实时搜索
+        break;
+      case 'code':
+        prompt = '我需要一个代码助手，请告诉我你可以帮助我解决哪些编程问题，比如代码生成、bug修复、代码优化等。';
+        model = 'gpt-4o'; // 使用GPT-4o进行代码生成
+        break;
+      case 'analysis':
+        prompt = '请为我分析当前全球热点事件，包括政治、经济、社会等各个方面的重要动态。';
+        model = 'claude-3.5-sonnet'; // 使用Claude进行深度分析
+        break;
+      default:
+        return;
+    }
+
+    setSelectedModel(model);
+    setInputValue(prompt);
+    
+    // 自动发送消息
+    setTimeout(() => {
+      handleSendMessage(prompt, model);
+    }, 100);
+  };
+
+  const handleSendMessage = async (customPrompt?: string, customModel?: string) => {
+    const messageText = customPrompt || inputValue.trim();
+    const currentModel = customModel || selectedModel;
+    
+    if (!messageText) return;
 
     // 检查使用次数限制（仅对非付费用户）
     if (!isPaidUser && usageCount >= maxUsage) {
@@ -90,7 +107,7 @@ const Chat = () => {
 
     const userMessage: Message = {
       id: Date.now(),
-      text: inputValue,
+      text: messageText,
       isUser: true,
       timestamp: new Date(),
     };
@@ -99,14 +116,6 @@ const Chat = () => {
     setMessages(updatedMessages);
     setInputValue('');
     setIsTyping(true);
-
-    // Update current session
-    setCurrentSession(prev => ({
-      ...prev,
-      messages: updatedMessages,
-      model: selectedModel,
-      timestamp: new Date()
-    }));
 
     // Update usage count for non-paid users
     if (!isPaidUser) {
@@ -122,17 +131,13 @@ const Chat = () => {
       setTimeout(() => {
         const aiMessage: Message = {
           id: Date.now() + 1,
-          text: `这是来自${models.find(m => m.id === selectedModel)?.name}的回复。您说："${userMessage.text}"。我理解您的需求，这里是我的回应...`,
+          text: `这是来自${models.find(m => m.id === currentModel)?.name}的回复。您说："${messageText}"。我理解您的需求，这里是我的回应...`,
           isUser: false,
           timestamp: new Date(),
         };
         
         const finalMessages = [...updatedMessages, aiMessage];
         setMessages(finalMessages);
-        setCurrentSession(prev => ({
-          ...prev,
-          messages: finalMessages
-        }));
         setIsTyping(false);
       }, 2000);
     } catch (error) {
@@ -146,23 +151,6 @@ const Chat = () => {
     }
   };
 
-  const loadSession = (session: ChatSession) => {
-    setMessages(session.messages);
-    setSelectedModel(session.model);
-    setCurrentSession(session);
-  };
-
-  const startNewChat = () => {
-    setMessages([]);
-    setCurrentSession({
-      id: `session_${Date.now()}`,
-      title: '',
-      timestamp: new Date(),
-      messages: [],
-      model: selectedModel
-    });
-  };
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -174,57 +162,69 @@ const Chat = () => {
     <div className="min-h-screen bg-nexus-dark flex flex-col">
       <Navigation />
       
-      <main className="flex-grow flex gap-4 p-4 pt-16 md:p-8">
-        {/* Left Sidebar - Chat History */}
-        <div className="hidden lg:block">
-          <ChatHistory 
-            onLoadSession={loadSession}
-            currentSession={currentSession}
-            onSaveCurrentSession={() => {}}
-          />
-        </div>
-
-        {/* Main Chat Area */}
-        <div className="flex-grow flex flex-col max-w-4xl mx-auto">
-          {/* Welcome Section - Show when no messages */}
+      <main className="flex-grow flex flex-col pt-16">
+        {/* 主聊天区域 */}
+        <div className="flex-grow flex flex-col max-w-6xl mx-auto w-full px-4 py-6">
+          
+          {/* 欢迎界面 - 无消息时显示 */}
           {messages.length === 0 && (
-            <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-8 mb-6">
-              <div className="text-center mb-8">
+            <div className="flex-grow flex flex-col justify-center">
+              {/* 主标题区域 */}
+              <div className="text-center mb-12">
                 <div className="flex items-center justify-center mb-6">
-                  <div className="bg-gradient-to-r from-nexus-blue to-nexus-cyan p-4 rounded-full">
-                    <Bot className="h-8 w-8 text-white" />
+                  <div className="bg-gradient-to-r from-nexus-blue to-nexus-cyan p-6 rounded-full">
+                    <Bot className="h-12 w-12 text-white" />
                   </div>
                 </div>
-                <h1 className="text-3xl font-bold text-gradient mb-4">世界在提问时，请直己写好答案～</h1>
-                <p className="text-white/70 text-lg mb-6">解锁AI超能力：对话、创想、发声，一站搞定！</p>
+                <h1 className="text-4xl md:text-5xl font-bold text-gradient mb-6">
+                  世界在提问时，请直己写好答案～
+                </h1>
+                <p className="text-white/70 text-xl mb-8">解锁AI超能力：对话、创想、发声，一站搞定！</p>
                 
-                {/* Feature Cards */}
-                <div className="grid md:grid-cols-3 gap-4 mb-8">
-                  <div className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg p-4 hover:bg-nexus-blue/10 transition-colors">
-                    <MessageSquare className="h-6 w-6 text-nexus-cyan mx-auto mb-2" />
-                    <h3 className="text-white font-semibold mb-1">AI对话</h3>
-                    <p className="text-white/60 text-sm">最新科技热点资讯，一键了解！</p>
-                  </div>
-                  
-                  <div className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg p-4 hover:bg-nexus-blue/10 transition-colors">
-                    <Image className="h-6 w-6 text-nexus-cyan mx-auto mb-2" />
-                    <h3 className="text-white font-semibold mb-1">代码生成</h3>
-                    <p className="text-white/60 text-sm">代码助手上线，轻松撸定开发难题！</p>
-                  </div>
-                  
-                  <div className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg p-4 hover:bg-nexus-blue/10 transition-colors">
-                    <Sparkles className="h-6 w-6 text-nexus-cyan mx-auto mb-2" />
-                    <h3 className="text-white font-semibold mb-1">热点解读</h3>
-                    <p className="text-white/60 text-sm">智能解读全网热点，一键掌握什么全金！</p>
-                  </div>
+                {/* 使用额度提示 - 小字显示 */}
+                {!isPaidUser && (
+                  <p className="text-white/50 text-sm mb-8">
+                    今日对话额度: {usageCount}/{maxUsage} · 
+                    <span className="text-nexus-cyan cursor-pointer hover:underline ml-1">升级VIP享受无限制</span>
+                  </p>
+                )}
+              </div>
+              
+              {/* 功能卡片 */}
+              <div className="grid md:grid-cols-3 gap-6 mb-12 max-w-4xl mx-auto">
+                <div 
+                  onClick={() => handleQuickStart('news')}
+                  className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-xl p-8 hover:bg-nexus-blue/10 transition-all duration-300 cursor-pointer group hover:scale-105"
+                >
+                  <Search className="h-8 w-8 text-nexus-cyan mx-auto mb-4 group-hover:scale-110 transition-transform" />
+                  <h3 className="text-white font-bold text-lg mb-3">AI对话</h3>
+                  <p className="text-white/60">最新科技热点资讯，一键了解！</p>
+                </div>
+                
+                <div 
+                  onClick={() => handleQuickStart('code')}
+                  className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-xl p-8 hover:bg-nexus-blue/10 transition-all duration-300 cursor-pointer group hover:scale-105"
+                >
+                  <Code className="h-8 w-8 text-nexus-cyan mx-auto mb-4 group-hover:scale-110 transition-transform" />
+                  <h3 className="text-white font-bold text-lg mb-3">代码生成</h3>
+                  <p className="text-white/60">代码助手上线，轻松撸定开发难题！</p>
+                </div>
+                
+                <div 
+                  onClick={() => handleQuickStart('analysis')}
+                  className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-xl p-8 hover:bg-nexus-blue/10 transition-all duration-300 cursor-pointer group hover:scale-105"
+                >
+                  <Sparkles className="h-8 w-8 text-nexus-cyan mx-auto mb-4 group-hover:scale-110 transition-transform" />
+                  <h3 className="text-white font-bold text-lg mb-3">热点解读</h3>
+                  <p className="text-white/60">智能解读全网热点，一键掌握什么全金！</p>
                 </div>
               </div>
               
-              {/* Model Selection */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-white mb-2">选择模型</label>
+              {/* 模型选择 */}
+              <div className="max-w-md mx-auto w-full mb-8">
+                <label className="block text-sm font-medium text-white mb-3">选择模型</label>
                 <Select value={selectedModel} onValueChange={setSelectedModel}>
-                  <SelectTrigger className="bg-nexus-dark/50 border-nexus-blue/30 text-white">
+                  <SelectTrigger className="bg-nexus-dark/50 border-nexus-blue/30 text-white h-12">
                     <SelectValue placeholder="选择AI模型" />
                   </SelectTrigger>
                   <SelectContent className="bg-nexus-dark border-nexus-blue/30 z-50">
@@ -235,7 +235,7 @@ const Chat = () => {
                         className="text-white hover:bg-nexus-blue/20"
                       >
                         <div>
-                          <div>{model.name}</div>
+                          <div className="font-medium">{model.name}</div>
                           <div className="text-xs text-white/60">{model.description}</div>
                         </div>
                       </SelectItem>
@@ -246,143 +246,116 @@ const Chat = () => {
             </div>
           )}
 
-          {/* Header - Show when there are messages */}
+          {/* 聊天消息区域 */}
           {messages.length > 0 && (
-            <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-6 mb-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <MessageSquare className="mr-3 h-6 w-6 text-nexus-cyan" />
-                  <h1 className="text-2xl font-bold text-gradient">AI 智能对话</h1>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <Button 
-                    onClick={startNewChat}
-                    variant="outline"
-                    size="sm"
-                    className="border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20"
-                  >
-                    新对话
-                  </Button>
+            <>
+              {/* 头部信息 */}
+              <div className="bg-gradient-to-r from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <MessageSquare className="mr-3 h-6 w-6 text-nexus-cyan" />
+                    <h1 className="text-xl font-bold text-gradient">AI 智能对话</h1>
+                  </div>
                   
-                  {/* Usage count display for non-paid users */}
-                  {!isPaidUser && (
-                    <div className="flex items-center bg-nexus-dark/50 rounded-lg px-4 py-2 border border-nexus-blue/30">
-                      <span className="text-white/80 text-sm mr-2">今日使用:</span>
-                      <span className={`font-bold ${usageCount >= maxUsage ? 'text-red-400' : 'text-nexus-cyan'}`}>
-                        {usageCount}/{maxUsage}
-                      </span>
+                  <div className="flex items-center gap-4">
+                    <Select value={selectedModel} onValueChange={setSelectedModel}>
+                      <SelectTrigger className="bg-nexus-dark/50 border-nexus-blue/30 text-white w-48">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-nexus-dark border-nexus-blue/30 z-50">
+                        {models.map((model) => (
+                          <SelectItem 
+                            key={model.id} 
+                            value={model.id}
+                            className="text-white hover:bg-nexus-blue/20"
+                          >
+                            {model.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    <Button 
+                      onClick={() => setMessages([])}
+                      variant="outline"
+                      size="sm"
+                      className="border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20"
+                    >
+                      新对话
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 消息列表 */}
+              <div className="flex-grow bg-gradient-to-br from-nexus-dark/50 to-nexus-purple/20 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-6 mb-6 overflow-hidden flex flex-col min-h-[500px]">
+                <div className="flex-grow overflow-y-auto space-y-6">
+                  {messages.map((message) => (
+                    <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[80%] rounded-xl p-6 ${
+                        message.isUser 
+                          ? 'bg-gradient-to-r from-nexus-blue to-nexus-cyan text-white' 
+                          : 'bg-nexus-dark/70 border border-nexus-blue/30 text-white'
+                      }`}>
+                        <div className="flex items-start space-x-3">
+                          {!message.isUser && <Bot className="h-6 w-6 text-nexus-cyan mt-1 flex-shrink-0" />}
+                          <div className="flex-grow">
+                            <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
+                            <p className="text-xs opacity-70 mt-3">
+                              {message.timestamp.toLocaleTimeString()}
+                            </p>
+                          </div>
+                          {message.isUser && <User className="h-6 w-6 text-white mt-1 flex-shrink-0" />}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {isTyping && (
+                    <div className="flex justify-start">
+                      <div className="bg-nexus-dark/70 border border-nexus-blue/30 rounded-xl p-6 max-w-[80%]">
+                        <div className="flex items-center space-x-3">
+                          <Bot className="h-6 w-6 text-nexus-cyan" />
+                          <div className="flex space-x-1">
+                            <div className="w-3 h-3 bg-nexus-cyan rounded-full animate-bounce"></div>
+                            <div className="w-3 h-3 bg-nexus-cyan rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                            <div className="w-3 h-3 bg-nexus-cyan rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
+                  
+                  <div ref={messagesEndRef} />
                 </div>
               </div>
-              
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-white mb-2">选择模型</label>
-                <Select value={selectedModel} onValueChange={setSelectedModel}>
-                  <SelectTrigger className="bg-nexus-dark/50 border-nexus-blue/30 text-white max-w-md">
-                    <SelectValue placeholder="选择AI模型" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-nexus-dark border-nexus-blue/30 z-50">
-                    {models.map((model) => (
-                      <SelectItem 
-                        key={model.id} 
-                        value={model.id}
-                        className="text-white hover:bg-nexus-blue/20"
-                      >
-                        <div>
-                          <div>{model.name}</div>
-                          <div className="text-xs text-white/60">{model.description}</div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            </>
           )}
 
-          {/* Messages Area */}
-          <div className="flex-grow bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-6 mb-6 overflow-hidden flex flex-col">
-            <div className="flex-grow overflow-y-auto mb-4 space-y-4">
-              {messages.length === 0 && (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <Bot className="h-16 w-16 text-white/20 mx-auto mb-4" />
-                    <p className="text-white/60">开始与AI对话吧！</p>
-                  </div>
-                </div>
-              )}
-              
-              {messages.map((message) => (
-                <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[80%] rounded-lg p-4 ${
-                    message.isUser 
-                      ? 'bg-nexus-blue text-white' 
-                      : 'bg-nexus-dark/50 border border-nexus-blue/30 text-white'
-                  }`}>
-                    <div className="flex items-start space-x-2">
-                      {!message.isUser && <Bot className="h-5 w-5 text-nexus-cyan mt-1 flex-shrink-0" />}
-                      <div className="flex-grow">
-                        <p className="whitespace-pre-wrap">{message.text}</p>
-                        <p className="text-xs opacity-70 mt-2">
-                          {message.timestamp.toLocaleTimeString()}
-                        </p>
-                      </div>
-                      {message.isUser && <User className="h-5 w-5 text-white mt-1 flex-shrink-0" />}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              {isTyping && (
-                <div className="flex justify-start">
-                  <div className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg p-4 max-w-[80%]">
-                    <div className="flex items-center space-x-2">
-                      <Bot className="h-5 w-5 text-nexus-cyan" />
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-nexus-cyan rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-nexus-cyan rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                        <div className="w-2 h-2 bg-nexus-cyan rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              <div ref={messagesEndRef} />
-            </div>
-          </div>
-
-          {/* Input Area */}
-          <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-4">
-            <div className="flex space-x-2">
+          {/* 输入区域 */}
+          <div className="bg-gradient-to-r from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-6">
+            <div className="flex space-x-4">
               <Input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="和我聊聊天吧"
-                className="flex-grow bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50"
+                placeholder="开始与AI对话吧！"
+                className="flex-grow bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 h-12 text-lg"
                 disabled={isTyping || (!isPaidUser && usageCount >= maxUsage)}
               />
               <Button 
-                onClick={handleSendMessage}
+                onClick={() => handleSendMessage()}
                 disabled={!inputValue.trim() || isTyping || (!isPaidUser && usageCount >= maxUsage)}
-                className="bg-nexus-blue hover:bg-nexus-blue/80 text-white"
+                className="bg-gradient-to-r from-nexus-blue to-nexus-cyan hover:from-nexus-blue/80 hover:to-nexus-cyan/80 text-white h-12 px-8"
               >
                 {isTyping ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <Send className="h-4 w-4" />
+                  <Send className="h-5 w-5" />
                 )}
               </Button>
             </div>
           </div>
-        </div>
-
-        {/* Right Sidebar - Usage Tracker */}
-        <div className="hidden xl:block">
-          <UsageTracker />
         </div>
       </main>
       
