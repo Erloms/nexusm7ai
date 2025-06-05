@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import ChatHistory from '@/components/ChatHistory';
+import UsageTracker from '@/components/UsageTracker';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,6 +17,14 @@ interface Message {
   timestamp: Date;
 }
 
+interface ChatSession {
+  id: string;
+  title: string;
+  timestamp: Date;
+  messages: Message[];
+  model: string;
+}
+
 const Chat = () => {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -23,7 +33,14 @@ const Chat = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gpt-4o');
   const [usageCount, setUsageCount] = useState(0);
-  const [maxUsage] = useState(5);
+  const [maxUsage] = useState(10);
+  const [currentSession, setCurrentSession] = useState<ChatSession>({
+    id: `session_${Date.now()}`,
+    title: '',
+    timestamp: new Date(),
+    messages: [],
+    model: 'gpt-4o'
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const models = [
@@ -77,11 +94,20 @@ const Chat = () => {
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInputValue('');
     setIsTyping(true);
 
-    // 更新使用次数（仅对非付费用户）
+    // Update current session
+    setCurrentSession(prev => ({
+      ...prev,
+      messages: updatedMessages,
+      model: selectedModel,
+      timestamp: new Date()
+    }));
+
+    // Update usage count for non-paid users
     if (!isPaidUser) {
       const newUsageCount = usageCount + 1;
       setUsageCount(newUsageCount);
@@ -100,7 +126,12 @@ const Chat = () => {
           timestamp: new Date(),
         };
         
-        setMessages(prev => [...prev, aiMessage]);
+        const finalMessages = [...updatedMessages, aiMessage];
+        setMessages(finalMessages);
+        setCurrentSession(prev => ({
+          ...prev,
+          messages: finalMessages
+        }));
         setIsTyping(false);
       }, 2000);
     } catch (error) {
@@ -114,6 +145,23 @@ const Chat = () => {
     }
   };
 
+  const loadSession = (session: ChatSession) => {
+    setMessages(session.messages);
+    setSelectedModel(session.model);
+    setCurrentSession(session);
+  };
+
+  const startNewChat = () => {
+    setMessages([]);
+    setCurrentSession({
+      id: `session_${Date.now()}`,
+      title: '',
+      timestamp: new Date(),
+      messages: [],
+      model: selectedModel
+    });
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -125,9 +173,19 @@ const Chat = () => {
     <div className="min-h-screen bg-nexus-dark flex flex-col">
       <Navigation />
       
-      <main className="flex-grow flex flex-col p-4 pt-16 md:p-8">
-        <div className="w-full max-w-4xl mx-auto flex-grow flex flex-col">
-          {/* 头部 */}
+      <main className="flex-grow flex gap-4 p-4 pt-16 md:p-8">
+        {/* Left Sidebar - Chat History */}
+        <div className="hidden lg:block">
+          <ChatHistory 
+            onLoadSession={loadSession}
+            currentSession={currentSession}
+            onSaveCurrentSession={() => {}}
+          />
+        </div>
+
+        {/* Main Chat Area */}
+        <div className="flex-grow flex flex-col max-w-4xl mx-auto">
+          {/* Header */}
           <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-6 mb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -135,15 +193,26 @@ const Chat = () => {
                 <h1 className="text-2xl font-bold text-gradient">AI 智能对话</h1>
               </div>
               
-              {/* 使用次数显示 */}
-              {!isPaidUser && (
-                <div className="flex items-center bg-nexus-dark/50 rounded-lg px-4 py-2 border border-nexus-blue/30">
-                  <span className="text-white/80 text-sm mr-2">今日使用:</span>
-                  <span className={`font-bold ${usageCount >= maxUsage ? 'text-red-400' : 'text-nexus-cyan'}`}>
-                    {usageCount}/{maxUsage}
-                  </span>
-                </div>
-              )}
+              <div className="flex items-center gap-3">
+                <Button 
+                  onClick={startNewChat}
+                  variant="outline"
+                  size="sm"
+                  className="border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20"
+                >
+                  新对话
+                </Button>
+                
+                {/* Usage count display for non-paid users */}
+                {!isPaidUser && (
+                  <div className="flex items-center bg-nexus-dark/50 rounded-lg px-4 py-2 border border-nexus-blue/30">
+                    <span className="text-white/80 text-sm mr-2">今日使用:</span>
+                    <span className={`font-bold ${usageCount >= maxUsage ? 'text-red-400' : 'text-nexus-cyan'}`}>
+                      {usageCount}/{maxUsage}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
             
             <div className="mt-4">
@@ -170,7 +239,7 @@ const Chat = () => {
             </div>
           </div>
 
-          {/* 消息区域 */}
+          {/* Messages Area */}
           <div className="flex-grow bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-6 mb-6 overflow-hidden flex flex-col">
             <div className="flex-grow overflow-y-auto mb-4 space-y-4">
               {messages.length === 0 && (
@@ -221,7 +290,7 @@ const Chat = () => {
               <div ref={messagesEndRef} />
             </div>
             
-            {/* 输入区域 */}
+            {/* Input Area */}
             <div className="flex space-x-2">
               <Input
                 value={inputValue}
@@ -244,6 +313,11 @@ const Chat = () => {
               </Button>
             </div>
           </div>
+        </div>
+
+        {/* Right Sidebar - Usage Tracker */}
+        <div className="hidden xl:block">
+          <UsageTracker />
         </div>
       </main>
       
