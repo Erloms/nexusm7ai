@@ -7,35 +7,52 @@ import { ArrowDown } from 'lucide-react';
 const HeroSection = () => {
   return (
     <section className="min-h-screen pt-20 flex flex-col items-center justify-center px-4 relative overflow-hidden">
-      {/* Background elements */}
-      <div className="absolute inset-0 bg-grid-pattern bg-[length:30px_30px] opacity-20 z-0"></div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-nexus-blue/10 rounded-full blur-[100px] z-0"></div>
+      {/* 增强的背景元素 */}
+      <div className="absolute inset-0 bg-gradient-to-br from-nexus-dark via-nexus-purple/20 to-nexus-blue/10 z-0"></div>
+      <div className="absolute inset-0 bg-grid-pattern bg-[length:30px_30px] opacity-10 z-0"></div>
+      
+      {/* 动态背景光效 */}
+      <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-nexus-blue/20 rounded-full blur-[80px] animate-pulse z-0"></div>
+      <div className="absolute top-1/2 right-1/4 w-[300px] h-[300px] bg-nexus-cyan/15 rounded-full blur-[60px] animate-pulse z-0" style={{animationDelay: '1s'}}></div>
+      <div className="absolute bottom-1/4 left-1/2 w-[350px] h-[350px] bg-nexus-purple/10 rounded-full blur-[70px] animate-pulse z-0" style={{animationDelay: '2s'}}></div>
+      
+      {/* 添加漂浮的装饰元素 */}
+      <div className="absolute top-1/3 left-1/6 w-2 h-2 bg-nexus-cyan rounded-full animate-bounce z-0" style={{animationDelay: '0.5s'}}></div>
+      <div className="absolute top-2/3 right-1/6 w-1 h-1 bg-nexus-blue rounded-full animate-bounce z-0" style={{animationDelay: '1.5s'}}></div>
+      <div className="absolute top-1/2 left-3/4 w-1.5 h-1.5 bg-nexus-purple rounded-full animate-bounce z-0" style={{animationDelay: '0.8s'}}></div>
       
       {/* Hero content */}
-      <div className="relative z-10 max-w-4xl mx-auto text-center">
-        <h1 className="text-4xl md:text-6xl font-bold mb-6">
-          <span className="text-gradient">解锁</span> <span className="text-gradient-reverse">AI</span> <span className="text-gradient">超能力</span>
-        </h1>
-        <h2 className="text-xl md:text-3xl font-bold mb-8">
-          <span className="text-white">对话、创想、发声，一站搞定！</span>
-        </h2>
+      <div className="relative z-10 max-w-5xl mx-auto text-center">
+        <div className="mb-8 animate-fade-in">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+            <span className="text-gradient bg-gradient-to-r from-nexus-blue via-nexus-cyan to-nexus-purple bg-clip-text text-transparent">解锁</span>{' '}
+            <span className="text-gradient-reverse bg-gradient-to-r from-nexus-purple via-nexus-cyan to-nexus-blue bg-clip-text text-transparent">AI</span>{' '}
+            <span className="text-gradient bg-gradient-to-r from-nexus-blue via-nexus-cyan to-nexus-purple bg-clip-text text-transparent">超能力</span>
+          </h1>
+          <h2 className="text-2xl md:text-4xl font-bold mb-8 text-white/90">
+            对话、创想、发声，一站搞定！
+          </h2>
+          <p className="text-lg md:text-xl text-white/70 mb-8 max-w-3xl mx-auto">
+            体验前沿AI技术，释放无限创造力。从智能对话到艺术创作，从语音合成到图像生成，让AI成为你的创作伙伴。
+          </p>
+        </div>
         
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-          <Button size="lg" asChild className="bg-nexus-blue hover:bg-nexus-blue/80 text-white text-lg px-8 py-6">
-            <Link to="/chat">立即体验</Link>
-          </Button>
-          <Button size="lg" variant="outline" asChild className="bg-transparent border border-nexus-blue hover:bg-nexus-blue/20 text-nexus-blue text-lg px-8 py-6">
-            <Link to="/payment">成为会员</Link>
+        <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12 animate-scale-in">
+          <Button size="lg" asChild className="bg-gradient-to-r from-nexus-blue to-nexus-cyan hover:from-nexus-blue/80 hover:to-nexus-cyan/80 text-white text-xl px-10 py-7 rounded-full shadow-2xl transform hover:scale-105 transition-all duration-300">
+            <Link to="/chat">🚀 立即体验</Link>
           </Button>
         </div>
         
         <button 
           onClick={() => document.getElementById('features')?.scrollIntoView({behavior: 'smooth'})}
-          className="animate-bounce flex items-center justify-center w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm mx-auto mt-8 hover:bg-white/20 transition"
+          className="animate-bounce flex items-center justify-center w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm mx-auto mt-12 hover:bg-white/20 transition-all duration-300 hover:scale-110"
         >
-          <ArrowDown size={20} className="text-white" />
+          <ArrowDown size={24} className="text-white" />
         </button>
       </div>
+      
+      {/* 底部装饰波浪 */}
+      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-nexus-dark/80 to-transparent z-0"></div>
     </section>
   );
 };
