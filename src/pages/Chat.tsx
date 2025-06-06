@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -24,8 +23,6 @@ const Chat = () => {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [selectedModel, setSelectedModel] = useState('openai');
-  const [usageCount, setUsageCount] = useState(0);
-  const [maxUsage] = useState(10);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -47,17 +44,12 @@ const Chat = () => {
     { id: 'qwen-coder', name: 'Qwen 2.5 Coder 32B', description: 'Qwen代码专用模型' },
   ];
 
-  // 检查是否为付费用户
-  const isPaidUser = user && JSON.parse(localStorage.getItem('nexusAi_users') || '[]')
-    .find((u: any) => u.id === user.id)?.isPaid;
-
-  useEffect(() => {
-    // 加载使用次数
-    if (user) {
-      const usage = parseInt(localStorage.getItem(`chat_usage_${user.id}`) || '0');
-      setUsageCount(usage);
-    }
-  }, [user]);
+  // 引导问题
+  const guideQuestions = [
+    "写一篇关于人工智能未来发展的文章",
+    "帮我生成一份周末旅行计划",
+    "创作一首关于星空的诗歌"
+  ];
 
   useEffect(() => {
     scrollToBottom();
@@ -131,16 +123,6 @@ const Chat = () => {
     
     if (!messageText) return;
 
-    // 检查使用次数限制（仅对非付费用户）
-    if (!isPaidUser && usageCount >= maxUsage) {
-      toast({
-        title: "使用次数已达上限",
-        description: `免费用户每日限制${maxUsage}次对话，请升级VIP享受无限制使用`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     const userMessage: Message = {
       id: Date.now(),
       text: messageText,
@@ -152,15 +134,6 @@ const Chat = () => {
     setMessages(updatedMessages);
     setInputValue('');
     setIsTyping(true);
-
-    // Update usage count for non-paid users
-    if (!isPaidUser) {
-      const newUsageCount = usageCount + 1;
-      setUsageCount(newUsageCount);
-      if (user) {
-        localStorage.setItem(`chat_usage_${user.id}`, newUsageCount.toString());
-      }
-    }
 
     try {
       // 检测是否为图片生成请求
@@ -227,180 +200,197 @@ const Chat = () => {
   };
 
   return (
-    <div className="min-h-screen bg-nexus-dark flex flex-col">
+    <div className="min-h-screen bg-nexus-dark flex flex-col relative">
+      {/* 背景装饰 */}
+      <div className="absolute inset-0 bg-gradient-to-br from-nexus-dark via-nexus-purple/20 to-nexus-blue/10 z-0"></div>
+      <div className="absolute inset-0 bg-grid-pattern bg-[length:50px_50px] opacity-5 z-0"></div>
+      
       <Navigation />
       
-      <main className="flex-grow flex flex-col pt-16">
-        {/* 主聊天区域 */}
-        <div className="flex-grow flex flex-col max-w-6xl mx-auto w-full px-4 py-6">
-          
-          {/* 欢迎界面 - 无消息时显示 */}
-          {messages.length === 0 && (
-            <div className="flex-grow flex flex-col justify-center items-center">
-              {/* 主标题区域 */}
-              <div className="text-center mb-8">
-                <div className="flex items-center justify-center mb-6">
-                  <div className="bg-gradient-to-r from-nexus-blue to-nexus-cyan p-6 rounded-full">
-                    <Bot className="h-12 w-12 text-white" />
-                  </div>
+      <main className="flex-grow flex flex-col pt-16 relative z-10">
+        
+        {/* 欢迎界面 - 无消息时显示 */}
+        {messages.length === 0 && (
+          <div className="flex-grow flex flex-col justify-center items-center px-4">
+            {/* AI图标和标题 */}
+            <div className="text-center mb-12">
+              <div className="flex items-center justify-center mb-8">
+                <div className="bg-gradient-to-r from-nexus-blue to-nexus-cyan p-8 rounded-full shadow-2xl">
+                  <Bot className="h-16 w-16 text-white" />
                 </div>
-                <h1 className="text-4xl md:text-5xl font-bold text-gradient mb-4">
-                  世界在提问时，请直己写好答案～
-                </h1>
-                <p className="text-white/70 text-xl mb-4">解锁AI超能力：对话、创想、发声，一站搞定！</p>
-                
-                {/* 使用额度提示 - 小字显示 */}
-                {!isPaidUser && (
-                  <p className="text-white/50 text-sm mb-6">
-                    今日对话额度: {usageCount}/{maxUsage} · 
-                    <span className="text-nexus-cyan cursor-pointer hover:underline ml-1">升级VIP享受无限制</span>
-                  </p>
-                )}
               </div>
-              
-              {/* 模型选择 */}
-              <div className="max-w-md mx-auto w-full mb-8">
-                <label className="block text-sm font-medium text-white mb-3">选择模型</label>
-                <Select value={selectedModel} onValueChange={setSelectedModel}>
-                  <SelectTrigger className="bg-nexus-dark/50 border-nexus-blue/30 text-white h-12">
-                    <SelectValue placeholder="选择AI模型" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-nexus-dark border-nexus-blue/30 z-50">
-                    {models.map((model) => (
-                      <SelectItem 
-                        key={model.id} 
-                        value={model.id}
-                        className="text-white hover:bg-nexus-blue/20"
-                      >
-                        <div>
-                          <div className="font-medium">{model.name}</div>
-                          <div className="text-xs text-white/60">{model.description}</div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <h1 className="text-5xl md:text-6xl font-bold text-gradient mb-6">
+                Nexus AI 对话
+              </h1>
+              <p className="text-white/70 text-xl mb-8 max-w-2xl mx-auto">
+                与AI智能对话，获得专业回答和创意灵感
+              </p>
+            </div>
+            
+            {/* 模型选择 - 居中显示 */}
+            <div className="max-w-lg mx-auto w-full mb-12">
+              <label className="block text-sm font-medium text-white mb-4 text-center">选择AI模型</label>
+              <Select value={selectedModel} onValueChange={setSelectedModel}>
+                <SelectTrigger className="bg-nexus-dark/70 border-nexus-blue/30 text-white h-14 text-lg backdrop-blur-sm">
+                  <SelectValue placeholder="选择AI模型" />
+                </SelectTrigger>
+                <SelectContent className="bg-nexus-dark border-nexus-blue/30 z-50">
+                  {models.map((model) => (
+                    <SelectItem 
+                      key={model.id} 
+                      value={model.id}
+                      className="text-white hover:bg-nexus-blue/20"
+                    >
+                      <div>
+                        <div className="font-medium">{model.name}</div>
+                        <div className="text-xs text-white/60">{model.description}</div>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 引导问题 */}
+            <div className="max-w-4xl mx-auto w-full mb-8">
+              <p className="text-white/60 text-center mb-6">或者试试以下问题：</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {guideQuestions.map((question, index) => (
+                  <Button
+                    key={index}
+                    onClick={() => handleSendMessage(question)}
+                    variant="outline"
+                    className="bg-nexus-dark/50 border-nexus-blue/30 text-white hover:bg-nexus-blue/20 p-6 h-auto text-left whitespace-normal"
+                  >
+                    <div className="flex items-start">
+                      <MessageSquare className="h-5 w-5 text-nexus-cyan mr-3 mt-1 flex-shrink-0" />
+                      <span className="text-sm">{question}</span>
+                    </div>
+                  </Button>
+                ))}
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* 聊天消息区域 */}
-          {messages.length > 0 && (
-            <>
-              {/* 头部信息 */}
-              <div className="bg-gradient-to-r from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-4 mb-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <MessageSquare className="mr-3 h-6 w-6 text-nexus-cyan" />
-                    <h1 className="text-xl font-bold text-gradient">AI 智能对话</h1>
-                  </div>
+        {/* 聊天消息区域 */}
+        {messages.length > 0 && (
+          <div className="flex-grow flex flex-col max-w-6xl mx-auto w-full px-4 py-6">
+            {/* 头部信息 */}
+            <div className="bg-gradient-to-r from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <MessageSquare className="mr-3 h-6 w-6 text-nexus-cyan" />
+                  <h1 className="text-xl font-bold text-gradient">AI 智能对话</h1>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <Select value={selectedModel} onValueChange={setSelectedModel}>
+                    <SelectTrigger className="bg-nexus-dark/50 border-nexus-blue/30 text-white w-48">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-nexus-dark border-nexus-blue/30 z-50">
+                      {models.map((model) => (
+                        <SelectItem 
+                          key={model.id} 
+                          value={model.id}
+                          className="text-white hover:bg-nexus-blue/20"
+                        >
+                          {model.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   
-                  <div className="flex items-center gap-4">
-                    <Select value={selectedModel} onValueChange={setSelectedModel}>
-                      <SelectTrigger className="bg-nexus-dark/50 border-nexus-blue/30 text-white w-48">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-nexus-dark border-nexus-blue/30 z-50">
-                        {models.map((model) => (
-                          <SelectItem 
-                            key={model.id} 
-                            value={model.id}
-                            className="text-white hover:bg-nexus-blue/20"
-                          >
-                            {model.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    
-                    <Button 
-                      onClick={() => setMessages([])}
-                      variant="outline"
-                      size="sm"
-                      className="border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20"
-                    >
-                      新对话
-                    </Button>
-                  </div>
+                  <Button 
+                    onClick={() => setMessages([])}
+                    variant="outline"
+                    size="sm"
+                    className="border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20"
+                  >
+                    新对话
+                  </Button>
                 </div>
               </div>
+            </div>
 
-              {/* 消息列表 */}
-              <div className="flex-grow bg-gradient-to-br from-nexus-dark/50 to-nexus-purple/20 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-6 mb-6 overflow-hidden flex flex-col min-h-[500px]">
-                <div className="flex-grow overflow-y-auto space-y-6">
-                  {messages.map((message) => (
-                    <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[80%] rounded-xl p-6 ${
-                        message.isUser 
-                          ? 'bg-gradient-to-r from-nexus-blue to-nexus-cyan text-white' 
-                          : 'bg-nexus-dark/70 border border-nexus-blue/30 text-white'
-                      }`}>
-                        <div className="flex items-start space-x-3">
-                          {!message.isUser && <Bot className="h-6 w-6 text-nexus-cyan mt-1 flex-shrink-0" />}
-                          <div className="flex-grow">
-                            <p className="whitespace-pre-wrap leading-relaxed mb-3">{message.text}</p>
-                            {message.imageUrl && (
-                              <div className="mt-4">
-                                <img 
-                                  src={message.imageUrl} 
-                                  alt="AI生成的图片" 
-                                  className="max-w-full h-auto rounded-lg border border-nexus-blue/30"
-                                  onLoad={() => scrollToBottom()}
-                                />
-                              </div>
-                            )}
-                            <p className="text-xs opacity-70 mt-3">
-                              {message.timestamp.toLocaleTimeString()}
-                            </p>
-                          </div>
-                          {message.isUser && <User className="h-6 w-6 text-white mt-1 flex-shrink-0" />}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {(isTyping || isGeneratingImage) && (
-                    <div className="flex justify-start">
-                      <div className="bg-nexus-dark/70 border border-nexus-blue/30 rounded-xl p-6 max-w-[80%]">
-                        <div className="flex items-center space-x-3">
-                          <Bot className="h-6 w-6 text-nexus-cyan" />
-                          <div className="flex items-center space-x-2">
-                            {isGeneratingImage && <ImageIcon className="h-4 w-4 text-nexus-cyan" />}
-                            <span className="text-white/70 text-sm">
-                              {isGeneratingImage ? '正在生成图片...' : '正在思考...'}
-                            </span>
-                            <div className="flex space-x-1">
-                              <div className="w-2 h-2 bg-nexus-cyan rounded-full animate-bounce"></div>
-                              <div className="w-2 h-2 bg-nexus-cyan rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                              <div className="w-2 h-2 bg-nexus-cyan rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+            {/* 消息列表 */}
+            <div className="flex-grow bg-gradient-to-br from-nexus-dark/50 to-nexus-purple/20 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-6 mb-6 overflow-hidden flex flex-col min-h-[600px]">
+              <div className="flex-grow overflow-y-auto space-y-6">
+                {messages.map((message) => (
+                  <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] rounded-xl p-6 ${
+                      message.isUser 
+                        ? 'bg-gradient-to-r from-nexus-blue to-nexus-cyan text-white' 
+                        : 'bg-nexus-dark/70 border border-nexus-blue/30 text-white'
+                    }`}>
+                      <div className="flex items-start space-x-3">
+                        {!message.isUser && <Bot className="h-6 w-6 text-nexus-cyan mt-1 flex-shrink-0" />}
+                        <div className="flex-grow">
+                          <p className="whitespace-pre-wrap leading-relaxed mb-3">{message.text}</p>
+                          {message.imageUrl && (
+                            <div className="mt-4">
+                              <img 
+                                src={message.imageUrl} 
+                                alt="AI生成的图片" 
+                                className="max-w-full h-auto rounded-lg border border-nexus-blue/30"
+                                onLoad={() => scrollToBottom()}
+                              />
                             </div>
+                          )}
+                          <p className="text-xs opacity-70 mt-3">
+                            {message.timestamp.toLocaleTimeString()}
+                          </p>
+                        </div>
+                        {message.isUser && <User className="h-6 w-6 text-white mt-1 flex-shrink-0" />}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {(isTyping || isGeneratingImage) && (
+                  <div className="flex justify-start">
+                    <div className="bg-nexus-dark/70 border border-nexus-blue/30 rounded-xl p-6 max-w-[80%]">
+                      <div className="flex items-center space-x-3">
+                        <Bot className="h-6 w-6 text-nexus-cyan" />
+                        <div className="flex items-center space-x-2">
+                          {isGeneratingImage && <ImageIcon className="h-4 w-4 text-nexus-cyan" />}
+                          <span className="text-white/70 text-sm">
+                            {isGeneratingImage ? '正在生成图片...' : '正在思考...'}
+                          </span>
+                          <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-nexus-cyan rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-nexus-cyan rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                            <div className="w-2 h-2 bg-nexus-cyan rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  )}
-                  
-                  <div ref={messagesEndRef} />
-                </div>
+                  </div>
+                )}
+                
+                <div ref={messagesEndRef} />
               </div>
-            </>
-          )}
+            </div>
+          </div>
+        )}
 
-          {/* 输入区域 */}
-          <div className="bg-gradient-to-r from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-6">
+        {/* 输入区域 - 固定在底部 */}
+        <div className="max-w-6xl mx-auto w-full px-4 pb-6">
+          <div className="bg-gradient-to-r from-nexus-dark/90 to-nexus-purple/40 backdrop-blur-md rounded-xl border border-nexus-blue/20 p-6">
             <div className="flex space-x-4">
               <Input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="开始与AI对话吧！支持文字对话和图片生成..."
-                className="flex-grow bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 h-12 text-lg"
-                disabled={isTyping || isGeneratingImage || (!isPaidUser && usageCount >= maxUsage)}
+                className="flex-grow bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 h-14 text-lg"
+                disabled={isTyping || isGeneratingImage}
               />
               <Button 
                 onClick={() => handleSendMessage()}
-                disabled={!inputValue.trim() || isTyping || isGeneratingImage || (!isPaidUser && usageCount >= maxUsage)}
-                className="bg-gradient-to-r from-nexus-blue to-nexus-cyan hover:from-nexus-blue/80 hover:to-nexus-cyan/80 text-white h-12 px-8"
+                disabled={!inputValue.trim() || isTyping || isGeneratingImage}
+                className="bg-gradient-to-r from-nexus-blue to-nexus-cyan hover:from-nexus-blue/80 hover:to-nexus-cyan/80 text-white h-14 px-8"
               >
                 {(isTyping || isGeneratingImage) ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
@@ -409,7 +399,7 @@ const Chat = () => {
                 )}
               </Button>
             </div>
-            <p className="text-white/50 text-xs mt-2 text-center">
+            <p className="text-white/50 text-xs mt-3 text-center">
               💡 输入"画一张..."或"生成图片..."即可创作AI画作
             </p>
           </div>

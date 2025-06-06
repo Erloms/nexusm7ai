@@ -1,19 +1,14 @@
-
-import React, { useState, useRef, useCallback } from 'react';
-import { Palette, Sparkles, Upload, Wand2, Shuffle, Download, ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Palette, Sparkles, Download, ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, CarouselApi } from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { useEffect } from 'react';
 
 const ImageShowcase = () => {
   const { toast } = useToast();
-  const [api, setApi] = useState<CarouselApi>();
+  const [api1, setApi1] = useState<CarouselApi>();
+  const [api2, setApi2] = useState<CarouselApi>();
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [analyzedPrompt, setAnalyzedPrompt] = useState<string>('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const showcaseImages = [
     {
@@ -91,7 +86,7 @@ const ImageShowcase = () => {
     }
   ];
 
-  // 第二行展示图片
+  // 第二行展示图片 - 扩展更多图片
   const showcaseImagesRow2 = [
     {
       url: "/lovable-uploads/67cf3145-f230-4c18-ae01-c7371c39ee85.png",
@@ -116,96 +111,65 @@ const ImageShowcase = () => {
       title: "茶艺对比",
       description: "茶杯的前后对比艺术",
       prompt: "Tea cup before and after comparison, artistic lighting, warm bokeh background"
+    },
+    {
+      url: "/lovable-uploads/c8663201-3d7a-4000-b62c-2fa92a4f4447.png",
+      title: "象棋与海浪",
+      description: "海洋背景下的艺术象棋",
+      prompt: "Artistic chess set against ocean waves, dramatic sky, surreal composition"
+    },
+    {
+      url: "/lovable-uploads/5bdc6013-1fdb-4642-bac6-3c60332ace8a.png",
+      title: "云中鲸鱼",
+      description: "梦幻云朵中的巨鲸",
+      prompt: "Majestic whale floating in dreamy clouds, golden hour lighting, fantasy atmosphere"
+    },
+    {
+      url: "/lovable-uploads/2cdaca26-7fcb-4be4-80c6-0eb16fd748fb.png",
+      title: "静物橙子",
+      description: "艺术风格的橙子静物画",
+      prompt: "Artistic still life with oranges, modern painting style, vibrant colors"
+    },
+    {
+      url: "/lovable-uploads/260b8ca9-3f0f-48eb-9be2-d7e4e40a38f7.png",
+      title: "月夜森林",
+      description: "神秘月光下的魔法森林",
+      prompt: "Mystical forest under moonlight, magical atmosphere, ethereal glow"
+    },
+    {
+      url: "/lovable-uploads/759c068d-45f9-4e68-8503-839ad9c2186f.png",
+      title: "阳光庭院",
+      description: "温馨的阳光庭院景色",
+      prompt: "Peaceful sunny garden with picnic tables, warm natural lighting"
+    },
+    {
+      url: "/lovable-uploads/49ddf65d-4ef4-46a1-94b7-2936d866be27.png",
+      title: "数字莲花",
+      description: "科技感十足的数字莲花",
+      prompt: "Digital lotus flower with binary code patterns, glowing neon effects"
     }
   ];
 
-  // 自动轮播功能
+  // 自动轮播功能 - 两行都轮播
   useEffect(() => {
-    if (!api || !isAutoPlaying) return;
+    if (!isAutoPlaying) return;
 
-    const interval = setInterval(() => {
-      api.scrollNext();
+    const interval1 = setInterval(() => {
+      api1?.scrollNext();
     }, 3000);
 
-    return () => clearInterval(interval);
-  }, [api, isAutoPlaying]);
+    const interval2 = setInterval(() => {
+      api2?.scrollNext();
+    }, 3500); // 稍微不同的间隔，避免同步
+
+    return () => {
+      clearInterval(interval1);
+      clearInterval(interval2);
+    };
+  }, [api1, api2, isAutoPlaying]);
 
   const toggleAutoPlay = () => {
     setIsAutoPlaying(!isAutoPlaying);
-  };
-
-  // 随机生成提示词
-  const generateRandomPrompt = () => {
-    const subjects = ["一只可爱的猫咪", "未来城市", "魔法森林", "古代宫殿", "太空飞船", "梦幻花园"];
-    const styles = ["油画风格", "水彩画风格", "赛博朋克风格", "日本动漫风格", "超现实主义", "印象派风格"];
-    const lighting = ["柔和光线", "戏剧性光影", "金色阳光", "霓虹灯光", "月光", "彩虹光"];
-    
-    const randomSubject = subjects[Math.floor(Math.random() * subjects.length)];
-    const randomStyle = styles[Math.floor(Math.random() * styles.length)];
-    const randomLighting = lighting[Math.floor(Math.random() * lighting.length)];
-    
-    return `${randomSubject}，${randomStyle}，${randomLighting}，超高清，杰作级作品`;
-  };
-
-  // 智能优化提示词
-  const optimizePrompt = (prompt: string) => {
-    if (!prompt.trim()) return generateRandomPrompt();
-    
-    // 检测风格关键词
-    const isAnimeStyle = /动漫|二次元|anime|manga/i.test(prompt);
-    const isRealisticStyle = /真实|现实|照片|摄影|realistic|photo/i.test(prompt);
-    const isFantasyStyle = /魔法|幻想|神秘|fantasy|magic|mystical/i.test(prompt);
-    const isArtStyle = /艺术|绘画|art|painting|illustration/i.test(prompt);
-    
-    let optimized = prompt;
-    
-    if (isAnimeStyle) {
-      optimized += "，精美的动漫插画，细腻的线条，鲜艳的色彩，高质量动画风格";
-    } else if (isFantasyStyle) {
-      optimized += "，梦幻的魔法氛围，神秘的光效，奇幻艺术风格，超详细的背景";
-    } else if (isArtStyle) {
-      optimized += "，艺术杰作，精湛的绘画技巧，丰富的色彩层次，美术馆级作品";
-    } else if (isRealisticStyle) {
-      optimized += "，超真实的细节，专业摄影，完美的光影，8K高清画质";
-    } else {
-      optimized += "，精美的数字艺术，超高清细节，专业级作品，完美的构图";
-    }
-    
-    return optimized;
-  };
-
-  // 处理图片上传
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const imageUrl = e.target?.result as string;
-        setUploadedImage(imageUrl);
-        analyzeImageForPrompt(imageUrl);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // 模拟图片分析生成提示词（实际应用中可以调用视觉AI模型）
-  const analyzeImageForPrompt = (imageUrl: string) => {
-    // 这里可以集成 Gemini 2.0 Vision 或 GPT-4 Vision API
-    const simulatedPrompts = [
-      "一只优雅的猫咪坐在豪华的室内环境中，温暖的灯光，舒适的氛围",
-      "未来科技风格的工作空间，霓虹灯效果，高科技设备",
-      "梦幻的独角兽在魔法花园中，粉色调，闪闪发光的装饰",
-      "神秘的夜晚场景，月光照射，古典茶具组合",
-      "数字艺术风格的神经网络可视化，发光连接，科技感"
-    ];
-    
-    const randomPrompt = simulatedPrompts[Math.floor(Math.random() * simulatedPrompts.length)];
-    setAnalyzedPrompt(optimizePrompt(randomPrompt));
-    
-    toast({
-      title: "图片分析完成",
-      description: "已为您生成优化的提示词",
-    });
   };
 
   const copyPrompt = (prompt: string) => {
@@ -237,24 +201,8 @@ const ImageShowcase = () => {
           </div>
           <p className="text-white/70 text-lg mb-8">探索AI创作的无限可能</p>
           
-          {/* 新增功能区域 */}
-          <div className="flex flex-wrap gap-4 justify-center mb-8">
-            <Button
-              onClick={() => copyPrompt(generateRandomPrompt())}
-              className="bg-nexus-blue/20 border border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/30"
-            >
-              <Shuffle className="h-4 w-4 mr-2" />
-              随机提示词
-            </Button>
-            
-            <Button
-              onClick={() => fileInputRef.current?.click()}
-              className="bg-nexus-purple/20 border border-nexus-purple/30 text-nexus-purple hover:bg-nexus-purple/30"
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              上传图片解析
-            </Button>
-            
+          {/* 轮播控制 */}
+          <div className="flex justify-center mb-8">
             <Button
               onClick={toggleAutoPlay}
               className="bg-nexus-cyan/20 border border-nexus-cyan/30 text-nexus-cyan hover:bg-nexus-cyan/30"
@@ -263,30 +211,6 @@ const ImageShowcase = () => {
               {isAutoPlaying ? '暂停轮播' : '开始轮播'}
             </Button>
           </div>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
-            className="hidden"
-          />
-
-          {/* 分析结果显示 */}
-          {analyzedPrompt && (
-            <div className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-lg p-4 mb-8 max-w-2xl mx-auto">
-              <h3 className="text-white font-bold mb-2">🎨 AI分析生成的提示词：</h3>
-              <p className="text-white/80 text-sm mb-3">{analyzedPrompt}</p>
-              <Button
-                onClick={() => copyPrompt(analyzedPrompt)}
-                size="sm"
-                className="bg-nexus-cyan/20 text-nexus-cyan hover:bg-nexus-cyan/30"
-              >
-                <Wand2 className="h-3 w-3 mr-1" />
-                复制使用
-              </Button>
-            </div>
-          )}
         </div>
 
         {/* 第一行轮播 */}
@@ -294,7 +218,7 @@ const ImageShowcase = () => {
           <Carousel 
             className="w-full max-w-6xl mx-auto" 
             opts={{ align: "start", loop: true }}
-            setApi={setApi}
+            setApi={setApi1}
           >
             <CarouselContent className="-ml-2 md:-ml-4">
               {showcaseImages.map((image, index) => (
@@ -308,13 +232,6 @@ const ImageShowcase = () => {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-nexus-dark/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex gap-1">
-                        <Button
-                          size="sm"
-                          onClick={() => copyPrompt(image.prompt)}
-                          className="bg-nexus-cyan/80 text-white p-1 h-auto"
-                        >
-                          <Wand2 className="h-3 w-3" />
-                        </Button>
                         <Button
                           size="sm"
                           onClick={() => downloadImage(image.url, image.title)}
@@ -339,7 +256,11 @@ const ImageShowcase = () => {
         </div>
 
         {/* 第二行轮播 */}
-        <Carousel className="w-full max-w-6xl mx-auto" opts={{ align: "start", loop: true }}>
+        <Carousel 
+          className="w-full max-w-6xl mx-auto" 
+          opts={{ align: "start", loop: true }}
+          setApi={setApi2}
+        >
           <CarouselContent className="-ml-2 md:-ml-4">
             {showcaseImagesRow2.map((image, index) => (
               <CarouselItem key={index} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
@@ -352,13 +273,6 @@ const ImageShowcase = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-nexus-dark/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex gap-1">
-                      <Button
-                        size="sm"
-                        onClick={() => copyPrompt(image.prompt)}
-                        className="bg-nexus-cyan/80 text-white p-1 h-auto"
-                      >
-                        <Wand2 className="h-3 w-3" />
-                      </Button>
                       <Button
                         size="sm"
                         onClick={() => downloadImage(image.url, image.title)}
