@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Send, Bot, User, Loader2, MessageSquare, Sparkles, Code, Search } from 'lucide-react';
+import { Send, Bot, User, Loader2, MessageSquare, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Message {
@@ -14,6 +14,7 @@ interface Message {
   text: string;
   isUser: boolean;
   timestamp: Date;
+  imageUrl?: string;
 }
 
 const Chat = () => {
@@ -25,6 +26,7 @@ const Chat = () => {
   const [selectedModel, setSelectedModel] = useState('openai');
   const [usageCount, setUsageCount] = useState(0);
   const [maxUsage] = useState(10);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 真实的Pollinations.ai支持的模型
@@ -100,35 +102,27 @@ const Chat = () => {
     }
   };
 
-  // 快速开始功能
-  const handleQuickStart = (type: string) => {
-    let prompt = '';
-    let model = selectedModel;
-    
-    switch (type) {
-      case 'news':
-        prompt = '请为我介绍今天最新的科技热点资讯，包括人工智能、科技公司动态等重要新闻。';
-        model = 'gemini'; // 使用Gemini进行搜索
-        break;
-      case 'code':
-        prompt = '我需要一个代码助手，请告诉我你可以帮助我解决哪些编程问题，比如代码生成、bug修复、代码优化等。';
-        model = 'qwen-coder'; // 使用专用代码模型
-        break;
-      case 'analysis':
-        prompt = '请为我分析当前全球热点事件，包括政治、经济、社会等各个方面的重要动态。';
-        model = 'deepseek-reasoner'; // 使用推理模型进行深度分析
-        break;
-      default:
-        return;
+  // 生成图片的函数
+  const generateImage = async (prompt: string) => {
+    try {
+      setIsGeneratingImage(true);
+      
+      // 调用Pollinations.ai的图片生成API
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&seed=${Math.floor(Math.random() * 1000000)}`;
+      
+      return imageUrl;
+    } catch (error) {
+      console.error('图片生成错误:', error);
+      throw error;
+    } finally {
+      setIsGeneratingImage(false);
     }
+  };
 
-    setSelectedModel(model);
-    setInputValue(prompt);
-    
-    // 自动发送消息
-    setTimeout(() => {
-      handleSendMessage(prompt, model);
-    }, 100);
+  // 检测是否为图片生成请求
+  const isImageRequest = (text: string) => {
+    const imageKeywords = ['画', '绘制', '生成图片', '创作', '画一个', '画一张', '图片', '插画', 'draw', 'paint', 'create image', 'generate image'];
+    return imageKeywords.some(keyword => text.toLowerCase().includes(keyword.toLowerCase()));
   };
 
   const handleSendMessage = async (customPrompt?: string, customModel?: string) => {
@@ -169,23 +163,42 @@ const Chat = () => {
     }
 
     try {
-      // 调用真实的AI API
-      const aiResponseText = await callPollinationsAPI(messageText, currentModel);
-      
-      const aiMessage: Message = {
-        id: Date.now() + 1,
-        text: aiResponseText,
-        isUser: false,
-        timestamp: new Date(),
-      };
-      
-      const finalMessages = [...updatedMessages, aiMessage];
-      setMessages(finalMessages);
-      setIsTyping(false);
+      // 检测是否为图片生成请求
+      if (isImageRequest(messageText)) {
+        setIsGeneratingImage(true);
+        const imageUrl = await generateImage(messageText);
+        
+        const aiMessage: Message = {
+          id: Date.now() + 1,
+          text: `我为您生成了这张图片：`,
+          isUser: false,
+          timestamp: new Date(),
+          imageUrl: imageUrl,
+        };
+        
+        const finalMessages = [...updatedMessages, aiMessage];
+        setMessages(finalMessages);
+        setIsTyping(false);
+      } else {
+        // 调用真实的AI API进行文本对话
+        const aiResponseText = await callPollinationsAPI(messageText, currentModel);
+        
+        const aiMessage: Message = {
+          id: Date.now() + 1,
+          text: aiResponseText,
+          isUser: false,
+          timestamp: new Date(),
+        };
+        
+        const finalMessages = [...updatedMessages, aiMessage];
+        setMessages(finalMessages);
+        setIsTyping(false);
+      }
       
     } catch (error) {
       console.error('发送消息失败:', error);
       setIsTyping(false);
+      setIsGeneratingImage(false);
       
       // 添加错误消息
       const errorMessage: Message = {
@@ -219,60 +232,30 @@ const Chat = () => {
       
       <main className="flex-grow flex flex-col pt-16">
         {/* 主聊天区域 */}
-        <div className="flex-grow flex flex-col max-w-4xl mx-auto w-full px-4 py-6">
+        <div className="flex-grow flex flex-col max-w-6xl mx-auto w-full px-4 py-6">
           
           {/* 欢迎界面 - 无消息时显示 */}
           {messages.length === 0 && (
-            <div className="flex-grow flex flex-col justify-center">
+            <div className="flex-grow flex flex-col justify-center items-center">
               {/* 主标题区域 */}
-              <div className="text-center mb-12">
+              <div className="text-center mb-8">
                 <div className="flex items-center justify-center mb-6">
                   <div className="bg-gradient-to-r from-nexus-blue to-nexus-cyan p-6 rounded-full">
                     <Bot className="h-12 w-12 text-white" />
                   </div>
                 </div>
-                <h1 className="text-4xl md:text-5xl font-bold text-gradient mb-6">
+                <h1 className="text-4xl md:text-5xl font-bold text-gradient mb-4">
                   世界在提问时，请直己写好答案～
                 </h1>
-                <p className="text-white/70 text-xl mb-8">解锁AI超能力：对话、创想、发声，一站搞定！</p>
+                <p className="text-white/70 text-xl mb-4">解锁AI超能力：对话、创想、发声，一站搞定！</p>
                 
                 {/* 使用额度提示 - 小字显示 */}
                 {!isPaidUser && (
-                  <p className="text-white/50 text-sm mb-8">
+                  <p className="text-white/50 text-sm mb-6">
                     今日对话额度: {usageCount}/{maxUsage} · 
                     <span className="text-nexus-cyan cursor-pointer hover:underline ml-1">升级VIP享受无限制</span>
                   </p>
                 )}
-              </div>
-              
-              {/* 功能卡片 */}
-              <div className="grid md:grid-cols-3 gap-6 mb-12 max-w-4xl mx-auto">
-                <div 
-                  onClick={() => handleQuickStart('news')}
-                  className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-xl p-8 hover:bg-nexus-blue/10 transition-all duration-300 cursor-pointer group hover:scale-105"
-                >
-                  <Search className="h-8 w-8 text-nexus-cyan mx-auto mb-4 group-hover:scale-110 transition-transform" />
-                  <h3 className="text-white font-bold text-lg mb-3">AI对话</h3>
-                  <p className="text-white/60">最新科技热点资讯，一键了解！</p>
-                </div>
-                
-                <div 
-                  onClick={() => handleQuickStart('code')}
-                  className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-xl p-8 hover:bg-nexus-blue/10 transition-all duration-300 cursor-pointer group hover:scale-105"
-                >
-                  <Code className="h-8 w-8 text-nexus-cyan mx-auto mb-4 group-hover:scale-110 transition-transform" />
-                  <h3 className="text-white font-bold text-lg mb-3">代码生成</h3>
-                  <p className="text-white/60">代码助手上线，轻松撸定开发难题！</p>
-                </div>
-                
-                <div 
-                  onClick={() => handleQuickStart('analysis')}
-                  className="bg-nexus-dark/50 border border-nexus-blue/30 rounded-xl p-8 hover:bg-nexus-blue/10 transition-all duration-300 cursor-pointer group hover:scale-105"
-                >
-                  <Sparkles className="h-8 w-8 text-nexus-cyan mx-auto mb-4 group-hover:scale-110 transition-transform" />
-                  <h3 className="text-white font-bold text-lg mb-3">热点解读</h3>
-                  <p className="text-white/60">智能解读全网热点，一键掌握全球动态！</p>
-                </div>
               </div>
               
               {/* 模型选择 */}
@@ -355,7 +338,17 @@ const Chat = () => {
                         <div className="flex items-start space-x-3">
                           {!message.isUser && <Bot className="h-6 w-6 text-nexus-cyan mt-1 flex-shrink-0" />}
                           <div className="flex-grow">
-                            <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
+                            <p className="whitespace-pre-wrap leading-relaxed mb-3">{message.text}</p>
+                            {message.imageUrl && (
+                              <div className="mt-4">
+                                <img 
+                                  src={message.imageUrl} 
+                                  alt="AI生成的图片" 
+                                  className="max-w-full h-auto rounded-lg border border-nexus-blue/30"
+                                  onLoad={() => scrollToBottom()}
+                                />
+                              </div>
+                            )}
                             <p className="text-xs opacity-70 mt-3">
                               {message.timestamp.toLocaleTimeString()}
                             </p>
@@ -366,15 +359,21 @@ const Chat = () => {
                     </div>
                   ))}
                   
-                  {isTyping && (
+                  {(isTyping || isGeneratingImage) && (
                     <div className="flex justify-start">
                       <div className="bg-nexus-dark/70 border border-nexus-blue/30 rounded-xl p-6 max-w-[80%]">
                         <div className="flex items-center space-x-3">
                           <Bot className="h-6 w-6 text-nexus-cyan" />
-                          <div className="flex space-x-1">
-                            <div className="w-3 h-3 bg-nexus-cyan rounded-full animate-bounce"></div>
-                            <div className="w-3 h-3 bg-nexus-cyan rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                            <div className="w-3 h-3 bg-nexus-cyan rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                          <div className="flex items-center space-x-2">
+                            {isGeneratingImage && <ImageIcon className="h-4 w-4 text-nexus-cyan" />}
+                            <span className="text-white/70 text-sm">
+                              {isGeneratingImage ? '正在生成图片...' : '正在思考...'}
+                            </span>
+                            <div className="flex space-x-1">
+                              <div className="w-2 h-2 bg-nexus-cyan rounded-full animate-bounce"></div>
+                              <div className="w-2 h-2 bg-nexus-cyan rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                              <div className="w-2 h-2 bg-nexus-cyan rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -394,22 +393,25 @@ const Chat = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="开始与AI对话吧！"
+                placeholder="开始与AI对话吧！支持文字对话和图片生成..."
                 className="flex-grow bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 h-12 text-lg"
-                disabled={isTyping || (!isPaidUser && usageCount >= maxUsage)}
+                disabled={isTyping || isGeneratingImage || (!isPaidUser && usageCount >= maxUsage)}
               />
               <Button 
                 onClick={() => handleSendMessage()}
-                disabled={!inputValue.trim() || isTyping || (!isPaidUser && usageCount >= maxUsage)}
+                disabled={!inputValue.trim() || isTyping || isGeneratingImage || (!isPaidUser && usageCount >= maxUsage)}
                 className="bg-gradient-to-r from-nexus-blue to-nexus-cyan hover:from-nexus-blue/80 hover:to-nexus-cyan/80 text-white h-12 px-8"
               >
-                {isTyping ? (
+                {(isTyping || isGeneratingImage) ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
                   <Send className="h-5 w-5" />
                 )}
               </Button>
             </div>
+            <p className="text-white/50 text-xs mt-2 text-center">
+              💡 输入"画一张..."或"生成图片..."即可创作AI画作
+            </p>
           </div>
         </div>
       </main>

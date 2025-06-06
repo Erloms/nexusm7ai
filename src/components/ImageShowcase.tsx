@@ -92,19 +92,6 @@ const ImageShowcase = () => {
           <CarouselPrevious className="left-4 bg-nexus-dark/80 border-nexus-blue/30 text-white hover:bg-nexus-blue/80" />
           <CarouselNext className="right-4 bg-nexus-dark/80 border-nexus-blue/30 text-white hover:bg-nexus-blue/80" />
         </Carousel>
-
-        <div className="text-center mt-12">
-          <div className="bg-gradient-to-r from-nexus-cyan/20 to-nexus-blue/20 p-6 rounded-xl border border-nexus-blue/30">
-            <h3 className="text-xl font-bold text-white mb-2">创意无限可能</h3>
-            <p className="text-white/80">
-              告别月月付费，拒绝年年涨价！<br />
-              Nexus AI 只需799元，买断！终身！<br />
-              GPT-4级对话、Gemini 2.0 Pro、DeepSeek R1...顶级大模型随便撩！<br />
-              Flux全系列AI创作工具，无限畅用！<br />
-              成年人不做选择，Nexus AI 让你全都要！
-            </p>
-          </div>
-        </div>
       </div>
     </section>
   );
