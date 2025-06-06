@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Palette, Sparkles, Download, ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, CarouselApi } from "@/components/ui/carousel";
@@ -150,7 +151,7 @@ const ImageShowcase = () => {
     }
   ];
 
-  // 自动轮播功能 - 两行都轮播
+  // 自动轮播功能 - 两行不同方向轮播
   useEffect(() => {
     if (!isAutoPlaying) return;
 
@@ -159,7 +160,7 @@ const ImageShowcase = () => {
     }, 3000);
 
     const interval2 = setInterval(() => {
-      api2?.scrollNext();
+      api2?.scrollPrev(); // 第二行向左轮播
     }, 3500); // 稍微不同的间隔，避免同步
 
     return () => {
@@ -213,7 +214,7 @@ const ImageShowcase = () => {
           </div>
         </div>
 
-        {/* 第一行轮播 */}
+        {/* 第一行轮播 - 向右 */}
         <div className="mb-12">
           <Carousel 
             className="w-full max-w-6xl mx-auto" 
@@ -255,7 +256,7 @@ const ImageShowcase = () => {
           </Carousel>
         </div>
 
-        {/* 第二行轮播 */}
+        {/* 第二行轮播 - 向左 */}
         <Carousel 
           className="w-full max-w-6xl mx-auto" 
           opts={{ align: "start", loop: true }}
