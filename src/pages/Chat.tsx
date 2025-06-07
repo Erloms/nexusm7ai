@@ -4,803 +4,837 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import { 
+  Send, 
+  Mic, 
+  MicOff, 
+  MessageCircle, 
+  Image as ImageIcon, 
+  Volume2, 
+  Bot,
+  User,
+  Loader2,
+  Settings
+} from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
-import { Send, Bot, User, Loader2, MessageSquare, Image as ImageIcon, Mic, Upload, Sparkles, Download, MicIcon, Play, Volume2, Settings } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import PaymentCheck from '@/components/PaymentCheck';
 
 interface Message {
-  id: number;
+  id: string;
   text: string;
-  isUser: boolean;
+  sender: 'user' | 'ai';
   timestamp: Date;
+  type?: 'text' | 'image';
   imageUrl?: string;
-  type?: 'text' | 'image' | 'voice';
 }
 
-const Chat = () => {
+const AI_MODELS = [
+  { id: "openai", name: "OpenAI GPT-4o-mini", group: "OpenAI" },
+  { id: "openai-large", name: "OpenAI GPT-4o", group: "OpenAI" },
+  { id: "claude", name: "Claude 3.5 Haiku", group: "Anthropic" },
+  { id: "gemini", name: "Gemini 2.0 Flash", group: "Google" },
+  { id: "searchgpt", name: "SearchGPT", group: "OpenAI" },
+  { id: "deepseek", name: "DeepSeek-V3", group: "DeepSeek" },
+  { id: "llama", name: "Llama 3.3 70B", group: "Meta" },
+];
+
+interface ChatProps {
+  decrementUsage?: () => boolean;
+}
+
+const Chat = ({ decrementUsage }: ChatProps) => {
   const { toast } = useToast();
-  const { user } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [chatMessages, setChatMessages] = useState<Message[]>([]);
+  const [imageMessages, setImageMessages] = useState<Message[]>([]);
+  const [audioMessages, setAudioMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
+  const [currentModel, setCurrentModel] = useState('gemini');
   const [isTyping, setIsTyping] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('openai');
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-  const [activeTab, setActiveTab] = useState('chat');
-  const [imagePrompt, setImagePrompt] = useState('');
   const [isRecording, setIsRecording] = useState(false);
-  const [selectedVoice, setSelectedVoice] = useState('alloy');
-  const [isListening, setIsListening] = useState(false);
-  const [enableVoiceReply, setEnableVoiceReply] = useState(false);
-  const [voiceChatInput, setVoiceChatInput] = useState('');
+  const [activeTab, setActiveTab] = useState('chat');
+  const [voiceReplyEnabled, setVoiceReplyEnabled] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-
-  // AI模型列表
-  const models = [
-    { id: 'openai', name: 'GPT-4o-mini', description: 'OpenAI高效模型' },
-    { id: 'openai-large', name: 'GPT-4o', description: 'OpenAI旗舰模型' },
-    { id: 'openai-reasoning', name: 'o1-mini', description: 'OpenAI推理模型' },
-    { id: 'llama', name: 'Llama 3.3 70B', description: 'Meta最新大模型' },
-    { id: 'mistral', name: 'Mistral Nemo', description: 'Mistral高效模型' },
-    { id: 'deepseek', name: 'DeepSeek-V3', description: 'DeepSeek旗舰模型' },
-    { id: 'deepseek-r1', name: 'DeepSeek-R1', description: 'DeepSeek推理模型' },
-    { id: 'claude', name: 'Claude 3.5 Haiku', description: 'Anthropic快速模型' },
-    { id: 'gemini', name: 'Gemini 2.0 Flash', description: 'Google最新模型' },
-    { id: 'searchgpt', name: 'SearchGPT', description: 'OpenAI搜索模型' },
-  ];
-
-  // 语音风格列表
-  const voices = [
-    { id: 'alloy', name: '合金', style: '中性清晰' },
-    { id: 'echo', name: '回波', style: '深沉磁性' },
-    { id: 'fable', name: '寓言', style: '温暖友好' },
-    { id: 'onyx', name: '缟玛瑙', style: '成熟稳重' },
-    { id: 'nova', name: '新星', style: '年轻活力' },
-    { id: 'shimmer', name: '微光', style: '轻柔甜美' },
-  ];
-
-  // 建议提示词
-  const suggestedPrompts = [
-    "创建一个未来主义的智能城市设计方案",
-    "描述一下人工智能在医疗领域的应用前景", 
-    "生成一个关于环保主题的创意文案",
-    "解释量子计算的基本原理",
-    "设计一个适合远程办公的工作流程"
-  ];
-
-  // 艺术风格提示词优化器
-  const optimizeImagePrompt = (userPrompt: string): string => {
-    const artisticStyles = [
-      "ethereal digital art, masterpiece quality, ultra-detailed",
-      "mystical fantasy illustration, intricate details, vibrant colors",
-      "surreal conceptual artwork, dreamlike atmosphere, stunning composition",
-      "abstract expressionist painting, bold brushstrokes, dynamic lighting",
-      "impressionist style artwork, soft textures, luminous colors",
-      "art nouveau inspired design, elegant flowing lines, ornate details",
-      "cyberpunk digital illustration, neon aesthetics, futuristic atmosphere",
-      "watercolor painting style, delicate washes, artistic expression"
-    ];
-
-    const qualityEnhancers = [
-      "masterpiece, best quality, ultra-detailed, 8k resolution",
-      "award-winning illustration, trending on ArtStation, highly detailed",
-      "cinematic lighting, dramatic composition, rich textures",
-      "professional artwork, museum quality, exquisite craftsmanship",
-      "breathtaking visual art, stunning colors, perfect composition"
-    ];
-
-    const artisticMasters = [
-      "by Greg Rutkowski, Alphonse Mucha, Gustav Klimt",
-      "by Makoto Shinkai, Studio Ghibli style",
-      "by Salvador Dalí, René Magritte surrealist style",
-      "by Claude Monet, Vincent van Gogh impressionist style",
-      "by Hayao Miyazaki, fantasy art style"
-    ];
-
-    // 随机选择增强元素
-    const randomStyle = artisticStyles[Math.floor(Math.random() * artisticStyles.length)];
-    const randomQuality = qualityEnhancers[Math.floor(Math.random() * qualityEnhancers.length)];
-    const randomArtist = artisticMasters[Math.floor(Math.random() * artisticMasters.length)];
-
-    // 构建优化后的提示词
-    let optimizedPrompt = `${userPrompt}, ${randomStyle}, ${randomQuality}, ${randomArtist}`;
-    
-    // 添加负面提示词避免照片风格
-    optimizedPrompt += ", artistic interpretation, stylized artwork, NOT photorealistic, NOT photography, creative stylization";
-
-    return optimizedPrompt;
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  useEffect(() => {
-    // 初始化语音识别
-    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.lang = 'zh-CN';
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.continuous = false;
-
-      recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
-        const result = event.results[0][0].transcript;
-        if (activeTab === 'voice') {
-          setVoiceChatInput(result);
-        } else {
-          setInputValue(result);
-        }
-        setIsListening(false);
-        
-        // 如果启用语音回复，自动发送消息
-        if (enableVoiceReply) {
-          setTimeout(() => {
-            if (activeTab === 'voice') {
-              handleVoiceChatSend(result);
-            } else {
-              handleSendMessage(result);
-            }
-          }, 100);
-        }
-      };
-
-      recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.error('语音识别错误:', event.error);
-        setIsListening(false);
-        toast({
-          title: "语音识别失败",
-          description: "请检查麦克风权限或重试",
-          variant: "destructive",
-        });
-      };
-
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
-    }
-  }, [enableVoiceReply, activeTab]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const callPollinationsAPI = async (prompt: string, modelId: string) => {
-    try {
-      console.log(`正在调用模型: ${modelId}, 提示词: ${prompt}`);
-      
-      const encodedPrompt = encodeURIComponent(prompt);
-      const apiUrl = `https://text.pollinations.ai/${encodedPrompt}?model=${modelId}`;
-      
-      console.log(`API URL: ${apiUrl}`);
-      
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'text/plain',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error(`API响应错误: ${response.status} ${response.statusText}`);
-      }
-      
-      const responseText = await response.text();
-      console.log(`API响应: ${responseText}`);
-      
-      return responseText || '抱歉，模型没有返回有效响应。';
-      
-    } catch (error) {
-      console.error('API调用错误:', error);
-      throw error;
-    }
-  };
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatMessages, imageMessages, audioMessages]);
 
-  const generateImage = async (prompt: string) => {
-    try {
-      setIsGeneratingImage(true);
-      
-      // 优化提示词，增强艺术感
-      const optimizedPrompt = optimizeImagePrompt(prompt);
-      console.log('原始提示词:', prompt);
-      console.log('优化后提示词:', optimizedPrompt);
-      
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(optimizedPrompt)}?width=1024&height=1024&seed=${Math.floor(Math.random() * 1000000)}&nologo=true`;
-      
-      return imageUrl;
-    } catch (error) {
-      console.error('图片生成错误:', error);
-      throw error;
-    } finally {
-      setIsGeneratingImage(false);
-    }
-  };
+  // 初始化语音识别
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'zh-CN';
 
-  const isImageRequest = (text: string) => {
-    const imageKeywords = ['画', '绘制', '生成图片', '创作', '画一个', '画一张', '图片', '插画', 'draw', 'paint', 'create image', 'generate image'];
-    return imageKeywords.some(keyword => text.toLowerCase().includes(keyword.toLowerCase()));
-  };
-
-  // 语音回复功能
-  const playVoiceReply = async (text: string) => {
-    try {
-      const voiceUrl = `https://text.pollinations.ai/${encodeURIComponent(text)}?model=openai-audio&voice=${selectedVoice}`;
-      
-      const audio = new Audio(voiceUrl);
-      audio.play();
-      
-      console.log('正在播放语音回复');
-    } catch (error) {
-      console.error('语音回复错误:', error);
-    }
-  };
-
-  const handleSendMessage = async (customPrompt?: string, customModel?: string) => {
-    const messageText = customPrompt || inputValue.trim();
-    const currentModel = customModel || selectedModel;
-    
-    if (!messageText) return;
-
-    const userMessage: Message = {
-      id: Date.now(),
-      text: messageText,
-      isUser: true,
-      timestamp: new Date(),
-      type: 'text'
-    };
-
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
-    setInputValue('');
-    setIsTyping(true);
-
-    try {
-      if (isImageRequest(messageText) || activeTab === 'image') {
-        setIsGeneratingImage(true);
-        const imageUrl = await generateImage(messageText);
-        
-        const aiMessage: Message = {
-          id: Date.now() + 1,
-          text: `我为您生成了这张艺术作品：`,
-          isUser: false,
-          timestamp: new Date(),
-          imageUrl: imageUrl,
-          type: 'image'
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
+          const transcript = event.results[0][0].transcript;
+          setInputValue(transcript);
+          setIsRecording(false);
         };
-        
-        const finalMessages = [...updatedMessages, aiMessage];
-        setMessages(finalMessages);
-        setIsTyping(false);
+
+        recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+          console.error('语音识别错误:', event.error);
+          setIsRecording(false);
+          toast({
+            title: "语音识别失败",
+            description: "请检查麦克风权限或稍后重试",
+            variant: "destructive",
+          });
+        };
+
+        recognition.onend = () => {
+          setIsRecording(false);
+        };
+
+        recognitionRef.current = recognition;
+      }
+    }
+  }, [toast]);
+
+  // 智能提示词优化器
+  const enhancePromptIntelligently = (originalPrompt: string): string => {
+    if (!originalPrompt.trim()) return originalPrompt;
+
+    let enhanced = originalPrompt;
+
+    // 检测风格意图 - 优先检查艺术风格关键词
+    const isArtStyle = /艺术|绘画|插画|动漫|卡通|手绘|art|painting|illustration|drawing|anime|cartoon|sketch|digital art|concept art|artwork/i.test(originalPrompt);
+    const isRealisticStyle = /真实|现实|照片|摄影|realistic|real|photo|photography|photorealistic/i.test(originalPrompt);
+    const isFantasyStyle = /幻想|魔法|科幻|梦幻|fantasy|magic|sci-fi|surreal|dreamy|mystical/i.test(originalPrompt);
+    const is3DStyle = /3d|三维|建模|渲染|blender|cinema4d|3d render|3d model/i.test(originalPrompt);
+
+    // 检测人物相关
+    if (/人|女|男|girl|boy|woman|man|person|people|character/i.test(originalPrompt)) {
+      if (isArtStyle) {
+        enhanced += ', beautiful character design, expressive eyes, detailed facial features, digital art style, professional illustration, sharp details';
+      } else if (isFantasyStyle) {
+        enhanced += ', fantasy character, magical appearance, ethereal beauty, enchanted features, mystical atmosphere';
+      } else if (!isRealisticStyle) {
+        enhanced += ', detailed portrait, beautiful facial features, expressive eyes, professional artwork, high quality rendering';
       } else {
-        const aiResponseText = await callPollinationsAPI(messageText, currentModel);
-        
-        const aiMessage: Message = {
-          id: Date.now() + 1,
-          text: aiResponseText,
-          isUser: false,
-          timestamp: new Date(),
-          type: 'text'
-        };
-        
-        const finalMessages = [...updatedMessages, aiMessage];
-        setMessages(finalMessages);
-        setIsTyping(false);
-        
-        // 如果启用语音回复，播放AI回复
-        if (enableVoiceReply && aiResponseText) {
-          setTimeout(() => {
-            playVoiceReply(aiResponseText);
-          }, 500);
-        }
+        enhanced += ', highly detailed portrait, beautiful facial features, expressive eyes, perfect skin texture, professional portrait photography, studio lighting, sharp focus on face, realistic hair texture, natural expression, high resolution';
       }
-      
-    } catch (error) {
-      console.error('发送消息失败:', error);
-      setIsTyping(false);
-      setIsGeneratingImage(false);
-      
-      const errorMessage: Message = {
-        id: Date.now() + 1,
-        text: '抱歉，AI服务暂时不可用，请稍后再试。',
-        isUser: false,
-        timestamp: new Date(),
-        type: 'text'
-      };
-      
-      const finalMessages = [...updatedMessages, errorMessage];
-      setMessages(finalMessages);
-      
-      toast({
-        title: "发送失败",
-        description: "AI服务暂时不可用，请稍后再试",
-        variant: "destructive",
-      });
     }
+
+    // 检测动物相关
+    if (/猫|狗|鸟|动物|cat|dog|bird|animal|pet/i.test(originalPrompt)) {
+      if (isArtStyle) {
+        enhanced += ', cute animal illustration, artistic style, detailed fur/feather texture, expressive animal eyes, digital art';
+      } else if (isFantasyStyle) {
+        enhanced += ', magical creature, fantasy animal, mystical features, enchanted appearance';
+      } else if (!isRealisticStyle) {
+        enhanced += ', detailed animal art, natural features, high quality illustration';
+      } else {
+        enhanced += ', highly detailed animal photography, natural fur/feather texture, expressive animal eyes, wildlife photography style, natural habitat, professional animal portrait, sharp details, realistic lighting';
+      }
+    }
+
+    // 检测风景相关
+    if (/风景|山|海|天空|森林|landscape|mountain|sea|sky|forest|nature/i.test(originalPrompt)) {
+      if (isArtStyle) {
+        enhanced += ', artistic landscape, painted style, beautiful scenery, digital landscape art, artistic composition';
+      } else if (isFantasyStyle) {
+        enhanced += ', fantasy landscape, magical scenery, enchanted environment, mystical atmosphere, otherworldly beauty';
+      } else if (!isRealisticStyle) {
+        enhanced += ', beautiful landscape art, scenic view, detailed environment, artistic rendering';
+      } else {
+        enhanced += ', breathtaking landscape photography, dramatic sky, golden hour lighting, wide angle view, high dynamic range, vivid natural colors, professional landscape photography, stunning vista, detailed foreground and background';
+      }
+    }
+
+    // 检测建筑相关
+    if (/建筑|房子|城市|building|house|city|architecture|tower/i.test(originalPrompt)) {
+      if (isArtStyle) {
+        enhanced += ', architectural art, artistic building design, illustrated architecture, concept art style';
+      } else if (isFantasyStyle) {
+        enhanced += ', fantasy architecture, magical buildings, enchanted structures, mystical design';
+      } else if (is3DStyle) {
+        enhanced += ', 3d architectural visualization, detailed 3d model, professional rendering, clean topology';
+      } else if (!isRealisticStyle) {
+        enhanced += ', detailed architectural design, beautiful building structure, artistic composition';
+      } else {
+        enhanced += ', architectural photography, detailed building structure, modern/classic design elements, professional architectural shot, perfect perspective, sharp geometric lines, urban photography style, detailed facade';
+      }
+    }
+
+    // 根据检测到的风格添加对应的质量增强词
+    if (isArtStyle) {
+      enhanced += ', digital art masterpiece, highly detailed illustration, vibrant color palette, artistic composition, professional digital painting, creative artwork, trending on artstation, award winning art';
+    } else if (isFantasyStyle) {
+      enhanced += ', fantasy art, magical atmosphere, enchanted scene, mystical lighting, otherworldly beauty, fantasy masterpiece, detailed fantasy illustration';
+    } else if (is3DStyle) {
+      enhanced += ', high quality 3d render, detailed 3d model, professional 3d visualization, clean topology, perfect lighting, 3d masterpiece';
+    } else if (isRealisticStyle || (!isArtStyle && !isFantasyStyle && !is3DStyle)) {
+      // 只有在明确要求真实风格或没有其他风格指示时才添加真实照片相关词汇
+      if (isRealisticStyle) {
+        enhanced += ', masterpiece, best quality, ultra detailed, 8k resolution, photorealistic, professional photography, sharp focus, perfect lighting, vivid colors, highly detailed, award winning photo';
+      } else {
+        enhanced += ', masterpiece, best quality, ultra detailed, high resolution, sharp focus, perfect composition, vivid colors, highly detailed';
+      }
+    }
+
+    // 检测科幻/未来主题（保持原有逻辑）
+    if (/科幻|未来|机器人|太空|sci-fi|future|robot|space|cyberpunk/i.test(originalPrompt)) {
+      enhanced += ', futuristic design, advanced technology, high-tech details, science fiction concept art, detailed mechanical parts, glowing elements';
+      if (!isArtStyle && !isRealisticStyle) {
+        enhanced += ', digital art';
+      }
+    }
+
+    return enhanced;
   };
 
-  const handleImageGenerate = async () => {
-    if (!imagePrompt.trim()) return;
-    await handleSendMessage(imagePrompt);
-    setImagePrompt('');
+  // 生成随机艺术提示词
+  const generateRandomPrompt = () => {
+    const artisticPrompts = [
+      "A beautiful anime girl with flowing hair in a magical forest, digital art style, by Makoto Shinkai",
+      "A majestic dragon soaring over ancient mountains, fantasy art, epic composition, by Greg Rutkowski",
+      "A cyberpunk cityscape at night, neon lights, futuristic architecture, digital art masterpiece",
+      "A serene oriental garden with cherry blossoms, traditional art style, painted illustration",
+      "A mystical wizard casting spells in a starry night, fantasy character art, magical atmosphere",
+      "A steampunk airship floating in cloudy skies, Victorian-era fantasy, detailed mechanical design",
+      "A graceful dancer in flowing silk dress, art nouveau style, elegant composition, by Alphonse Mucha",
+      "A fierce warrior with ornate armor, epic fantasy art, dynamic pose, detailed illustration"
+    ];
+    
+    const randomPrompt = artisticPrompts[Math.floor(Math.random() * artisticPrompts.length)];
+    setInputValue(randomPrompt);
+    
+    toast({
+      title: "随机艺术提示词已生成",
+      description: "已为您生成一个具有艺术感的提示词",
+    });
   };
 
-  const handleVoiceInput = () => {
-    if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+  // 处理语音录制
+  const handleVoiceRecord = () => {
+    if (!recognitionRef.current) {
       toast({
         title: "不支持语音识别",
-        description: "您的浏览器不支持语音识别功能，请使用Chrome浏览器",
+        description: "请使用Chrome浏览器或检查麦克风权限",
         variant: "destructive",
       });
       return;
     }
 
-    if (isListening) {
-      recognitionRef.current?.stop();
-      setIsListening(false);
+    if (isRecording) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
     } else {
-      setIsListening(true);
-      recognitionRef.current?.start();
+      setIsRecording(true);
+      recognitionRef.current.start();
     }
   };
 
-  const handleVoiceChatSend = async (customText?: string) => {
-    const text = customText || voiceChatInput.trim();
-    if (!text) return;
+  // 调用真实的Pollinations.ai API
+  const callTextAPI = async (prompt: string, modelId: string) => {
+    try {
+      setIsTyping(true);
+      
+      const encodedPrompt = encodeURIComponent(prompt);
+      const apiUrl = `https://text.pollinations.ai/${encodedPrompt}?model=${modelId}`;
+      
+      console.log('调用API:', apiUrl);
+      console.log('模型:', modelId);
+      console.log('提示词:', prompt);
+      
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error(`API响应错误: ${response.status}`);
+      }
+      
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let aiResponse = '';
+      
+      // 创建AI消息占位符
+      const aiMessageId = Date.now().toString();
+      const getCurrentMessages = () => {
+        switch (activeTab) {
+          case 'image': return imageMessages;
+          case 'audio': return audioMessages;
+          default: return chatMessages;
+        }
+      };
+      
+      const setCurrentMessages = (updater: (prev: Message[]) => Message[]) => {
+        switch (activeTab) {
+          case 'image': setImageMessages(updater); break;
+          case 'audio': setAudioMessages(updater); break;
+          default: setChatMessages(updater); break;
+        }
+      };
+      
+      // 添加AI消息占位符
+      setCurrentMessages(prev => [...prev, {
+        id: aiMessageId,
+        text: '',
+        sender: 'ai',
+        timestamp: new Date()
+      }]);
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        aiResponse += chunk;
+        
+        // 更新AI消息内容
+        setCurrentMessages(prev => prev.map(msg => 
+          msg.id === aiMessageId 
+            ? { ...msg, text: aiResponse }
+            : msg
+        ));
+      }
+      
+      return aiResponse;
+    } catch (error) {
+      console.error("API调用错误:", error);
+      toast({
+        title: "模型调用失败",
+        description: "请稍后再试",
+        variant: "destructive",
+      });
+      return "抱歉，我在处理您的请求时遇到了问题。请稍后再试。";
+    } finally {
+      setIsTyping(false);
+    }
+  };
 
-    await handleSendMessage(text);
-    setVoiceChatInput('');
+  // 生成图片
+  const generateImage = async (prompt: string) => {
+    try {
+      setIsTyping(true);
+      
+      // 智能优化提示词
+      const enhancedPrompt = enhancePromptIntelligently(prompt);
+      console.log('原始提示词:', prompt);
+      console.log('优化后提示词:', enhancedPrompt);
+      
+      const timestamp = Date.now();
+      const apiUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=1024&height=768&seed=${timestamp}&nologo=true&enhance=true&model=flux`;
+      
+      // 创建图片消息
+      const imageMessage: Message = {
+        id: timestamp.toString(),
+        text: prompt,
+        sender: 'ai',
+        timestamp: new Date(),
+        type: 'image',
+        imageUrl: apiUrl
+      };
+      
+      setImageMessages(prev => [...prev, imageMessage]);
+      
+      toast({
+        title: "图像生成成功",
+        description: "您的AI图像已生成",
+      });
+    } catch (error) {
+      console.error('生成图像时出错:', error);
+      toast({
+        title: "生成失败",
+        description: "图像生成失败，请稍后再试",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  // 语音合成
+  const speakText = (text: string) => {
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'zh-CN';
+      utterance.rate = 0.9;
+      speechSynthesis.speak(utterance);
+    }
+  };
+
+  // 发送消息
+  const sendMessage = async () => {
+    if (!inputValue.trim()) return;
+    
+    if (decrementUsage && !decrementUsage()) {
+      return;
+    }
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: inputValue,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    // 根据当前标签页添加到对应消息列表
+    switch (activeTab) {
+      case 'image':
+        setImageMessages(prev => [...prev, userMessage]);
+        await generateImage(inputValue);
+        break;
+      case 'audio':
+        setAudioMessages(prev => [...prev, userMessage]);
+        const audioResponse = await callTextAPI(inputValue, currentModel);
+        if (voiceReplyEnabled && audioResponse) {
+          speakText(audioResponse);
+        }
+        break;
+      default:
+        setChatMessages(prev => [...prev, userMessage]);
+        const textResponse = await callTextAPI(inputValue, currentModel);
+        if (voiceReplyEnabled && textResponse) {
+          speakText(textResponse);
+        }
+        break;
+    }
+
+    setInputValue('');
+  };
+
+  // 处理快捷问题
+  const handleQuickQuestion = async (question: string) => {
+    setInputValue(question);
+    // 自动发送
+    setTimeout(() => {
+      sendMessage();
+    }, 100);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (activeTab === 'chat') {
-        handleSendMessage();
-      } else if (activeTab === 'image') {
-        handleImageGenerate();
-      } else if (activeTab === 'voice') {
-        handleVoiceChatSend();
-      }
+      sendMessage();
     }
   };
 
+  // 获取当前消息列表
+  const getCurrentMessages = () => {
+    switch (activeTab) {
+      case 'image': return imageMessages;
+      case 'audio': return audioMessages;
+      default: return chatMessages;
+    }
+  };
+
+  // 快捷问题
+  const quickQuestions = [
+    "帮我写一篇关于AI技术的文章",
+    "生成一个创意广告文案",
+    "画一只在宇宙中漂浮的可爱猫咪",
+    "创作一首关于春天的诗",
+    "制作一个科幻风格的城市场景"
+  ];
+
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden">
-      {/* 星空背景 */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black via-slate-900/50 to-purple-900/20 z-0"></div>
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%239C92AC%22%20fill-opacity%3D%220.1%22%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%221%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] z-0"></div>
-      
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex flex-col">
       <Navigation />
       
-      <main className="flex-grow flex flex-col pt-16 relative z-10 max-w-6xl mx-auto w-full px-4">
-        
-        {/* 顶部功能切换和模型选择 */}
-        <div className="flex flex-col items-center mb-8 pt-8">
-          <div className="flex items-center justify-center mb-6">
-            <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-3 rounded-full shadow-lg">
-              <MessageSquare className="h-8 w-8 text-white" />
-            </div>
-          </div>
-          
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-4xl">
-            <div className="flex flex-col items-center">
-              <TabsList className="grid w-full max-w-md grid-cols-3 bg-slate-800/50 border border-slate-700 mb-6">
-                <TabsTrigger value="chat" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  聊天
-                </TabsTrigger>
-                <TabsTrigger value="image" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
-                  <ImageIcon className="h-4 w-4 mr-2" />
-                  图像
-                </TabsTrigger>
-                <TabsTrigger value="voice" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
-                  <Volume2 className="h-4 w-4 mr-2" />
-                  语音
-                </TabsTrigger>
-              </TabsList>
-
-              {/* 模型选择和语音设置 - 小字体左对齐 */}
-              <div className="w-full mb-4 flex items-center justify-between">
-                <div className="flex items-center text-sm text-slate-400">
-                  <span className="mr-2">模型：</span>
-                  <Select value={selectedModel} onValueChange={setSelectedModel}>
-                    <SelectTrigger className="bg-transparent border-slate-700 text-white w-48 h-8 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-slate-700">
-                      {models.map((model) => (
-                        <SelectItem key={model.id} value={model.id} className="text-white hover:bg-slate-700">
-                          {model.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                {/* 语音设置 - 小字体选项框 */}
-                <div className="flex items-center space-x-4 text-sm text-slate-400">
-                  <div className="flex items-center space-x-2">
-                    <label className="flex items-center space-x-1 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={enableVoiceReply}
-                        onChange={(e) => setEnableVoiceReply(e.target.checked)}
-                        className="w-3 h-3 text-purple-600 rounded"
-                      />
-                      <span className="text-xs">语音回复</span>
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs">语音：</span>
-                    <Select value={selectedVoice} onValueChange={setSelectedVoice}>
-                      <SelectTrigger className="bg-transparent border-slate-700 text-white w-24 h-6 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-800 border-slate-700">
-                        {voices.map((voice) => (
-                          <SelectItem key={voice.id} value={voice.id} className="text-white hover:bg-slate-700 text-xs">
-                            {voice.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+      <PaymentCheck featureType="chat">
+        <main className="flex-grow flex flex-col pt-16">
+          <div className="max-w-6xl mx-auto w-full flex-grow flex flex-col p-4">
+            {/* 标签页切换 */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-grow flex flex-col">
+              <div className="flex justify-center mb-6">
+                <TabsList className="bg-white/10 backdrop-blur-sm border border-white/20">
+                  <TabsTrigger 
+                    value="chat" 
+                    className="data-[state=active]:bg-white/20 data-[state=active]:text-white text-white/70 flex items-center gap-2"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    聊天
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="image" 
+                    className="data-[state=active]:bg-white/20 data-[state=active]:text-white text-white/70 flex items-center gap-2"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                    图像
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="audio" 
+                    className="data-[state=active]:bg-white/20 data-[state=active]:text-white text-white/70 flex items-center gap-2"
+                  >
+                    <Volume2 className="h-4 w-4" />
+                    音频
+                  </TabsTrigger>
+                </TabsList>
               </div>
-            </div>
 
-            <TabsContent value="chat" className="flex-grow flex flex-col">
               {/* 聊天内容区域 */}
-              {messages.length === 0 ? (
-                <div className="flex-grow flex flex-col justify-center items-center">
-                  <div className="text-center mb-8">
-                    <h1 className="text-2xl font-medium text-slate-300 mb-8">
-                      欢迎来到 Nexus AI！我可以帮助您生成文本、图像等，您今天想创造什么？
-                    </h1>
-                    
-                    {/* 增加空白间距 - 调整为更大的间距 */}
-                    <div className="h-24 mb-6"></div>
-                    
-                    <p className="text-slate-400 text-center mb-6">请尝试以下方法之一：</p>
-                  </div>
-                  
-                  {/* 建议问题 */}
-                  <div className="max-w-4xl w-full">
-                    <div className="flex flex-wrap justify-center gap-3">
-                      {suggestedPrompts.map((prompt, index) => (
-                        <Button
-                          key={index}
-                          onClick={() => handleSendMessage(prompt)}
-                          variant="outline"
-                          className="bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-700 text-sm px-4 py-2 h-auto whitespace-normal max-w-xs"
-                        >
-                          {prompt}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex-grow bg-slate-900/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6 mb-6 overflow-hidden flex flex-col min-h-[500px]">
-                  <div className="flex-grow overflow-y-auto space-y-6">
-                    {messages.map((message) => (
-                      <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[80%] rounded-xl p-4 ${
-                          message.isUser 
-                            ? 'bg-purple-600 text-white' 
-                            : 'bg-slate-800/70 border border-slate-700 text-white'
-                        }`}>
-                          <div className="flex items-start space-x-3">
-                            {!message.isUser && <Bot className="h-5 w-5 text-purple-400 mt-1 flex-shrink-0" />}
-                            <div className="flex-grow">
-                              <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
-                              {message.imageUrl && (
-                                <div className="mt-3">
-                                  <img 
-                                    src={message.imageUrl} 
-                                    alt="AI生成的艺术作品" 
-                                    className="max-w-full h-auto rounded-lg border border-slate-600"
-                                    onLoad={() => scrollToBottom()}
-                                  />
-                                </div>
-                              )}
-                              <p className="text-xs opacity-70 mt-2">
-                                {message.timestamp.toLocaleTimeString()}
-                              </p>
-                            </div>
-                            {message.isUser && <User className="h-5 w-5 text-white mt-1 flex-shrink-0" />}
-                          </div>
+              <div className="flex-grow flex flex-col bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden">
+                <TabsContent value="chat" className="flex-grow flex flex-col m-0">
+                  {chatMessages.length === 0 ? (
+                    <div className="flex-grow flex flex-col items-center justify-center p-8">
+                      <div className="text-center mb-8">
+                        <Bot className="h-16 w-16 text-blue-400 mx-auto mb-4" />
+                        <h2 className="text-2xl font-bold text-white mb-2">欢迎来到 Nexus AI！</h2>
+                        <p className="text-white/70 mb-8">我可以帮助您进行智能对话，您今天想聊什么？</p>
+                      </div>
+                      
+                      <div className="h-32"></div>
+                      
+                      <div className="w-full max-w-2xl">
+                        <p className="text-white/60 text-center mb-4">请尝试以下方法之一：</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {quickQuestions.slice(0, 4).map((question, index) => (
+                            <Card 
+                              key={index}
+                              className="bg-white/10 backdrop-blur-sm border-white/20 cursor-pointer hover:bg-white/20 transition-all duration-200"
+                              onClick={() => handleQuickQuestion(question)}
+                            >
+                              <CardContent className="p-4">
+                                <p className="text-white/90 text-sm">{question}</p>
+                              </CardContent>
+                            </Card>
+                          ))}
                         </div>
                       </div>
-                    ))}
-                    
-                    {(isTyping || isGeneratingImage) && (
-                      <div className="flex justify-start">
-                        <div className="bg-slate-800/70 border border-slate-700 rounded-xl p-4 max-w-[80%]">
-                          <div className="flex items-center space-x-3">
-                            <Bot className="h-5 w-5 text-purple-400" />
-                            <div className="flex items-center space-x-2">
-                              {isGeneratingImage && <ImageIcon className="h-4 w-4 text-purple-400" />}
-                              <span className="text-slate-300 text-sm">
-                                {isGeneratingImage ? '正在创作艺术作品...' : '正在思考...'}
-                              </span>
-                              <div className="flex space-x-1">
-                                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></div>
-                                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                    </div>
+                  ) : (
+                    <div className="flex-grow overflow-y-auto p-6 space-y-4">
+                      {chatMessages.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[80%] p-4 rounded-2xl ${
+                              message.sender === 'user'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white/10 backdrop-blur-sm text-white border border-white/20'
+                            }`}
+                          >
+                            <div className="flex items-start space-x-2">
+                              {message.sender === 'ai' && <Bot className="h-5 w-5 mt-0.5 text-blue-400" />}
+                              {message.sender === 'user' && <User className="h-5 w-5 mt-0.5" />}
+                              <div className="flex-1">
+                                <p className="whitespace-pre-wrap">{message.text}</p>
+                                <p className="text-xs opacity-70 mt-2">
+                                  {message.timestamp.toLocaleTimeString()}
+                                </p>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    )}
-                    
-                    <div ref={messagesEndRef} />
-                  </div>
-                </div>
-              )}
-            </TabsContent>
+                      ))}
+                      {isTyping && (
+                        <div className="flex justify-start">
+                          <div className="bg-white/10 backdrop-blur-sm border border-white/20 p-4 rounded-2xl">
+                            <div className="flex items-center space-x-2">
+                              <Bot className="h-5 w-5 text-blue-400" />
+                              <Loader2 className="h-4 w-4 animate-spin text-white" />
+                              <span className="text-white/70">AI正在思考...</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      <div ref={messagesEndRef} />
+                    </div>
+                  )}
+                </TabsContent>
 
-            <TabsContent value="image" className="flex-grow flex flex-col">
-              <div className="flex-grow bg-slate-900/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6 mb-6 overflow-hidden flex flex-col min-h-[500px]">
-                <div className="text-center mb-8">
-                  <h1 className="text-2xl font-medium text-slate-300 mb-4">
-                    AI 艺术创作
-                  </h1>
-                  <p className="text-slate-400">描述您想要的艺术作品，AI将为您创作独特的视觉艺术</p>
-                  <p className="text-slate-500 text-sm mt-2">✨ 已启用艺术增强模式，自动优化提示词以获得更佳艺术效果</p>
-                </div>
-                
-                {/* 显示生成的图片消息 */}
-                <div className="flex-grow overflow-y-auto space-y-6">
-                  {messages.filter(msg => msg.type === 'image').map((message) => (
-                    <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[80%] rounded-xl p-4 ${
-                        message.isUser 
-                          ? 'bg-purple-600 text-white' 
-                          : 'bg-slate-800/70 border border-slate-700 text-white'
-                      }`}>
-                        <div className="flex items-start space-x-3">
-                          {!message.isUser && <Bot className="h-5 w-5 text-purple-400 mt-1 flex-shrink-0" />}
-                          <div className="flex-grow">
-                            <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
-                            {message.imageUrl && (
-                              <div className="mt-3">
+                <TabsContent value="image" className="flex-grow flex flex-col m-0">
+                  {imageMessages.length === 0 ? (
+                    <div className="flex-grow flex flex-col items-center justify-center p-8">
+                      <div className="text-center mb-8">
+                        <ImageIcon className="h-16 w-16 text-purple-400 mx-auto mb-4" />
+                        <h2 className="text-2xl font-bold text-white mb-2">AI 图像生成</h2>
+                        <p className="text-white/70 mb-8">描述您想要生成的图像，AI将为您创作精美的艺术作品</p>
+                      </div>
+                      
+                      <div className="h-32"></div>
+                      
+                      <div className="w-full max-w-2xl">
+                        <p className="text-white/60 text-center mb-4">请尝试以下方法之一：</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <Card 
+                            className="bg-white/10 backdrop-blur-sm border-white/20 cursor-pointer hover:bg-white/20 transition-all duration-200"
+                            onClick={() => handleQuickQuestion("画一只在魔法森林中的可爱独角兽")}
+                          >
+                            <CardContent className="p-4">
+                              <p className="text-white/90 text-sm">画一只在魔法森林中的可爱独角兽</p>
+                            </CardContent>
+                          </Card>
+                          <Card 
+                            className="bg-white/10 backdrop-blur-sm border-white/20 cursor-pointer hover:bg-white/20 transition-all duration-200"
+                            onClick={() => handleQuickQuestion("生成一座未来主义风格的城市")}
+                          >
+                            <CardContent className="p-4">
+                              <p className="text-white/90 text-sm">生成一座未来主义风格的城市</p>
+                            </CardContent>
+                          </Card>
+                          <Card 
+                            className="bg-white/10 backdrop-blur-sm border-white/20 cursor-pointer hover:bg-white/20 transition-all duration-200"
+                            onClick={generateRandomPrompt}
+                          >
+                            <CardContent className="p-4">
+                              <p className="text-white/90 text-sm">🎲 随机艺术提示词</p>
+                            </CardContent>
+                          </Card>
+                          <Card 
+                            className="bg-white/10 backdrop-blur-sm border-white/20 cursor-pointer hover:bg-white/20 transition-all duration-200"
+                            onClick={() => handleQuickQuestion("创作一幅抽象艺术作品")}
+                          >
+                            <CardContent className="p-4">
+                              <p className="text-white/90 text-sm">创作一幅抽象艺术作品</p>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex-grow overflow-y-auto p-6 space-y-4">
+                      {imageMessages.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[80%] p-4 rounded-2xl ${
+                              message.sender === 'user'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white/10 backdrop-blur-sm text-white border border-white/20'
+                            }`}
+                          >
+                            {message.type === 'image' && message.imageUrl ? (
+                              <div>
                                 <img 
                                   src={message.imageUrl} 
-                                  alt="AI生成的艺术作品" 
-                                  className="max-w-full h-auto rounded-lg border border-slate-600"
+                                  alt={message.text}
+                                  className="rounded-lg max-w-full h-auto mb-2"
                                 />
+                                <p className="text-sm opacity-90">提示词: {message.text}</p>
                               </div>
+                            ) : (
+                              <p className="whitespace-pre-wrap">{message.text}</p>
                             )}
                             <p className="text-xs opacity-70 mt-2">
                               {message.timestamp.toLocaleTimeString()}
                             </p>
                           </div>
-                          {message.isUser && <User className="h-5 w-5 text-white mt-1 flex-shrink-0" />}
                         </div>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {isGeneratingImage && (
-                    <div className="flex justify-start">
-                      <div className="bg-slate-800/70 border border-slate-700 rounded-xl p-4 max-w-[80%]">
-                        <div className="flex items-center space-x-3">
-                          <Bot className="h-5 w-5 text-purple-400" />
-                          <div className="flex items-center space-x-2">
-                            <ImageIcon className="h-4 w-4 text-purple-400" />
-                            <span className="text-slate-300 text-sm">正在创作艺术作品...</span>
-                            <div className="flex space-x-1">
-                              <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></div>
-                              <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                              <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                      ))}
+                      {isTyping && (
+                        <div className="flex justify-start">
+                          <div className="bg-white/10 backdrop-blur-sm border border-white/20 p-4 rounded-2xl">
+                            <div className="flex items-center space-x-2">
+                              <ImageIcon className="h-5 w-5 text-purple-400" />
+                              <Loader2 className="h-4 w-4 animate-spin text-white" />
+                              <span className="text-white/70">正在生成图像...</span>
                             </div>
                           </div>
                         </div>
-                      </div>
+                      )}
+                      <div ref={messagesEndRef} />
                     </div>
                   )}
-                  
-                  <div ref={messagesEndRef} />
-                </div>
-              </div>
-            </TabsContent>
+                </TabsContent>
 
-            <TabsContent value="voice" className="flex-grow flex flex-col">
-              <div className="flex-grow bg-slate-900/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6 mb-6 overflow-hidden flex flex-col min-h-[500px]">
-                <div className="text-center mb-8">
-                  <h1 className="text-2xl font-medium text-slate-300 mb-4">
-                    语音聊天助手
-                  </h1>
-                  <p className="text-slate-400">开启语音对话，体验更自然的AI交流方式</p>
-                </div>
-                
-                {/* 语音聊天设置 */}
-                <div className="bg-slate-800/50 p-4 rounded-lg mb-6">
+                <TabsContent value="audio" className="flex-grow flex flex-col m-0">
+                  {audioMessages.length === 0 ? (
+                    <div className="flex-grow flex flex-col items-center justify-center p-8">
+                      <div className="text-center mb-8">
+                        <Volume2 className="h-16 w-16 text-green-400 mx-auto mb-4" />
+                        <h2 className="text-2xl font-bold text-white mb-2">语音聊天</h2>
+                        <p className="text-white/70 mb-8">与AI进行语音对话，支持语音输入和语音回复</p>
+                      </div>
+                      
+                      <div className="h-32"></div>
+                      
+                      <div className="w-full max-w-2xl">
+                        <p className="text-white/60 text-center mb-4">请尝试以下方法之一：</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <Card 
+                            className="bg-white/10 backdrop-blur-sm border-white/20 cursor-pointer hover:bg-white/20 transition-all duration-200"
+                            onClick={() => handleQuickQuestion("介绍一下人工智能的发展历程")}
+                          >
+                            <CardContent className="p-4">
+                              <p className="text-white/90 text-sm">介绍一下人工智能的发展历程</p>
+                            </CardContent>
+                          </Card>
+                          <Card 
+                            className="bg-white/10 backdrop-blur-sm border-white/20 cursor-pointer hover:bg-white/20 transition-all duration-200"
+                            onClick={() => handleQuickQuestion("讲一个有趣的科学故事")}
+                          >
+                            <CardContent className="p-4">
+                              <p className="text-white/90 text-sm">讲一个有趣的科学故事</p>
+                            </CardContent>
+                          </Card>
+                          <Card 
+                            className="bg-white/10 backdrop-blur-sm border-white/20 cursor-pointer hover:bg-white/20 transition-all duration-200"
+                            onClick={() => handleQuickQuestion("教我一些实用的生活技巧")}
+                          >
+                            <CardContent className="p-4">
+                              <p className="text-white/90 text-sm">教我一些实用的生活技巧</p>
+                            </CardContent>
+                          </Card>
+                          <Card 
+                            className="bg-white/10 backdrop-blur-sm border-white/20 cursor-pointer hover:bg-white/20 transition-all duration-200"
+                            onClick={() => handleQuickQuestion("分析一下当前的科技趋势")}
+                          >
+                            <CardContent className="p-4">
+                              <p className="text-white/90 text-sm">分析一下当前的科技趋势</p>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex-grow overflow-y-auto p-6 space-y-4">
+                      {audioMessages.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[80%] p-4 rounded-2xl ${
+                              message.sender === 'user'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white/10 backdrop-blur-sm text-white border border-white/20'
+                            }`}
+                          >
+                            <div className="flex items-start space-x-2">
+                              {message.sender === 'ai' && <Volume2 className="h-5 w-5 mt-0.5 text-green-400" />}
+                              {message.sender === 'user' && <User className="h-5 w-5 mt-0.5" />}
+                              <div className="flex-1">
+                                <p className="whitespace-pre-wrap">{message.text}</p>
+                                <p className="text-xs opacity-70 mt-2">
+                                  {message.timestamp.toLocaleTimeString()}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {isTyping && (
+                        <div className="flex justify-start">
+                          <div className="bg-white/10 backdrop-blur-sm border border-white/20 p-4 rounded-2xl">
+                            <div className="flex items-center space-x-2">
+                              <Volume2 className="h-5 w-5 text-green-400" />
+                              <Loader2 className="h-4 w-4 animate-spin text-white" />
+                              <span className="text-white/70">AI正在回复...</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      <div ref={messagesEndRef} />
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* 输入区域 */}
+                <div className="p-6 border-t border-white/10">
+                  {/* 模型选择和语音回复开关 */}
                   <div className="flex items-center justify-between mb-4">
-                    <label className="flex items-center space-x-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={enableVoiceReply}
-                        onChange={(e) => setEnableVoiceReply(e.target.checked)}
-                        className="w-4 h-4 text-purple-600 rounded"
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-white/60 text-sm">模型:</span>
+                        <Select value={currentModel} onValueChange={setCurrentModel}>
+                          <SelectTrigger className="w-48 bg-white/10 border-white/20 text-white text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-slate-800 border-slate-600">
+                            {AI_MODELS.map((model) => (
+                              <SelectItem 
+                                key={model.id} 
+                                value={model.id}
+                                className="text-white hover:bg-slate-700"
+                              >
+                                {model.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {(activeTab === 'audio' || activeTab === 'chat') && (
+                        <div className="flex items-center space-x-2">
+                          <span className="text-white/60 text-sm">语音回复:</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setVoiceReplyEnabled(!voiceReplyEnabled)}
+                            className={`${
+                              voiceReplyEnabled 
+                                ? 'bg-green-500/20 border-green-500/50 text-green-400' 
+                                : 'bg-white/10 border-white/20 text-white/70'
+                            } text-xs`}
+                          >
+                            {voiceReplyEnabled ? '已开启' : '已关闭'}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 输入框 */}
+                  <div className="flex items-end space-x-4">
+                    <div className="flex-grow">
+                      <Input
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder={
+                          activeTab === 'image' 
+                            ? "描述您想要生成的图像..." 
+                            : activeTab === 'audio'
+                            ? "输入文字或点击麦克风语音输入..."
+                            : "输入您的消息..."
+                        }
+                        className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-blue-400 min-h-[50px]"
+                        disabled={isTyping}
                       />
-                      <span className="text-white font-medium">启用语音回复</span>
-                    </label>
-                    
-                    <div className="flex items-center space-x-2">
-                      <span className="text-slate-400 text-sm">语音风格：</span>
-                      <Select value={selectedVoice} onValueChange={setSelectedVoice}>
-                        <SelectTrigger className="bg-slate-700 border-slate-600 text-white w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-700">
-                          {voices.map((voice) => (
-                            <SelectItem key={voice.id} value={voice.id} className="text-white hover:bg-slate-700">
-                              {voice.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                     </div>
-                  </div>
-                  
-                  <div className="text-sm text-slate-400">
-                    {enableVoiceReply ? (
-                      <p>✅ 语音聊天已启用：说话→AI理解→AI语音回复</p>
-                    ) : (
-                      <p>⚪ 仅语音输入：说话→转换为文字→AI文字回复</p>
-                    )}
-                  </div>
-                </div>
-                
-                {/* 语音聊天区域 */}
-                <div className="flex-grow">
-                  <div className="text-center py-12">
-                    <div className="flex justify-center mb-6">
-                      <button
-                        onClick={handleVoiceInput}
-                        className={`p-6 rounded-full transition-all duration-200 ${
-                          isListening 
-                            ? 'bg-red-600 animate-pulse scale-110' 
-                            : 'bg-purple-600 hover:bg-purple-700'
-                        }`}
+                    
+                    {/* 语音输入按钮 */}
+                    {(activeTab === 'audio' || activeTab === 'chat') && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handleVoiceRecord}
+                        disabled={isTyping}
+                        className={`${
+                          isRecording 
+                            ? 'bg-red-500/20 border-red-500/50 text-red-400' 
+                            : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
+                        } h-[50px] w-[50px]`}
                       >
-                        <Mic className="h-8 w-8 text-white" />
-                      </button>
-                    </div>
-                    
-                    <h3 className="text-xl font-medium text-white mb-2">
-                      {isListening ? '正在听您说话...' : '点击开始语音对话'}
-                    </h3>
-                    <p className="text-slate-400">
-                      {isListening 
-                        ? '请说出您的问题' 
-                        : enableVoiceReply 
-                          ? 'AI将用语音回复您的问题'
-                          : '语音将转换为文字显示'
-                      }
-                    </p>
+                        {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                      </Button>
+                    )}
+
+                    {/* 发送按钮 */}
+                    <Button
+                      onClick={sendMessage}
+                      disabled={!inputValue.trim() || isTyping}
+                      className="bg-blue-600 hover:bg-blue-700 text-white h-[50px] px-6 disabled:opacity-50"
+                    >
+                      {isTyping ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <Send className="h-5 w-5" />
+                      )}
+                    </Button>
                   </div>
                 </div>
               </div>
-            </TabsContent>
-
-            {/* 底部输入区域 - 根据不同tab显示不同内容 */}
-            <div className="bg-slate-900/50 backdrop-blur-md rounded-xl border border-slate-700/50 p-4">
-              {activeTab === 'chat' && (
-                <div className="flex space-x-3">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="border-slate-700 text-slate-400 hover:bg-slate-700 flex-shrink-0"
-                  >
-                    <Upload className="h-4 w-4" />
-                  </Button>
-                  <Input
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="输入您的问题..."
-                    className="flex-grow bg-transparent border-slate-700 text-white placeholder-slate-400"
-                    disabled={isTyping || isGeneratingImage}
-                  />
-                  <Button
-                    onClick={handleVoiceInput}
-                    variant="outline"
-                    size="icon"
-                    className={`border-slate-700 flex-shrink-0 ${
-                      isListening 
-                        ? 'bg-red-600 border-red-600 text-white animate-pulse' 
-                        : 'text-slate-400 hover:bg-slate-700'
-                    }`}
-                  >
-                    <Mic className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    onClick={() => handleSendMessage()}
-                    disabled={!inputValue.trim() || isTyping || isGeneratingImage}
-                    size="icon"
-                    className="bg-purple-600 hover:bg-purple-700 text-white flex-shrink-0"
-                  >
-                    {(isTyping || isGeneratingImage) ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              )}
-              
-              {activeTab === 'image' && (
-                <div className="flex space-x-3">
-                  <Input
-                    value={imagePrompt}
-                    onChange={(e) => setImagePrompt(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="描述您想要创作的艺术作品..."
-                    className="flex-grow bg-transparent border-slate-700 text-white placeholder-slate-400"
-                    disabled={isGeneratingImage}
-                  />
-                  <Button 
-                    onClick={handleImageGenerate}
-                    disabled={!imagePrompt.trim() || isGeneratingImage}
-                    size="icon"
-                    className="bg-purple-600 hover:bg-purple-700 text-white flex-shrink-0"
-                  >
-                    {isGeneratingImage ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              )}
-              
-              {activeTab === 'voice' && (
-                <div className="flex space-x-3">
-                  <Input
-                    value={voiceChatInput}
-                    onChange={(e) => setVoiceChatInput(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="您也可以直接输入文字..."
-                    className="flex-grow bg-transparent border-slate-700 text-white placeholder-slate-400"
-                    disabled={isTyping}
-                  />
-                  <Button
-                    onClick={handleVoiceInput}
-                    variant="outline"
-                    size="icon"
-                    className={`border-slate-700 flex-shrink-0 ${
-                      isListening 
-                        ? 'bg-red-600 border-red-600 text-white animate-pulse' 
-                        : 'text-slate-400 hover:bg-slate-700'
-                    }`}
-                  >
-                    <Mic className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    onClick={() => handleVoiceChatSend()}
-                    disabled={!voiceChatInput.trim() || isTyping}
-                    size="icon"
-                    className="bg-purple-600 hover:bg-purple-700 text-white flex-shrink-0"
-                  >
-                    {isTyping ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              )}
-            </div>
-          </Tabs>
-        </div>
-      </main>
+            </Tabs>
+          </div>
+        </main>
+      </PaymentCheck>
       
       <Footer />
     </div>

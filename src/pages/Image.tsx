@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -169,14 +170,14 @@ const Image = ({ decrementUsage }: ImageProps) => {
 
   const generateRandomPrompt = () => {
     const randomPrompts = [
-      "a cute orange cat playing in a sunny garden",
-      "futuristic city skyline at sunset with flying cars",
-      "ancient Chinese temple in misty mountains",
-      "beautiful woman with flowing hair in wind",
-      "majestic eagle soaring over snowy peaks",
-      "cozy coffee shop interior with warm lighting",
-      "mysterious forest path with sunbeams",
-      "modern architectural building with glass facade"
+      "A hyper-realistic full-color portrait depicting a young man with green eyes, freckles and curly red hair. He has a whimsical smile on his face, with a sunny summer day in the background, artistic style, masterpiece",
+      "An abstract portrait mimicking the vibrant rhythms of Beethoven's symphonies, digital art, by famous artists, colorful composition",
+      "Tokyo's neon-lit hustle at dusk; eerie quiet of abandoned Detroit factories; romantic charm of Parisian alleys in spring, artistic collage style",
+      "A futuristic city at night under starlight illuminated with neon lights and flying cars, overlooking a bustling alien marketplace from the tower of a futuristic city at sunset, concept art",
+      "A lone explorer observing alien monoliths in a Martian sandstorm, science fiction art, dramatic atmosphere",
+      "Create a futuristic landscape with a hazy purple sky, large monolithic structures filling the terrain, digital art masterpiece",
+      "Paint a sunset by the beach with foamy waves lapping against the shore, beautiful landscape art, artistic style",
+      "Create a portrait of a woman with blue eyes, alabaster skin and dark shoulder-length hair in Art Deco style, elegant illustration"
     ];
     
     const randomPrompt = randomPrompts[Math.floor(Math.random() * randomPrompts.length)];
