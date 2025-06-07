@@ -8,7 +8,7 @@ import GradientLogo from './GradientLogo';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -59,7 +59,7 @@ const Navigation = () => {
                     </Button>
                   </Link>
                   <Button 
-                    onClick={signOut}
+                    onClick={logout}
                     variant="outline" 
                     className="border-nexus-blue text-white hover:bg-nexus-blue"
                   >
@@ -135,7 +135,7 @@ const Navigation = () => {
                   </Link>
                   <button
                     onClick={() => {
-                      signOut();
+                      logout();
                       setIsMenuOpen(false);
                     }}
                     className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-white/80 hover:text-nexus-cyan"
