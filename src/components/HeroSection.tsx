@@ -7,39 +7,40 @@ import { ArrowDown } from 'lucide-react';
 const HeroSection = () => {
   return (
     <section className="min-h-screen pt-20 flex flex-col items-center justify-center px-4 relative overflow-hidden">
-      {/* 增强的背景元素 */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-purple-950/60 to-slate-900/80 z-0"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-cyan-500/10 via-purple-500/5 to-transparent z-0"></div>
+      {/* 科技粒子特效背景 */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-gray-900 to-black z-0"></div>
       
-      {/* 增强的动态背景光效 */}
-      <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-gradient-to-r from-cyan-400/20 to-blue-500/30 rounded-full blur-[140px] animate-pulse z-0"></div>
-      <div className="absolute top-1/2 right-1/4 w-[500px] h-[500px] bg-gradient-to-r from-purple-500/25 to-pink-500/20 rounded-full blur-[120px] animate-pulse z-0" style={{animationDelay: '1s'}}></div>
-      <div className="absolute bottom-1/4 left-1/2 w-[550px] h-[550px] bg-gradient-to-r from-indigo-500/15 to-cyan-500/25 rounded-full blur-[100px] animate-pulse z-0" style={{animationDelay: '2s'}}></div>
-      <div className="absolute top-1/3 right-1/3 w-[400px] h-[400px] bg-gradient-to-r from-teal-400/20 to-emerald-400/15 rounded-full blur-[90px] animate-pulse z-0" style={{animationDelay: '0.5s'}}></div>
-      
-      {/* 增强的漂浮装饰元素 */}
-      <div className="absolute top-1/3 left-1/6 w-4 h-4 bg-cyan-300/60 rounded-full animate-bounce z-0" style={{animationDelay: '0.5s'}}></div>
-      <div className="absolute top-2/3 right-1/6 w-3 h-3 bg-blue-300/70 rounded-full animate-bounce z-0" style={{animationDelay: '1.5s'}}></div>
-      <div className="absolute top-1/2 left-3/4 w-3.5 h-3.5 bg-purple-300/50 rounded-full animate-bounce z-0" style={{animationDelay: '0.8s'}}></div>
-      <div className="absolute bottom-1/3 left-1/3 w-2.5 h-2.5 bg-pink-300/60 rounded-full animate-bounce z-0" style={{animationDelay: '2.2s'}}></div>
-      <div className="absolute top-1/5 right-1/2 w-2 h-2 bg-indigo-300/40 rounded-full animate-bounce z-0" style={{animationDelay: '1.8s'}}></div>
-      <div className="absolute bottom-1/2 right-1/5 w-3 h-3 bg-emerald-300/50 rounded-full animate-bounce z-0" style={{animationDelay: '2.5s'}}></div>
-      
-      {/* 增强的星空背景点缀 */}
-      <div className="absolute inset-0 opacity-10 z-0" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.15'%3E%3Ccircle cx='40' cy='40' r='1.5'/%3E%3Ccircle cx='20' cy='20' r='1'/%3E%3Ccircle cx='60' cy='60' r='1'/%3E%3Ccircle cx='10' cy='60' r='0.5'/%3E%3Ccircle cx='70' cy='20' r='0.5'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+      {/* 动态粒子特效 */}
+      <div className="absolute inset-0 z-0" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3Ccircle cx='15' cy='15' r='0.5'/%3E%3Ccircle cx='45' cy='45' r='0.5'/%3E%3Ccircle cx='15' cy='45' r='0.3'/%3E%3Ccircle cx='45' cy='15' r='0.3'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
       }}></div>
+      
+      {/* 增强的动态光效 */}
+      <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-gradient-to-r from-cyan-500/10 to-blue-500/15 rounded-full blur-[100px] animate-pulse z-0"></div>
+      <div className="absolute top-1/2 right-1/4 w-[350px] h-[350px] bg-gradient-to-r from-purple-500/12 to-pink-500/10 rounded-full blur-[90px] animate-pulse z-0" style={{animationDelay: '1s'}}></div>
+      <div className="absolute bottom-1/4 left-1/2 w-[300px] h-[300px] bg-gradient-to-r from-indigo-500/8 to-cyan-500/12 rounded-full blur-[80px] animate-pulse z-0" style={{animationDelay: '2s'}}></div>
+      
+      {/* 科技线条特效 */}
+      <div className="absolute inset-0 opacity-20 z-0" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 50h100M50 0v100' stroke='%2300d4ff' stroke-width='0.2' opacity='0.3'/%3E%3C/svg%3E")`
+      }}></div>
+      
+      {/* 漂浮装饰元素 */}
+      <div className="absolute top-1/3 left-1/6 w-2 h-2 bg-cyan-400/40 rounded-full animate-bounce z-0" style={{animationDelay: '0.5s'}}></div>
+      <div className="absolute top-2/3 right-1/6 w-1.5 h-1.5 bg-blue-400/50 rounded-full animate-bounce z-0" style={{animationDelay: '1.5s'}}></div>
+      <div className="absolute top-1/2 left-3/4 w-2.5 h-2.5 bg-purple-400/30 rounded-full animate-bounce z-0" style={{animationDelay: '0.8s'}}></div>
+      <div className="absolute bottom-1/3 left-1/3 w-1 h-1 bg-pink-400/40 rounded-full animate-bounce z-0" style={{animationDelay: '2.2s'}}></div>
       
       {/* Hero content */}
       <div className="relative z-10 max-w-5xl mx-auto text-center">
         <div className="mb-8 animate-fade-in">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
             <span className="inline-block bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent drop-shadow-lg">
-              智启未来
+              AI创作助手
             </span>
             <br />
             <span className="inline-block bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent drop-shadow-lg">
-              AI无界
+              三合一套餐
             </span>
           </h1>
           <h2 className="text-xl md:text-3xl font-semibold mb-8 text-white/90 drop-shadow-md">
@@ -69,10 +70,10 @@ const HeroSection = () => {
         </button>
       </div>
       
-      {/* 增强的底部装饰波浪 */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-slate-900/90 via-slate-900/50 to-transparent z-0"></div>
+      {/* 底部装饰渐变 */}
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/90 via-gray-900/50 to-transparent z-0"></div>
       
-      {/* 添加边缘光效 */}
+      {/* 边缘光效 */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent"></div>
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent"></div>
     </section>

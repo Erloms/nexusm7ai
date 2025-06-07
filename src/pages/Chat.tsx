@@ -34,6 +34,7 @@ const Chat = () => {
   const [selectedVoice, setSelectedVoice] = useState('alloy');
   const [isListening, setIsListening] = useState(false);
   const [enableVoiceReply, setEnableVoiceReply] = useState(false);
+  const [voiceChatInput, setVoiceChatInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
@@ -72,33 +73,43 @@ const Chat = () => {
 
   // 艺术风格提示词优化器
   const optimizeImagePrompt = (userPrompt: string): string => {
-    const styleEnhancers = [
-      "masterpiece, best quality, ultra-detailed, 8k, high-resolution",
-      "intricate details, stunning composition, cinematic lighting",
-      "trending on Artstation, breathtaking, beautiful",
-      "dramatic atmosphere, vibrant colors, rich textures",
-      "award-winning illustration, highly detailed background"
-    ];
-
     const artisticStyles = [
-      "by Greg Rutkowski, Artgerm, WLOP",
-      "by Makoto Shinkai, Ilya Kuvshinov", 
-      "by Alphonse Mucha, Gustav Klimt",
-      "by Beeple, Syd Mead, Simon Stalenhag"
+      "ethereal digital art, masterpiece quality, ultra-detailed",
+      "mystical fantasy illustration, intricate details, vibrant colors",
+      "surreal conceptual artwork, dreamlike atmosphere, stunning composition",
+      "abstract expressionist painting, bold brushstrokes, dynamic lighting",
+      "impressionist style artwork, soft textures, luminous colors",
+      "art nouveau inspired design, elegant flowing lines, ornate details",
+      "cyberpunk digital illustration, neon aesthetics, futuristic atmosphere",
+      "watercolor painting style, delicate washes, artistic expression"
     ];
 
-    // 检测用户提示词是否包含风格关键词
-    const hasArtisticTerms = /anime|art|painting|illustration|fantasy|magical|ethereal|dreamy/i.test(userPrompt);
+    const qualityEnhancers = [
+      "masterpiece, best quality, ultra-detailed, 8k resolution",
+      "award-winning illustration, trending on ArtStation, highly detailed",
+      "cinematic lighting, dramatic composition, rich textures",
+      "professional artwork, museum quality, exquisite craftsmanship",
+      "breathtaking visual art, stunning colors, perfect composition"
+    ];
+
+    const artisticMasters = [
+      "by Greg Rutkowski, Alphonse Mucha, Gustav Klimt",
+      "by Makoto Shinkai, Studio Ghibli style",
+      "by Salvador Dalí, René Magritte surrealist style",
+      "by Claude Monet, Vincent van Gogh impressionist style",
+      "by Hayao Miyazaki, fantasy art style"
+    ];
+
+    // 随机选择增强元素
+    const randomStyle = artisticStyles[Math.floor(Math.random() * artisticStyles.length)];
+    const randomQuality = qualityEnhancers[Math.floor(Math.random() * qualityEnhancers.length)];
+    const randomArtist = artisticMasters[Math.floor(Math.random() * artisticMasters.length)];
+
+    // 构建优化后的提示词
+    let optimizedPrompt = `${userPrompt}, ${randomStyle}, ${randomQuality}, ${randomArtist}`;
     
-    let optimizedPrompt = userPrompt;
-    
-    if (!hasArtisticTerms) {
-      // 如果没有艺术风格，添加艺术增强词
-      optimizedPrompt = `A breathtaking artistic illustration of ${userPrompt}, ${styleEnhancers[0]}, ${artisticStyles[Math.floor(Math.random() * artisticStyles.length)]}, ethereal, magical, dreamy atmosphere`;
-    } else {
-      // 如果已有风格，增强细节
-      optimizedPrompt = `${userPrompt}, ${styleEnhancers[Math.floor(Math.random() * styleEnhancers.length)]}, ${artisticStyles[Math.floor(Math.random() * artisticStyles.length)]}`;
-    }
+    // 添加负面提示词避免照片风格
+    optimizedPrompt += ", artistic interpretation, stylized artwork, NOT photorealistic, NOT photography, creative stylization";
 
     return optimizedPrompt;
   };
@@ -118,13 +129,21 @@ const Chat = () => {
 
       recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
         const result = event.results[0][0].transcript;
-        setInputValue(result);
+        if (activeTab === 'voice') {
+          setVoiceChatInput(result);
+        } else {
+          setInputValue(result);
+        }
         setIsListening(false);
         
         // 如果启用语音回复，自动发送消息
         if (enableVoiceReply) {
           setTimeout(() => {
-            handleSendMessage(result);
+            if (activeTab === 'voice') {
+              handleVoiceChatSend(result);
+            } else {
+              handleSendMessage(result);
+            }
           }, 100);
         }
       };
@@ -143,7 +162,7 @@ const Chat = () => {
         setIsListening(false);
       };
     }
-  }, [enableVoiceReply]);
+  }, [enableVoiceReply, activeTab]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -327,6 +346,14 @@ const Chat = () => {
     }
   };
 
+  const handleVoiceChatSend = async (customText?: string) => {
+    const text = customText || voiceChatInput.trim();
+    if (!text) return;
+
+    await handleSendMessage(text);
+    setVoiceChatInput('');
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -334,6 +361,8 @@ const Chat = () => {
         handleSendMessage();
       } else if (activeTab === 'image') {
         handleImageGenerate();
+      } else if (activeTab === 'voice') {
+        handleVoiceChatSend();
       }
     }
   };
@@ -733,8 +762,39 @@ const Chat = () => {
               )}
               
               {activeTab === 'voice' && (
-                <div className="text-center text-slate-400">
-                  语音聊天模式：点击上方麦克风按钮开始对话
+                <div className="flex space-x-3">
+                  <Input
+                    value={voiceChatInput}
+                    onChange={(e) => setVoiceChatInput(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="您也可以直接输入文字..."
+                    className="flex-grow bg-transparent border-slate-700 text-white placeholder-slate-400"
+                    disabled={isTyping}
+                  />
+                  <Button
+                    onClick={handleVoiceInput}
+                    variant="outline"
+                    size="icon"
+                    className={`border-slate-700 flex-shrink-0 ${
+                      isListening 
+                        ? 'bg-red-600 border-red-600 text-white animate-pulse' 
+                        : 'text-slate-400 hover:bg-slate-700'
+                    }`}
+                  >
+                    <Mic className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    onClick={() => handleVoiceChatSend()}
+                    disabled={!voiceChatInput.trim() || isTyping}
+                    size="icon"
+                    className="bg-purple-600 hover:bg-purple-700 text-white flex-shrink-0"
+                  >
+                    {isTyping ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </Button>
                 </div>
               )}
             </div>
