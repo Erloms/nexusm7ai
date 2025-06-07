@@ -22,7 +22,7 @@ const SloganSection = () => {
             <div className="text-center">
               <h3 className="text-xl font-bold text-gradient-gold mb-4">价格优势</h3>
               <p className="text-white/80 mb-4">
-                无需为昂贵的大模型付费，只需 <span className="text-gradient-gold font-bold text-xl">799元永久使用</span> 顶尖AI模型
+                灵活定价方案：<span className="text-gradient-gold font-bold text-xl">199元/年</span> 或 <span className="text-gradient-gold font-bold text-xl">799元/永久</span> 使用顶尖AI模型
               </p>
             </div>
             
@@ -42,6 +42,10 @@ const SloganSection = () => {
           </div>
           
           <div className="text-center">
+            <div className="mb-4">
+              <p className="text-white/60 text-sm mb-2">免费体验次数已用完</p>
+              <p className="text-white/80 mb-4">您已用完免费体验次数</p>
+            </div>
             <Button size="lg" asChild className="bg-nexus-blue hover:bg-nexus-blue/80 text-white text-lg px-8 py-4 mr-4">
               <Link to="/payment">立即升级会员</Link>
             </Button>

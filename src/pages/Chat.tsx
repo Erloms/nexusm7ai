@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { Send, Bot, User, Loader2, MessageSquare, Image as ImageIcon, Mic, Upload, Sparkles, Download } from 'lucide-react';
+import { Send, Bot, User, Loader2, MessageSquare, Image as ImageIcon, Mic, Upload, Sparkles, Download, MicIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Message {
@@ -16,6 +16,7 @@ interface Message {
   isUser: boolean;
   timestamp: Date;
   imageUrl?: string;
+  type?: 'text' | 'image' | 'voice';
 }
 
 const Chat = () => {
@@ -28,6 +29,7 @@ const Chat = () => {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
   const [imagePrompt, setImagePrompt] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // AI模型列表
@@ -123,6 +125,7 @@ const Chat = () => {
       text: messageText,
       isUser: true,
       timestamp: new Date(),
+      type: 'text'
     };
 
     const updatedMessages = [...messages, userMessage];
@@ -131,7 +134,7 @@ const Chat = () => {
     setIsTyping(true);
 
     try {
-      if (isImageRequest(messageText)) {
+      if (isImageRequest(messageText) || activeTab === 'image') {
         setIsGeneratingImage(true);
         const imageUrl = await generateImage(messageText);
         
@@ -141,6 +144,7 @@ const Chat = () => {
           isUser: false,
           timestamp: new Date(),
           imageUrl: imageUrl,
+          type: 'image'
         };
         
         const finalMessages = [...updatedMessages, aiMessage];
@@ -154,6 +158,7 @@ const Chat = () => {
           text: aiResponseText,
           isUser: false,
           timestamp: new Date(),
+          type: 'text'
         };
         
         const finalMessages = [...updatedMessages, aiMessage];
@@ -171,6 +176,7 @@ const Chat = () => {
         text: '抱歉，AI服务暂时不可用，请稍后再试。',
         isUser: false,
         timestamp: new Date(),
+        type: 'text'
       };
       
       const finalMessages = [...updatedMessages, errorMessage];
@@ -186,22 +192,24 @@ const Chat = () => {
 
   const handleImageGenerate = async () => {
     if (!imagePrompt.trim()) return;
+    await handleSendMessage(imagePrompt);
+    setImagePrompt('');
+  };
 
-    try {
-      setIsGeneratingImage(true);
-      const imageUrl = await generateImage(imagePrompt);
-      
+  const handleVoiceRecord = async () => {
+    if (isRecording) {
+      setIsRecording(false);
+      // TODO: 实现语音录制停止和转换逻辑
       toast({
-        title: "图片生成成功",
-        description: "您的图片已生成完成",
+        title: "语音录制结束",
+        description: "语音转文字功能即将上线",
       });
-      
-      setImagePrompt('');
-    } catch (error) {
+    } else {
+      setIsRecording(true);
+      // TODO: 实现语音录制开始逻辑
       toast({
-        title: "生成失败",
-        description: "图片生成失败，请稍后再试",
-        variant: "destructive",
+        title: "开始录音",
+        description: "请说话，点击停止结束录音",
       });
     }
   };
@@ -235,7 +243,6 @@ const Chat = () => {
             </div>
           </div>
           
-          {/* 使用Tabs组件包裹所有内容 */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-4xl">
             <div className="flex flex-col items-center">
               <TabsList className="grid w-full max-w-md grid-cols-3 bg-slate-800/50 border border-slate-700 mb-6">
@@ -273,7 +280,6 @@ const Chat = () => {
               </div>
             </div>
 
-            {/* TabsContent 组件现在正确地嵌套在 Tabs 内 */}
             <TabsContent value="chat" className="flex-grow flex flex-col">
               {/* 聊天内容区域 */}
               {messages.length === 0 ? (
@@ -282,11 +288,14 @@ const Chat = () => {
                     <h1 className="text-2xl font-medium text-slate-300 mb-4">
                       欢迎来到 Nexus AI！我可以帮助您生成文本、图像等，您今天想创造什么？
                     </h1>
+                    <p className="text-slate-400 text-center mb-4">请尝试以下方法之一：</p>
                   </div>
+                  
+                  {/* 增加空白间距 */}
+                  <div className="h-24"></div>
                   
                   {/* 建议问题 */}
                   <div className="max-w-4xl w-full">
-                    <p className="text-slate-400 text-center mb-4">请尝试以下方法之一：</p>
                     <div className="flex flex-wrap justify-center gap-3">
                       {suggestedPrompts.map((prompt, index) => (
                         <Button
@@ -363,7 +372,7 @@ const Chat = () => {
             </TabsContent>
 
             <TabsContent value="image" className="flex-grow flex flex-col">
-              <div className="flex-grow flex flex-col justify-center items-center">
+              <div className="flex-grow bg-slate-900/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6 mb-6 overflow-hidden flex flex-col min-h-[500px]">
                 <div className="text-center mb-8">
                   <h1 className="text-2xl font-medium text-slate-300 mb-4">
                     AI 图像生成
@@ -371,54 +380,119 @@ const Chat = () => {
                   <p className="text-slate-400">描述您想要的图像，AI将为您创作</p>
                 </div>
                 
-                <div className="w-full max-w-2xl">
-                  <Textarea
-                    value={imagePrompt}
-                    onChange={(e) => setImagePrompt(e.target.value)}
-                    placeholder="描述您想要生成的图像..."
-                    className="bg-slate-800/50 border-slate-700 text-white placeholder-slate-400 min-h-[100px] mb-4"
-                    onKeyPress={handleKeyPress}
-                  />
-                  <Button
-                    onClick={handleImageGenerate}
-                    disabled={!imagePrompt.trim() || isGeneratingImage}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                  >
-                    {isGeneratingImage ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        生成中...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        生成图像
-                      </>
-                    )}
-                  </Button>
+                {/* 显示生成的图片消息 */}
+                <div className="flex-grow overflow-y-auto space-y-6">
+                  {messages.filter(msg => msg.type === 'image').map((message) => (
+                    <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[80%] rounded-xl p-4 ${
+                        message.isUser 
+                          ? 'bg-purple-600 text-white' 
+                          : 'bg-slate-800/70 border border-slate-700 text-white'
+                      }`}>
+                        <div className="flex items-start space-x-3">
+                          {!message.isUser && <Bot className="h-5 w-5 text-purple-400 mt-1 flex-shrink-0" />}
+                          <div className="flex-grow">
+                            <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
+                            {message.imageUrl && (
+                              <div className="mt-3">
+                                <img 
+                                  src={message.imageUrl} 
+                                  alt="AI生成的图片" 
+                                  className="max-w-full h-auto rounded-lg border border-slate-600"
+                                />
+                              </div>
+                            )}
+                            <p className="text-xs opacity-70 mt-2">
+                              {message.timestamp.toLocaleTimeString()}
+                            </p>
+                          </div>
+                          {message.isUser && <User className="h-5 w-5 text-white mt-1 flex-shrink-0" />}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {isGeneratingImage && (
+                    <div className="flex justify-start">
+                      <div className="bg-slate-800/70 border border-slate-700 rounded-xl p-4 max-w-[80%]">
+                        <div className="flex items-center space-x-3">
+                          <Bot className="h-5 w-5 text-purple-400" />
+                          <div className="flex items-center space-x-2">
+                            <ImageIcon className="h-4 w-4 text-purple-400" />
+                            <span className="text-slate-300 text-sm">正在生成图片...</span>
+                            <div className="flex space-x-1">
+                              <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></div>
+                              <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                              <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div ref={messagesEndRef} />
                 </div>
               </div>
             </TabsContent>
 
             <TabsContent value="voice" className="flex-grow flex flex-col">
-              <div className="flex-grow flex flex-col justify-center items-center">
+              <div className="flex-grow bg-slate-900/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6 mb-6 overflow-hidden flex flex-col min-h-[500px]">
                 <div className="text-center mb-8">
                   <h1 className="text-2xl font-medium text-slate-300 mb-4">
                     AI 语音功能
                   </h1>
-                  <p className="text-slate-400">语音功能即将上线，敬请期待</p>
+                  <p className="text-slate-400">点击录音按钮开始语音对话</p>
                 </div>
                 
-                <div className="w-full max-w-2xl text-center">
-                  <Mic className="h-16 w-16 text-slate-600 mx-auto mb-4" />
-                  <p className="text-slate-500">该功能正在开发中...</p>
+                {/* 语音录制界面 */}
+                <div className="flex-grow flex flex-col justify-center items-center">
+                  <Button
+                    onClick={handleVoiceRecord}
+                    className={`w-32 h-32 rounded-full ${
+                      isRecording 
+                        ? 'bg-red-600 hover:bg-red-700 animate-pulse' 
+                        : 'bg-purple-600 hover:bg-purple-700'
+                    }`}
+                  >
+                    <MicIcon className="h-12 w-12" />
+                  </Button>
+                  <p className="text-slate-400 mt-4">
+                    {isRecording ? '正在录音，点击停止' : '点击开始录音'}
+                  </p>
+                </div>
+                
+                {/* 显示语音消息 */}
+                <div className="flex-grow overflow-y-auto space-y-6">
+                  {messages.filter(msg => msg.type === 'voice').map((message) => (
+                    <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[80%] rounded-xl p-4 ${
+                        message.isUser 
+                          ? 'bg-purple-600 text-white' 
+                          : 'bg-slate-800/70 border border-slate-700 text-white'
+                      }`}>
+                        <div className="flex items-start space-x-3">
+                          {!message.isUser && <Bot className="h-5 w-5 text-purple-400 mt-1 flex-shrink-0" />}
+                          <div className="flex-grow">
+                            <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
+                            <p className="text-xs opacity-70 mt-2">
+                              {message.timestamp.toLocaleTimeString()}
+                            </p>
+                          </div>
+                          {message.isUser && <User className="h-5 w-5 text-white mt-1 flex-shrink-0" />}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <div ref={messagesEndRef} />
                 </div>
               </div>
             </TabsContent>
 
-            {/* 底部输入区域 - 仅聊天模式显示 */}
-            {activeTab === 'chat' && (
-              <div className="bg-slate-900/50 backdrop-blur-md rounded-xl border border-slate-700/50 p-4 mt-6">
+            {/* 底部输入区域 - 根据不同tab显示不同内容 */}
+            <div className="bg-slate-900/50 backdrop-blur-md rounded-xl border border-slate-700/50 p-4">
+              {activeTab === 'chat' && (
                 <div className="flex space-x-3">
                   <Button
                     variant="outline"
@@ -448,8 +522,49 @@ const Chat = () => {
                     )}
                   </Button>
                 </div>
-              </div>
-            )}
+              )}
+              
+              {activeTab === 'image' && (
+                <div className="flex space-x-3">
+                  <Input
+                    value={imagePrompt}
+                    onChange={(e) => setImagePrompt(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="描述您想要生成的图像..."
+                    className="flex-grow bg-transparent border-slate-700 text-white placeholder-slate-400"
+                    disabled={isGeneratingImage}
+                  />
+                  <Button 
+                    onClick={handleImageGenerate}
+                    disabled={!imagePrompt.trim() || isGeneratingImage}
+                    size="icon"
+                    className="bg-purple-600 hover:bg-purple-700 text-white flex-shrink-0"
+                  >
+                    {isGeneratingImage ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              )}
+              
+              {activeTab === 'voice' && (
+                <div className="flex justify-center">
+                  <Button
+                    onClick={handleVoiceRecord}
+                    className={`px-8 py-3 ${
+                      isRecording 
+                        ? 'bg-red-600 hover:bg-red-700' 
+                        : 'bg-purple-600 hover:bg-purple-700'
+                    }`}
+                  >
+                    <MicIcon className="h-4 w-4 mr-2" />
+                    {isRecording ? '停止录音' : '开始录音'}
+                  </Button>
+                </div>
+              )}
+            </div>
           </Tabs>
         </div>
       </main>
