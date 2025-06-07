@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -7,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { Send, Bot, User, Loader2, MessageSquare, Image as ImageIcon, Mic, Upload, Sparkles, Download, MicIcon } from 'lucide-react';
+import { Send, Bot, User, Loader2, MessageSquare, Image as ImageIcon, Mic, Upload, Sparkles, Download, MicIcon, Play, Volume2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Message {
@@ -30,7 +31,10 @@ const Chat = () => {
   const [activeTab, setActiveTab] = useState('chat');
   const [imagePrompt, setImagePrompt] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState('alloy');
+  const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   // AI模型列表
   const models = [
@@ -46,6 +50,25 @@ const Chat = () => {
     { id: 'searchgpt', name: 'SearchGPT', description: 'OpenAI搜索模型' },
   ];
 
+  // 语音风格列表
+  const voices = [
+    { id: 'alloy', name: '合金', style: '中性清晰' },
+    { id: 'echo', name: '回波', style: '深沉磁性' },
+    { id: 'fable', name: '寓言', style: '温暖友好' },
+    { id: 'onyx', name: '缟玛瑙', style: '成熟稳重' },
+    { id: 'nova', name: '新星', style: '年轻活力' },
+    { id: 'shimmer', name: '微光', style: '轻柔甜美' },
+  ];
+
+  const moreVoices = [
+    { id: 'coral', name: '珊瑚', style: '清新自然' },
+    { id: 'ballad', name: '民谣', style: '抒情柔和' },
+    { id: 'verse', name: '诗句', style: '文艺优雅' },
+    { id: 'sage', name: '圣人', style: '智慧沉稳' },
+    { id: 'aster', name: '紫菀', style: '神秘优美' },
+    { id: 'brook', name: '小溪', style: '流畅自然' },
+  ];
+
   // 建议提示词
   const suggestedPrompts = [
     "创建一个未来主义的智能城市设计方案",
@@ -58,6 +81,37 @@ const Chat = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    // 初始化语音识别
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.lang = 'zh-CN';
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.continuous = false;
+
+      recognitionRef.current.onresult = (event: any) => {
+        const result = event.results[0][0].transcript;
+        setInputValue(result);
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error('语音识别错误:', event.error);
+        setIsListening(false);
+        toast({
+          title: "语音识别失败",
+          description: "请检查麦克风权限或重试",
+          variant: "destructive",
+        });
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -98,7 +152,7 @@ const Chat = () => {
     try {
       setIsGeneratingImage(true);
       
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&seed=${Math.floor(Math.random() * 1000000)}`;
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&seed=${Math.floor(Math.random() * 1000000)}&nologo=true`;
       
       return imageUrl;
     } catch (error) {
@@ -196,22 +250,51 @@ const Chat = () => {
     setImagePrompt('');
   };
 
-  const handleVoiceRecord = async () => {
-    if (isRecording) {
-      setIsRecording(false);
-      // TODO: 实现语音录制停止和转换逻辑
+  const handleVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
       toast({
-        title: "语音录制结束",
-        description: "语音转文字功能即将上线",
+        title: "不支持语音识别",
+        description: "您的浏览器不支持语音识别功能，请使用Chrome浏览器",
+        variant: "destructive",
       });
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
     } else {
-      setIsRecording(true);
-      // TODO: 实现语音录制开始逻辑
+      setIsListening(true);
+      recognitionRef.current?.start();
+    }
+  };
+
+  const generateVoice = async (text: string) => {
+    try {
+      const voiceUrl = `https://text.pollinations.ai/${encodeURIComponent(text)}?model=openai-audio&voice=${selectedVoice}`;
+      
+      // 创建音频元素并播放
+      const audio = new Audio(voiceUrl);
+      audio.play();
+      
       toast({
-        title: "开始录音",
-        description: "请说话，点击停止结束录音",
+        title: "语音生成成功",
+        description: "正在播放语音",
+      });
+    } catch (error) {
+      console.error('语音生成错误:', error);
+      toast({
+        title: "语音生成失败",
+        description: "请稍后重试",
+        variant: "destructive",
       });
     }
+  };
+
+  const playVoicePreview = (voiceId: string) => {
+    const previewText = "你好，这是" + voices.find(v => v.id === voiceId)?.name + "的语音效果";
+    generateVoice(previewText);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -255,8 +338,8 @@ const Chat = () => {
                   图像
                 </TabsTrigger>
                 <TabsTrigger value="voice" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
-                  <Mic className="h-4 w-4 mr-2" />
-                  音频
+                  <Volume2 className="h-4 w-4 mr-2" />
+                  语音
                 </TabsTrigger>
               </TabsList>
 
@@ -284,15 +367,16 @@ const Chat = () => {
               {/* 聊天内容区域 */}
               {messages.length === 0 ? (
                 <div className="flex-grow flex flex-col justify-center items-center">
-                  <div className="text-center mb-8">
-                    <h1 className="text-2xl font-medium text-slate-300 mb-4">
+                  <div className="text-center mb-16">
+                    <h1 className="text-2xl font-medium text-slate-300 mb-16">
                       欢迎来到 Nexus AI！我可以帮助您生成文本、图像等，您今天想创造什么？
                     </h1>
-                    <p className="text-slate-400 text-center mb-4">请尝试以下方法之一：</p>
+                    
+                    {/* 增加更大的空白间距 - 8行高度 */}
+                    <div className="h-32 mb-8"></div>
+                    
+                    <p className="text-slate-400 text-center mb-8">请尝试以下方法之一：</p>
                   </div>
-                  
-                  {/* 增加空白间距 */}
-                  <div className="h-24"></div>
                   
                   {/* 建议问题 */}
                   <div className="max-w-4xl w-full">
@@ -440,52 +524,106 @@ const Chat = () => {
               <div className="flex-grow bg-slate-900/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6 mb-6 overflow-hidden flex flex-col min-h-[500px]">
                 <div className="text-center mb-8">
                   <h1 className="text-2xl font-medium text-slate-300 mb-4">
-                    AI 语音功能
+                    AI 语音合成
                   </h1>
-                  <p className="text-slate-400">点击录音按钮开始语音对话</p>
+                  <p className="text-slate-400">输入文本，选择语音风格，生成语音</p>
                 </div>
                 
-                {/* 语音录制界面 */}
-                <div className="flex-grow flex flex-col justify-center items-center">
-                  <Button
-                    onClick={handleVoiceRecord}
-                    className={`w-32 h-32 rounded-full ${
-                      isRecording 
-                        ? 'bg-red-600 hover:bg-red-700 animate-pulse' 
-                        : 'bg-purple-600 hover:bg-purple-700'
-                    }`}
-                  >
-                    <MicIcon className="h-12 w-12" />
-                  </Button>
-                  <p className="text-slate-400 mt-4">
-                    {isRecording ? '正在录音，点击停止' : '点击开始录音'}
-                  </p>
-                </div>
-                
-                {/* 显示语音消息 */}
-                <div className="flex-grow overflow-y-auto space-y-6">
-                  {messages.filter(msg => msg.type === 'voice').map((message) => (
-                    <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[80%] rounded-xl p-4 ${
-                        message.isUser 
-                          ? 'bg-purple-600 text-white' 
-                          : 'bg-slate-800/70 border border-slate-700 text-white'
-                      }`}>
-                        <div className="flex items-start space-x-3">
-                          {!message.isUser && <Bot className="h-5 w-5 text-purple-400 mt-1 flex-shrink-0" />}
-                          <div className="flex-grow">
-                            <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
-                            <p className="text-xs opacity-70 mt-2">
-                              {message.timestamp.toLocaleTimeString()}
-                            </p>
+                {/* 语音风格选择 */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium text-white mb-4">常用语音风格</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                    {voices.map((voice) => (
+                      <div
+                        key={voice.id}
+                        className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                          selectedVoice === voice.id
+                            ? 'border-purple-500 bg-purple-500/20'
+                            : 'border-slate-600 bg-slate-800/50 hover:bg-slate-700/50'
+                        }`}
+                        onClick={() => setSelectedVoice(voice.id)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-white font-medium">{voice.name}</p>
+                            <p className="text-slate-400 text-sm">{voice.style}</p>
                           </div>
-                          {message.isUser && <User className="h-5 w-5 text-white mt-1 flex-shrink-0" />}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              playVoicePreview(voice.id);
+                            }}
+                            className="text-xs"
+                          >
+                            <Play className="h-3 w-3 mr-1" />
+                            试听
+                          </Button>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                   
-                  <div ref={messagesEndRef} />
+                  <details className="group">
+                    <summary className="text-purple-400 cursor-pointer hover:text-purple-300 mb-4">
+                      更多语音风格 ▼
+                    </summary>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {moreVoices.map((voice) => (
+                        <div
+                          key={voice.id}
+                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                            selectedVoice === voice.id
+                              ? 'border-purple-500 bg-purple-500/20'
+                              : 'border-slate-600 bg-slate-800/50 hover:bg-slate-700/50'
+                          }`}
+                          onClick={() => setSelectedVoice(voice.id)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-white font-medium">{voice.name}</p>
+                              <p className="text-slate-400 text-sm">{voice.style}</p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                playVoicePreview(voice.id);
+                              }}
+                              className="text-xs"
+                            >
+                              <Play className="h-3 w-3 mr-1" />
+                              试听
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                </div>
+                
+                {/* 文本输入区域 */}
+                <div className="flex-grow">
+                  <Textarea
+                    placeholder="输入要转换为语音的文本..."
+                    className="w-full h-32 bg-slate-800/50 border-slate-700 text-white placeholder-slate-400 resize-none"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                  />
+                </div>
+                
+                {/* 语音操作按钮 */}
+                <div className="flex justify-center gap-4 mt-6">
+                  <Button
+                    onClick={() => generateVoice(inputValue)}
+                    disabled={!inputValue.trim()}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    <Volume2 className="h-4 w-4 mr-2" />
+                    生成语音
+                  </Button>
                 </div>
               </div>
             </TabsContent>
@@ -509,6 +647,18 @@ const Chat = () => {
                     className="flex-grow bg-transparent border-slate-700 text-white placeholder-slate-400"
                     disabled={isTyping || isGeneratingImage}
                   />
+                  <Button
+                    onClick={handleVoiceInput}
+                    variant="outline"
+                    size="icon"
+                    className={`border-slate-700 flex-shrink-0 ${
+                      isListening 
+                        ? 'bg-red-600 border-red-600 text-white animate-pulse' 
+                        : 'text-slate-400 hover:bg-slate-700'
+                    }`}
+                  >
+                    <Mic className="h-4 w-4" />
+                  </Button>
                   <Button 
                     onClick={() => handleSendMessage()}
                     disabled={!inputValue.trim() || isTyping || isGeneratingImage}
@@ -550,18 +700,8 @@ const Chat = () => {
               )}
               
               {activeTab === 'voice' && (
-                <div className="flex justify-center">
-                  <Button
-                    onClick={handleVoiceRecord}
-                    className={`px-8 py-3 ${
-                      isRecording 
-                        ? 'bg-red-600 hover:bg-red-700' 
-                        : 'bg-purple-600 hover:bg-purple-700'
-                    }`}
-                  >
-                    <MicIcon className="h-4 w-4 mr-2" />
-                    {isRecording ? '停止录音' : '开始录音'}
-                  </Button>
+                <div className="text-center text-slate-400">
+                  在上方输入文本，选择语音风格，然后点击生成语音
                 </div>
               )}
             </div>
