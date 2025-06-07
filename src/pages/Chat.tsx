@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { Send, Bot, User, Loader2, MessageSquare, Image as ImageIcon, Mic, Upload, Sparkles, Download, MicIcon, Play, Volume2 } from 'lucide-react';
+import { Send, Bot, User, Loader2, MessageSquare, Image as ImageIcon, Mic, Upload, Sparkles, Download, MicIcon, Play, Volume2, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Message {
@@ -33,8 +33,9 @@ const Chat = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState('alloy');
   const [isListening, setIsListening] = useState(false);
+  const [enableVoiceReply, setEnableVoiceReply] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   // AI模型列表
   const models = [
@@ -60,15 +61,6 @@ const Chat = () => {
     { id: 'shimmer', name: '微光', style: '轻柔甜美' },
   ];
 
-  const moreVoices = [
-    { id: 'coral', name: '珊瑚', style: '清新自然' },
-    { id: 'ballad', name: '民谣', style: '抒情柔和' },
-    { id: 'verse', name: '诗句', style: '文艺优雅' },
-    { id: 'sage', name: '圣人', style: '智慧沉稳' },
-    { id: 'aster', name: '紫菀', style: '神秘优美' },
-    { id: 'brook', name: '小溪', style: '流畅自然' },
-  ];
-
   // 建议提示词
   const suggestedPrompts = [
     "创建一个未来主义的智能城市设计方案",
@@ -78,26 +70,66 @@ const Chat = () => {
     "设计一个适合远程办公的工作流程"
   ];
 
+  // 艺术风格提示词优化器
+  const optimizeImagePrompt = (userPrompt: string): string => {
+    const styleEnhancers = [
+      "masterpiece, best quality, ultra-detailed, 8k, high-resolution",
+      "intricate details, stunning composition, cinematic lighting",
+      "trending on Artstation, breathtaking, beautiful",
+      "dramatic atmosphere, vibrant colors, rich textures",
+      "award-winning illustration, highly detailed background"
+    ];
+
+    const artisticStyles = [
+      "by Greg Rutkowski, Artgerm, WLOP",
+      "by Makoto Shinkai, Ilya Kuvshinov", 
+      "by Alphonse Mucha, Gustav Klimt",
+      "by Beeple, Syd Mead, Simon Stalenhag"
+    ];
+
+    // 检测用户提示词是否包含风格关键词
+    const hasArtisticTerms = /anime|art|painting|illustration|fantasy|magical|ethereal|dreamy/i.test(userPrompt);
+    
+    let optimizedPrompt = userPrompt;
+    
+    if (!hasArtisticTerms) {
+      // 如果没有艺术风格，添加艺术增强词
+      optimizedPrompt = `A breathtaking artistic illustration of ${userPrompt}, ${styleEnhancers[0]}, ${artisticStyles[Math.floor(Math.random() * artisticStyles.length)]}, ethereal, magical, dreamy atmosphere`;
+    } else {
+      // 如果已有风格，增强细节
+      optimizedPrompt = `${userPrompt}, ${styleEnhancers[Math.floor(Math.random() * styleEnhancers.length)]}, ${artisticStyles[Math.floor(Math.random() * artisticStyles.length)]}`;
+    }
+
+    return optimizedPrompt;
+  };
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
   useEffect(() => {
     // 初始化语音识别
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.lang = 'zh-CN';
       recognitionRef.current.interimResults = false;
       recognitionRef.current.continuous = false;
 
-      recognitionRef.current.onresult = (event: any) => {
+      recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
         const result = event.results[0][0].transcript;
         setInputValue(result);
         setIsListening(false);
+        
+        // 如果启用语音回复，自动发送消息
+        if (enableVoiceReply) {
+          setTimeout(() => {
+            handleSendMessage(result);
+          }, 100);
+        }
       };
 
-      recognitionRef.current.onerror = (event: any) => {
+      recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('语音识别错误:', event.error);
         setIsListening(false);
         toast({
@@ -111,7 +143,7 @@ const Chat = () => {
         setIsListening(false);
       };
     }
-  }, []);
+  }, [enableVoiceReply]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -152,7 +184,12 @@ const Chat = () => {
     try {
       setIsGeneratingImage(true);
       
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&seed=${Math.floor(Math.random() * 1000000)}&nologo=true`;
+      // 优化提示词，增强艺术感
+      const optimizedPrompt = optimizeImagePrompt(prompt);
+      console.log('原始提示词:', prompt);
+      console.log('优化后提示词:', optimizedPrompt);
+      
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(optimizedPrompt)}?width=1024&height=1024&seed=${Math.floor(Math.random() * 1000000)}&nologo=true`;
       
       return imageUrl;
     } catch (error) {
@@ -166,6 +203,20 @@ const Chat = () => {
   const isImageRequest = (text: string) => {
     const imageKeywords = ['画', '绘制', '生成图片', '创作', '画一个', '画一张', '图片', '插画', 'draw', 'paint', 'create image', 'generate image'];
     return imageKeywords.some(keyword => text.toLowerCase().includes(keyword.toLowerCase()));
+  };
+
+  // 语音回复功能
+  const playVoiceReply = async (text: string) => {
+    try {
+      const voiceUrl = `https://text.pollinations.ai/${encodeURIComponent(text)}?model=openai-audio&voice=${selectedVoice}`;
+      
+      const audio = new Audio(voiceUrl);
+      audio.play();
+      
+      console.log('正在播放语音回复');
+    } catch (error) {
+      console.error('语音回复错误:', error);
+    }
   };
 
   const handleSendMessage = async (customPrompt?: string, customModel?: string) => {
@@ -194,7 +245,7 @@ const Chat = () => {
         
         const aiMessage: Message = {
           id: Date.now() + 1,
-          text: `我为您生成了这张图片：`,
+          text: `我为您生成了这张艺术作品：`,
           isUser: false,
           timestamp: new Date(),
           imageUrl: imageUrl,
@@ -218,6 +269,13 @@ const Chat = () => {
         const finalMessages = [...updatedMessages, aiMessage];
         setMessages(finalMessages);
         setIsTyping(false);
+        
+        // 如果启用语音回复，播放AI回复
+        if (enableVoiceReply && aiResponseText) {
+          setTimeout(() => {
+            playVoiceReply(aiResponseText);
+          }, 500);
+        }
       }
       
     } catch (error) {
@@ -251,8 +309,7 @@ const Chat = () => {
   };
 
   const handleVoiceInput = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
+    if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
       toast({
         title: "不支持语音识别",
         description: "您的浏览器不支持语音识别功能，请使用Chrome浏览器",
@@ -268,33 +325,6 @@ const Chat = () => {
       setIsListening(true);
       recognitionRef.current?.start();
     }
-  };
-
-  const generateVoice = async (text: string) => {
-    try {
-      const voiceUrl = `https://text.pollinations.ai/${encodeURIComponent(text)}?model=openai-audio&voice=${selectedVoice}`;
-      
-      // 创建音频元素并播放
-      const audio = new Audio(voiceUrl);
-      audio.play();
-      
-      toast({
-        title: "语音生成成功",
-        description: "正在播放语音",
-      });
-    } catch (error) {
-      console.error('语音生成错误:', error);
-      toast({
-        title: "语音生成失败",
-        description: "请稍后重试",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const playVoicePreview = (voiceId: string) => {
-    const previewText = "你好，这是" + voices.find(v => v.id === voiceId)?.name + "的语音效果";
-    generateVoice(previewText);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -343,9 +373,9 @@ const Chat = () => {
                 </TabsTrigger>
               </TabsList>
 
-              {/* 模型选择 - 小字体左对齐 */}
-              <div className="w-full mb-4">
-                <div className="flex items-center text-sm text-slate-400 mb-2">
+              {/* 模型选择和语音设置 - 小字体左对齐 */}
+              <div className="w-full mb-4 flex items-center justify-between">
+                <div className="flex items-center text-sm text-slate-400">
                   <span className="mr-2">模型：</span>
                   <Select value={selectedModel} onValueChange={setSelectedModel}>
                     <SelectTrigger className="bg-transparent border-slate-700 text-white w-48 h-8 text-sm">
@@ -360,6 +390,36 @@ const Chat = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                
+                {/* 语音设置 - 小字体选项框 */}
+                <div className="flex items-center space-x-4 text-sm text-slate-400">
+                  <div className="flex items-center space-x-2">
+                    <label className="flex items-center space-x-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={enableVoiceReply}
+                        onChange={(e) => setEnableVoiceReply(e.target.checked)}
+                        className="w-3 h-3 text-purple-600 rounded"
+                      />
+                      <span className="text-xs">语音回复</span>
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs">语音：</span>
+                    <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+                      <SelectTrigger className="bg-transparent border-slate-700 text-white w-24 h-6 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-slate-700">
+                        {voices.map((voice) => (
+                          <SelectItem key={voice.id} value={voice.id} className="text-white hover:bg-slate-700 text-xs">
+                            {voice.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -367,15 +427,15 @@ const Chat = () => {
               {/* 聊天内容区域 */}
               {messages.length === 0 ? (
                 <div className="flex-grow flex flex-col justify-center items-center">
-                  <div className="text-center mb-16">
-                    <h1 className="text-2xl font-medium text-slate-300 mb-16">
+                  <div className="text-center mb-8">
+                    <h1 className="text-2xl font-medium text-slate-300 mb-8">
                       欢迎来到 Nexus AI！我可以帮助您生成文本、图像等，您今天想创造什么？
                     </h1>
                     
-                    {/* 增加更大的空白间距 - 8行高度 */}
-                    <div className="h-32 mb-8"></div>
+                    {/* 增加空白间距 - 调整为更大的间距 */}
+                    <div className="h-24 mb-6"></div>
                     
-                    <p className="text-slate-400 text-center mb-8">请尝试以下方法之一：</p>
+                    <p className="text-slate-400 text-center mb-6">请尝试以下方法之一：</p>
                   </div>
                   
                   {/* 建议问题 */}
@@ -412,7 +472,7 @@ const Chat = () => {
                                 <div className="mt-3">
                                   <img 
                                     src={message.imageUrl} 
-                                    alt="AI生成的图片" 
+                                    alt="AI生成的艺术作品" 
                                     className="max-w-full h-auto rounded-lg border border-slate-600"
                                     onLoad={() => scrollToBottom()}
                                   />
@@ -436,7 +496,7 @@ const Chat = () => {
                             <div className="flex items-center space-x-2">
                               {isGeneratingImage && <ImageIcon className="h-4 w-4 text-purple-400" />}
                               <span className="text-slate-300 text-sm">
-                                {isGeneratingImage ? '正在生成图片...' : '正在思考...'}
+                                {isGeneratingImage ? '正在创作艺术作品...' : '正在思考...'}
                               </span>
                               <div className="flex space-x-1">
                                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></div>
@@ -459,9 +519,10 @@ const Chat = () => {
               <div className="flex-grow bg-slate-900/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6 mb-6 overflow-hidden flex flex-col min-h-[500px]">
                 <div className="text-center mb-8">
                   <h1 className="text-2xl font-medium text-slate-300 mb-4">
-                    AI 图像生成
+                    AI 艺术创作
                   </h1>
-                  <p className="text-slate-400">描述您想要的图像，AI将为您创作</p>
+                  <p className="text-slate-400">描述您想要的艺术作品，AI将为您创作独特的视觉艺术</p>
+                  <p className="text-slate-500 text-sm mt-2">✨ 已启用艺术增强模式，自动优化提示词以获得更佳艺术效果</p>
                 </div>
                 
                 {/* 显示生成的图片消息 */}
@@ -481,7 +542,7 @@ const Chat = () => {
                               <div className="mt-3">
                                 <img 
                                   src={message.imageUrl} 
-                                  alt="AI生成的图片" 
+                                  alt="AI生成的艺术作品" 
                                   className="max-w-full h-auto rounded-lg border border-slate-600"
                                 />
                               </div>
@@ -503,7 +564,7 @@ const Chat = () => {
                           <Bot className="h-5 w-5 text-purple-400" />
                           <div className="flex items-center space-x-2">
                             <ImageIcon className="h-4 w-4 text-purple-400" />
-                            <span className="text-slate-300 text-sm">正在生成图片...</span>
+                            <span className="text-slate-300 text-sm">正在创作艺术作品...</span>
                             <div className="flex space-x-1">
                               <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></div>
                               <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
@@ -524,106 +585,78 @@ const Chat = () => {
               <div className="flex-grow bg-slate-900/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6 mb-6 overflow-hidden flex flex-col min-h-[500px]">
                 <div className="text-center mb-8">
                   <h1 className="text-2xl font-medium text-slate-300 mb-4">
-                    AI 语音合成
+                    语音聊天助手
                   </h1>
-                  <p className="text-slate-400">输入文本，选择语音风格，生成语音</p>
+                  <p className="text-slate-400">开启语音对话，体验更自然的AI交流方式</p>
                 </div>
                 
-                {/* 语音风格选择 */}
-                <div className="mb-6">
-                  <h3 className="text-lg font-medium text-white mb-4">常用语音风格</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                    {voices.map((voice) => (
-                      <div
-                        key={voice.id}
-                        className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                          selectedVoice === voice.id
-                            ? 'border-purple-500 bg-purple-500/20'
-                            : 'border-slate-600 bg-slate-800/50 hover:bg-slate-700/50'
-                        }`}
-                        onClick={() => setSelectedVoice(voice.id)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-white font-medium">{voice.name}</p>
-                            <p className="text-slate-400 text-sm">{voice.style}</p>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              playVoicePreview(voice.id);
-                            }}
-                            className="text-xs"
-                          >
-                            <Play className="h-3 w-3 mr-1" />
-                            试听
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                {/* 语音聊天设置 */}
+                <div className="bg-slate-800/50 p-4 rounded-lg mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={enableVoiceReply}
+                        onChange={(e) => setEnableVoiceReply(e.target.checked)}
+                        className="w-4 h-4 text-purple-600 rounded"
+                      />
+                      <span className="text-white font-medium">启用语音回复</span>
+                    </label>
+                    
+                    <div className="flex items-center space-x-2">
+                      <span className="text-slate-400 text-sm">语音风格：</span>
+                      <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+                        <SelectTrigger className="bg-slate-700 border-slate-600 text-white w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-800 border-slate-700">
+                          {voices.map((voice) => (
+                            <SelectItem key={voice.id} value={voice.id} className="text-white hover:bg-slate-700">
+                              {voice.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   
-                  <details className="group">
-                    <summary className="text-purple-400 cursor-pointer hover:text-purple-300 mb-4">
-                      更多语音风格 ▼
-                    </summary>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {moreVoices.map((voice) => (
-                        <div
-                          key={voice.id}
-                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                            selectedVoice === voice.id
-                              ? 'border-purple-500 bg-purple-500/20'
-                              : 'border-slate-600 bg-slate-800/50 hover:bg-slate-700/50'
-                          }`}
-                          onClick={() => setSelectedVoice(voice.id)}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-white font-medium">{voice.name}</p>
-                              <p className="text-slate-400 text-sm">{voice.style}</p>
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                playVoicePreview(voice.id);
-                              }}
-                              className="text-xs"
-                            >
-                              <Play className="h-3 w-3 mr-1" />
-                              试听
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </details>
+                  <div className="text-sm text-slate-400">
+                    {enableVoiceReply ? (
+                      <p>✅ 语音聊天已启用：说话→AI理解→AI语音回复</p>
+                    ) : (
+                      <p>⚪ 仅语音输入：说话→转换为文字→AI文字回复</p>
+                    )}
+                  </div>
                 </div>
                 
-                {/* 文本输入区域 */}
+                {/* 语音聊天区域 */}
                 <div className="flex-grow">
-                  <Textarea
-                    placeholder="输入要转换为语音的文本..."
-                    className="w-full h-32 bg-slate-800/50 border-slate-700 text-white placeholder-slate-400 resize-none"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                  />
-                </div>
-                
-                {/* 语音操作按钮 */}
-                <div className="flex justify-center gap-4 mt-6">
-                  <Button
-                    onClick={() => generateVoice(inputValue)}
-                    disabled={!inputValue.trim()}
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    <Volume2 className="h-4 w-4 mr-2" />
-                    生成语音
-                  </Button>
+                  <div className="text-center py-12">
+                    <div className="flex justify-center mb-6">
+                      <button
+                        onClick={handleVoiceInput}
+                        className={`p-6 rounded-full transition-all duration-200 ${
+                          isListening 
+                            ? 'bg-red-600 animate-pulse scale-110' 
+                            : 'bg-purple-600 hover:bg-purple-700'
+                        }`}
+                      >
+                        <Mic className="h-8 w-8 text-white" />
+                      </button>
+                    </div>
+                    
+                    <h3 className="text-xl font-medium text-white mb-2">
+                      {isListening ? '正在听您说话...' : '点击开始语音对话'}
+                    </h3>
+                    <p className="text-slate-400">
+                      {isListening 
+                        ? '请说出您的问题' 
+                        : enableVoiceReply 
+                          ? 'AI将用语音回复您的问题'
+                          : '语音将转换为文字显示'
+                      }
+                    </p>
+                  </div>
                 </div>
               </div>
             </TabsContent>
@@ -680,7 +713,7 @@ const Chat = () => {
                     value={imagePrompt}
                     onChange={(e) => setImagePrompt(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="描述您想要生成的图像..."
+                    placeholder="描述您想要创作的艺术作品..."
                     className="flex-grow bg-transparent border-slate-700 text-white placeholder-slate-400"
                     disabled={isGeneratingImage}
                   />
@@ -701,7 +734,7 @@ const Chat = () => {
               
               {activeTab === 'voice' && (
                 <div className="text-center text-slate-400">
-                  在上方输入文本，选择语音风格，然后点击生成语音
+                  语音聊天模式：点击上方麦克风按钮开始对话
                 </div>
               )}
             </div>
