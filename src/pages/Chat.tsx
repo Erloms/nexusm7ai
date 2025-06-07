@@ -47,11 +47,9 @@ const Chat = () => {
 
   // 建议提示词
   const suggestedPrompts = [
-    "创建一个未来主义的智能城市设计方案",
-    "描述一下人工智能在医疗领域的应用前景", 
-    "生成一个关于环保主题的创意文案",
-    "解释量子计算的基本原理",
-    "设计一个适合远程办公的工作流程"
+    "帮我写一份关于人工智能的研究报告",
+    "创意写作：科幻小说开头", 
+    "解释量子计算的基本原理"
   ];
 
   useEffect(() => {
@@ -62,7 +60,6 @@ const Chat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // API调用函数保持不变
   const callPollinationsAPI = async (prompt: string, modelId: string) => {
     try {
       console.log(`正在调用模型: ${modelId}, 提示词: ${prompt}`);
@@ -220,51 +217,48 @@ const Chat = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden">
-      {/* 星空背景 */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black via-slate-900/50 to-purple-900/20 z-0"></div>
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%239C92AC" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="1"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] z-0"></div>
+    <div className="min-h-screen bg-nexus-dark text-white relative overflow-hidden">
+      {/* 背景 */}
+      <div className="absolute inset-0 bg-gradient-to-br from-nexus-dark via-nexus-purple/10 to-nexus-blue/10 z-0"></div>
+      <div className="absolute inset-0 bg-grid-pattern bg-[length:30px_30px] opacity-5 z-0"></div>
       
       <Navigation />
       
-      <main className="flex-grow flex flex-col pt-16 relative z-10 max-w-6xl mx-auto w-full px-4">
-        
-        {/* 顶部功能切换和模型选择 */}
-        <div className="flex flex-col items-center mb-8 pt-8">
-          <div className="flex items-center justify-center mb-6">
-            <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-3 rounded-full shadow-lg">
-              <MessageSquare className="h-8 w-8 text-white" />
-            </div>
-          </div>
+      <main className="flex flex-col min-h-screen pt-16 relative z-10">
+        <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col px-4 py-8">
           
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-md mb-6">
-            <TabsList className="grid w-full grid-cols-3 bg-slate-800/50 border border-slate-700">
-              <TabsTrigger value="chat" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
-                <MessageSquare className="h-4 w-4 mr-2" />
-                聊天
-              </TabsTrigger>
-              <TabsTrigger value="image" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
-                <ImageIcon className="h-4 w-4 mr-2" />
-                图像
-              </TabsTrigger>
-              <TabsTrigger value="voice" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
-                <Mic className="h-4 w-4 mr-2" />
-                音频
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          {/* 顶部标题和切换 */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold mb-6">Nexus AI</h1>
+            
+            {/* 功能切换标签 */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-md mx-auto mb-6">
+              <TabsList className="grid w-full grid-cols-3 bg-nexus-purple/20 border border-nexus-purple/30">
+                <TabsTrigger value="chat" className="data-[state=active]:bg-nexus-purple data-[state=active]:text-white">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  聊天
+                </TabsTrigger>
+                <TabsTrigger value="image" className="data-[state=active]:bg-nexus-purple data-[state=active]:text-white">
+                  <ImageIcon className="h-4 w-4 mr-2" />
+                  图像
+                </TabsTrigger>
+                <TabsTrigger value="voice" className="data-[state=active]:bg-nexus-purple data-[state=active]:text-white">
+                  <Mic className="h-4 w-4 mr-2" />
+                  音频
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
 
-          {/* 模型选择 - 小字体左对齐 */}
-          <div className="w-full max-w-4xl mb-4">
-            <div className="flex items-center text-sm text-slate-400 mb-2">
+            {/* 模型选择 - 左上角小字 */}
+            <div className="flex items-center text-sm text-white/60 mb-4">
               <span className="mr-2">模型：</span>
               <Select value={selectedModel} onValueChange={setSelectedModel}>
-                <SelectTrigger className="bg-transparent border-slate-700 text-white w-48 h-8 text-sm">
+                <SelectTrigger className="bg-transparent border-nexus-purple/30 text-white w-48 h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
+                <SelectContent className="bg-nexus-dark border-nexus-purple/30">
                   {models.map((model) => (
-                    <SelectItem key={model.id} value={model.id} className="text-white hover:bg-slate-700">
+                    <SelectItem key={model.id} value={model.id} className="text-white hover:bg-nexus-purple/20">
                       {model.name}
                     </SelectItem>
                   ))}
@@ -272,184 +266,183 @@ const Chat = () => {
               </Select>
             </div>
           </div>
-        </div>
 
-        <TabsContent value="chat" className="flex-grow flex flex-col">
-          {/* 聊天内容区域 */}
-          {messages.length === 0 ? (
-            <div className="flex-grow flex flex-col justify-center items-center">
-              <div className="text-center mb-8">
-                <h1 className="text-2xl font-medium text-slate-300 mb-4">
-                  欢迎来到 Nexus AI！我可以帮助您生成文本、图像等，您今天想创造什么？
-                </h1>
-              </div>
-              
-              {/* 建议问题 */}
-              <div className="max-w-4xl w-full">
-                <p className="text-slate-400 text-center mb-4">请尝试以下方法之一：</p>
-                <div className="flex flex-wrap justify-center gap-3">
-                  {suggestedPrompts.map((prompt, index) => (
-                    <Button
-                      key={index}
-                      onClick={() => handleSendMessage(prompt)}
-                      variant="outline"
-                      className="bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-700 text-sm px-4 py-2 h-auto whitespace-normal max-w-xs"
-                    >
-                      {prompt}
-                    </Button>
-                  ))}
+          <TabsContent value="chat" className="flex-1 flex flex-col">
+            {/* 聊天内容区域 */}
+            {messages.length === 0 ? (
+              <div className="flex-1 flex flex-col justify-center items-center">
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl font-medium text-white/80 mb-4">
+                    你好！我是 Nexus AI，有什么可以帮助您？
+                  </h2>
+                </div>
+                
+                {/* 建议问题 */}
+                <div className="max-w-4xl w-full">
+                  <div className="flex flex-wrap justify-center gap-3">
+                    {suggestedPrompts.map((prompt, index) => (
+                      <Button
+                        key={index}
+                        onClick={() => handleSendMessage(prompt)}
+                        variant="outline"
+                        className="bg-nexus-purple/20 border-nexus-purple/30 text-white hover:bg-nexus-purple/40 text-sm px-6 py-3 h-auto whitespace-normal max-w-xs"
+                      >
+                        {prompt}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="flex-grow bg-slate-900/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6 mb-6 overflow-hidden flex flex-col min-h-[500px]">
-              <div className="flex-grow overflow-y-auto space-y-6">
-                {messages.map((message) => (
-                  <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] rounded-xl p-4 ${
-                      message.isUser 
-                        ? 'bg-purple-600 text-white' 
-                        : 'bg-slate-800/70 border border-slate-700 text-white'
-                    }`}>
-                      <div className="flex items-start space-x-3">
-                        {!message.isUser && <Bot className="h-5 w-5 text-purple-400 mt-1 flex-shrink-0" />}
-                        <div className="flex-grow">
-                          <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
-                          {message.imageUrl && (
-                            <div className="mt-3">
-                              <img 
-                                src={message.imageUrl} 
-                                alt="AI生成的图片" 
-                                className="max-w-full h-auto rounded-lg border border-slate-600"
-                                onLoad={() => scrollToBottom()}
-                              />
-                            </div>
-                          )}
-                          <p className="text-xs opacity-70 mt-2">
-                            {message.timestamp.toLocaleTimeString()}
-                          </p>
+            ) : (
+              <div className="flex-1 bg-nexus-purple/10 backdrop-blur-sm rounded-xl border border-nexus-purple/20 p-6 mb-6 overflow-hidden flex flex-col">
+                <div className="flex-1 overflow-y-auto space-y-6">
+                  {messages.map((message) => (
+                    <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[80%] rounded-xl p-4 ${
+                        message.isUser 
+                          ? 'bg-nexus-purple text-white' 
+                          : 'bg-nexus-dark/70 border border-nexus-purple/20 text-white'
+                      }`}>
+                        <div className="flex items-start space-x-3">
+                          {!message.isUser && <Bot className="h-5 w-5 text-nexus-cyan mt-1 flex-shrink-0" />}
+                          <div className="flex-grow">
+                            <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
+                            {message.imageUrl && (
+                              <div className="mt-3">
+                                <img 
+                                  src={message.imageUrl} 
+                                  alt="AI生成的图片" 
+                                  className="max-w-full h-auto rounded-lg border border-nexus-purple/30"
+                                  onLoad={() => scrollToBottom()}
+                                />
+                              </div>
+                            )}
+                            <p className="text-xs opacity-70 mt-2">
+                              {message.timestamp.toLocaleTimeString()}
+                            </p>
+                          </div>
+                          {message.isUser && <User className="h-5 w-5 text-white mt-1 flex-shrink-0" />}
                         </div>
-                        {message.isUser && <User className="h-5 w-5 text-white mt-1 flex-shrink-0" />}
                       </div>
                     </div>
-                  </div>
-                ))}
-                
-                {(isTyping || isGeneratingImage) && (
-                  <div className="flex justify-start">
-                    <div className="bg-slate-800/70 border border-slate-700 rounded-xl p-4 max-w-[80%]">
-                      <div className="flex items-center space-x-3">
-                        <Bot className="h-5 w-5 text-purple-400" />
-                        <div className="flex items-center space-x-2">
-                          {isGeneratingImage && <ImageIcon className="h-4 w-4 text-purple-400" />}
-                          <span className="text-slate-300 text-sm">
-                            {isGeneratingImage ? '正在生成图片...' : '正在思考...'}
-                          </span>
-                          <div className="flex space-x-1">
-                            <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></div>
-                            <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                            <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                  ))}
+                  
+                  {(isTyping || isGeneratingImage) && (
+                    <div className="flex justify-start">
+                      <div className="bg-nexus-dark/70 border border-nexus-purple/20 rounded-xl p-4 max-w-[80%]">
+                        <div className="flex items-center space-x-3">
+                          <Bot className="h-5 w-5 text-nexus-cyan" />
+                          <div className="flex items-center space-x-2">
+                            {isGeneratingImage && <ImageIcon className="h-4 w-4 text-nexus-cyan" />}
+                            <span className="text-white/80 text-sm">
+                              {isGeneratingImage ? '正在生成图片...' : '正在思考...'}
+                            </span>
+                            <div className="flex space-x-1">
+                              <div className="w-2 h-2 bg-nexus-cyan rounded-full animate-bounce"></div>
+                              <div className="w-2 h-2 bg-nexus-cyan rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                              <div className="w-2 h-2 bg-nexus-cyan rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
-                
-                <div ref={messagesEndRef} />
+                  )}
+                  
+                  <div ref={messagesEndRef} />
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="image" className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col justify-center items-center">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-medium text-white/80 mb-4">
+                  AI 图像生成
+                </h2>
+                <p className="text-white/60">描述您想要的图像，AI将为您创作</p>
+              </div>
+              
+              <div className="w-full max-w-2xl">
+                <Textarea
+                  value={imagePrompt}
+                  onChange={(e) => setImagePrompt(e.target.value)}
+                  placeholder="描述您想要生成的图像..."
+                  className="bg-nexus-purple/20 border-nexus-purple/30 text-white placeholder-white/40 min-h-[100px] mb-4"
+                  onKeyPress={handleKeyPress}
+                />
+                <Button
+                  onClick={handleImageGenerate}
+                  disabled={!imagePrompt.trim() || isGeneratingImage}
+                  className="w-full bg-nexus-purple hover:bg-nexus-purple/80 text-white"
+                >
+                  {isGeneratingImage ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      生成中...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      生成图像
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="voice" className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col justify-center items-center">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-medium text-white/80 mb-4">
+                  AI 语音功能
+                </h2>
+                <p className="text-white/60">语音功能即将上线，敬请期待</p>
+              </div>
+              
+              <div className="w-full max-w-2xl text-center">
+                <Mic className="h-16 w-16 text-white/40 mx-auto mb-4" />
+                <p className="text-white/50">该功能正在开发中...</p>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* 底部输入区域 - 仅聊天模式显示 */}
+          {activeTab === 'chat' && (
+            <div className="bg-nexus-purple/20 backdrop-blur-md rounded-xl border border-nexus-purple/30 p-4">
+              <div className="flex space-x-3">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="border-nexus-purple/30 text-white/60 hover:bg-nexus-purple/20 flex-shrink-0"
+                >
+                  <Upload className="h-4 w-4" />
+                </Button>
+                <Input
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="输入您的问题..."
+                  className="flex-grow bg-transparent border-nexus-purple/30 text-white placeholder-white/40"
+                  disabled={isTyping || isGeneratingImage}
+                />
+                <Button 
+                  onClick={() => handleSendMessage()}
+                  disabled={!inputValue.trim() || isTyping || isGeneratingImage}
+                  size="icon"
+                  className="bg-nexus-purple hover:bg-nexus-purple/80 text-white flex-shrink-0"
+                >
+                  {(isTyping || isGeneratingImage) ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
               </div>
             </div>
           )}
-        </TabsContent>
-
-        <TabsContent value="image" className="flex-grow flex flex-col">
-          <div className="flex-grow flex flex-col justify-center items-center">
-            <div className="text-center mb-8">
-              <h1 className="text-2xl font-medium text-slate-300 mb-4">
-                AI 图像生成
-              </h1>
-              <p className="text-slate-400">描述您想要的图像，AI将为您创作</p>
-            </div>
-            
-            <div className="w-full max-w-2xl">
-              <Textarea
-                value={imagePrompt}
-                onChange={(e) => setImagePrompt(e.target.value)}
-                placeholder="描述您想要生成的图像..."
-                className="bg-slate-800/50 border-slate-700 text-white placeholder-slate-400 min-h-[100px] mb-4"
-                onKeyPress={handleKeyPress}
-              />
-              <Button
-                onClick={handleImageGenerate}
-                disabled={!imagePrompt.trim() || isGeneratingImage}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                {isGeneratingImage ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    生成中...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    生成图像
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="voice" className="flex-grow flex flex-col">
-          <div className="flex-grow flex flex-col justify-center items-center">
-            <div className="text-center mb-8">
-              <h1 className="text-2xl font-medium text-slate-300 mb-4">
-                AI 语音功能
-              </h1>
-              <p className="text-slate-400">语音功能即将上线，敬请期待</p>
-            </div>
-            
-            <div className="w-full max-w-2xl text-center">
-              <Mic className="h-16 w-16 text-slate-600 mx-auto mb-4" />
-              <p className="text-slate-500">该功能正在开发中...</p>
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* 底部输入区域 - 仅聊天模式显示 */}
-        {activeTab === 'chat' && (
-          <div className="bg-slate-900/50 backdrop-blur-md rounded-xl border border-slate-700/50 p-4">
-            <div className="flex space-x-3">
-              <Button
-                variant="outline"
-                size="icon"
-                className="border-slate-700 text-slate-400 hover:bg-slate-800 flex-shrink-0"
-              >
-                <Upload className="h-4 w-4" />
-              </Button>
-              <Input
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="键入消息..."
-                className="flex-grow bg-transparent border-slate-700 text-white placeholder-slate-400"
-                disabled={isTyping || isGeneratingImage}
-              />
-              <Button 
-                onClick={() => handleSendMessage()}
-                disabled={!inputValue.trim() || isTyping || isGeneratingImage}
-                size="icon"
-                className="bg-purple-600 hover:bg-purple-700 text-white flex-shrink-0"
-              >
-                {(isTyping || isGeneratingImage) ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-          </div>
-        )}
+        </div>
       </main>
       
       <Footer />
