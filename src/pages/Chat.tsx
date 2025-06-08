@@ -57,7 +57,7 @@ const Chat = () => {
   const { user, checkPaymentStatus } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // 获取总额度使用情况
+  // 获取总额度使用情况（统一10个额度）
   const getTotalUsage = () => {
     if (!user?.id) return 0;
     
@@ -77,7 +77,7 @@ const Chat = () => {
     if (remainingUsage <= 0) {
       toast({
         title: "额度用完",
-        description: "您的额度已用完，请升级VIP",
+        description: "您的总额度已用完，请升级VIP",
         variant: "destructive",
       });
       return false;
@@ -347,13 +347,13 @@ const Chat = () => {
         </div>
 
         <div className="relative z-10 flex flex-col h-screen max-w-6xl mx-auto px-4">
-          {/* 顶部标题区 - 增加顶部间距 */}
-          <div className="text-center py-8 pt-16">
+          {/* 顶部标题区 - 大幅增加顶部间距 */}
+          <div className="text-center py-8 pt-24">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2">
               Nexus AI
             </h1>
             <p className="text-gray-400 text-xs">
-              {!checkPaymentStatus() && `剩余额度: ${remainingUsage}/10`}
+              {!checkPaymentStatus() && `总剩余额度: ${remainingUsage}/10`}
             </p>
           </div>
 
@@ -522,8 +522,8 @@ const Chat = () => {
               </div>
             </TabsContent>
 
-            {/* 输入区域 - 固定在底部并增加底部间距 */}
-            <div className="p-4 pb-12 border-t border-gray-800 bg-gradient-to-br from-gray-900/90 via-gray-800/90 to-gray-900/90 backdrop-blur-sm">
+            {/* 输入区域 - 固定在底部并增加更多底部间距 */}
+            <div className="p-4 pb-16 border-t border-gray-800 bg-gradient-to-br from-gray-900/90 via-gray-800/90 to-gray-900/90 backdrop-blur-sm">
               <div className="flex gap-3 items-end max-w-4xl mx-auto">
                 <div className="flex-1">
                   <Textarea
