@@ -1,21 +1,24 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageSquare, Image, Volume2, Mic, MicOff, Send, Copy, Download } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
+import { MessageSquare, Image, Volume2, Mic, MicOff, Send, Copy, Download, Play, Pause } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 import PaymentCheck from '@/components/PaymentCheck';
 
 interface Message {
   text: string;
   sender: 'user' | 'ai';
-  type?: 'text' | 'image';
+  type?: 'text' | 'image' | 'audio';
   imageUrl?: string;
+  audioUrl?: string;
 }
 
 const AI_MODELS = [
+  { id: "gemini", name: "Gemini 2.0 Flash", group: "Google" },
   { id: "openai", name: "OpenAI GPT-4o-mini", group: "OpenAI" },
   { id: "openai-large", name: "OpenAI GPT-4o", group: "OpenAI" },
   { id: "openai-reasoning", name: "OpenAI o1-mini", group: "OpenAI" },
@@ -27,7 +30,6 @@ const AI_MODELS = [
   { id: "deepseek-reasoner", name: "DeepSeek R1 - Full", group: "DeepSeek" },
   { id: "deepseek-r1-llama", name: "DeepSeek R1 - Llama 70B", group: "DeepSeek" },
   { id: "claude", name: "Claude 3.5 Haiku", group: "Anthropic" },
-  { id: "gemini", name: "Gemini 2.0 Flash", group: "Google" },
   { id: "gemini-thinking", name: "Gemini 2.0 Flash Thinking", group: "Google" },
   { id: "phi", name: "Phi-4 Multimodal Instruct", group: "Microsoft" },
   { id: "qwen-coder", name: "Qwen 2.5 Coder 32B", group: "Qwen" },
@@ -74,7 +76,11 @@ const Chat = () => {
     if (!user?.id || checkPaymentStatus()) return true;
     
     if (remainingUsage <= 0) {
-      toast.error("您的额度已用完，请升级VIP");
+      toast({
+        title: "额度用完",
+        description: "您的额度已用完，请升级VIP",
+        variant: "destructive",
+      });
       return false;
     }
 
@@ -94,11 +100,40 @@ const Chat = () => {
     return true;
   };
 
+  // 搜索功能
+  const searchWeb = async (query: string): Promise<string> => {
+    try {
+      const encodedQuery = encodeURIComponent(query);
+      const searchUrl = `https://api.duckduckgo.com/?q=${encodedQuery}&format=json&no_html=1&skip_disambig=1`;
+      
+      const response = await fetch(searchUrl);
+      if (!response.ok) {
+        throw new Error(`搜索失败: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // 提取搜索结果
+      const results = data.RelatedTopics?.slice(0, 5)?.map((item: any) => item.Text)?.join('\n') || 
+                    data.AbstractText || 
+                    '未找到相关信息';
+      
+      return results;
+    } catch (error) {
+      console.error('搜索错误:', error);
+      return '搜索服务暂时不可用，请稍后再试。';
+    }
+  };
+
   // 语音识别
   const startListening = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      toast.error('您的浏览器不支持语音识别');
+      toast({
+        title: "不支持",
+        description: "您的浏览器不支持语音识别",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -110,14 +145,18 @@ const Chat = () => {
       setIsListening(true);
     };
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: any) => {
       const result = event.results[0][0].transcript;
       setInput(result);
       setIsListening(false);
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      toast.error('语音识别失败: ' + event.error);
+    recognition.onerror = (event: any) => {
+      toast({
+        title: "识别失败",
+        description: '语音识别失败: ' + event.error,
+        variant: "destructive",
+      });
       setIsListening(false);
     };
 
@@ -133,7 +172,18 @@ const Chat = () => {
     
     try {
       setIsTyping(true);
-      const encodedPrompt = encodeURIComponent(prompt);
+      
+      // 检查是否需要搜索
+      const shouldSearch = /搜索|查找|最新|新闻|当前|现在|今天|查询/.test(prompt) || selectedModel === 'searchgpt';
+      
+      let finalPrompt = prompt;
+      
+      if (shouldSearch) {
+        const searchResults = await searchWeb(prompt);
+        finalPrompt = `根据以下搜索结果回答问题：\n\n搜索结果：\n${searchResults}\n\n用户问题：${prompt}\n\n请基于搜索结果提供准确回答：`;
+      }
+      
+      const encodedPrompt = encodeURIComponent(finalPrompt);
       const apiUrl = `https://text.pollinations.ai/${encodedPrompt}?model=${modelId}`;
       
       const response = await fetch(apiUrl);
@@ -155,7 +205,11 @@ const Chat = () => {
       return aiResponse;
     } catch (error) {
       console.error("API调用错误:", error);
-      toast.error("模型调用失败，请重试");
+      toast({
+        title: "调用失败",
+        description: "模型调用失败，请重试",
+        variant: "destructive",
+      });
       return "抱歉，我在处理您的请求时遇到了问题。请稍后再试。";
     } finally {
       setIsTyping(false);
@@ -166,12 +220,18 @@ const Chat = () => {
     if (!decrementTotalUsage()) return null;
     
     try {
-      const encodedPrompt = encodeURIComponent(prompt);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true`;
+      // 优化提示词，增强艺术感
+      const enhancedPrompt = `${prompt}, digital art, masterpiece, highly detailed, artistic style, vibrant colors, creative composition, ultra detailed, 8k resolution, trending on artstation`;
+      const encodedPrompt = encodeURIComponent(enhancedPrompt);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true`;
       return imageUrl;
     } catch (error) {
       console.error("图像生成错误:", error);
-      toast.error("图像生成失败，请重试");
+      toast({
+        title: "生成失败",
+        description: "图像生成失败，请重试",
+        variant: "destructive",
+      });
       return null;
     }
   };
@@ -189,9 +249,18 @@ const Chat = () => {
       return audioUrl;
     } catch (error) {
       console.error("语音合成错误:", error);
-      toast.error("语音合成失败，请重试");
+      toast({
+        title: "合成失败",
+        description: "语音合成失败，请重试",
+        variant: "destructive",
+      });
       return null;
     }
+  };
+
+  const detectImagePrompt = (text: string): boolean => {
+    const imageKeywords = ['画', '绘制', '生成图片', '创建图像', '画一个', '画出', '生成一张', 'draw', 'create', 'generate image', 'make a picture'];
+    return imageKeywords.some(keyword => text.toLowerCase().includes(keyword.toLowerCase()));
   };
 
   const handleSend = async () => {
@@ -205,6 +274,23 @@ const Chat = () => {
 
     try {
       if (activeTab === 'chat') {
+        // 检查是否需要生成图片
+        if (detectImagePrompt(currentInput)) {
+          // 提取图片描述
+          const imagePrompt = currentInput.replace(/画|绘制|生成图片|创建图像|画一个|画出|生成一张/g, '').trim();
+          const imageUrl = await generateImage(imagePrompt || currentInput);
+          if (imageUrl) {
+            const aiMessage: Message = { 
+              text: `为您生成了图像：${imagePrompt || currentInput}`, 
+              sender: 'ai', 
+              type: 'image',
+              imageUrl 
+            };
+            setMessages(prev => [...prev, aiMessage]);
+            return;
+          }
+        }
+        
         const response = await callTextAPI(currentInput, selectedModel);
         const aiMessage: Message = { text: response, sender: 'ai' };
         setMessages(prev => [...prev, aiMessage]);
@@ -227,7 +313,11 @@ const Chat = () => {
       }
     } catch (error) {
       console.error('发送失败:', error);
-      toast.error('发送失败，请重试');
+      toast({
+        title: "发送失败",
+        description: "发送失败，请重试",
+        variant: "destructive",
+      });
     }
   };
 
@@ -236,39 +326,42 @@ const Chat = () => {
   }, [messages]);
 
   const suggestedQuestions = [
-    "创建未来主义者的肖像...",
-    "描绘一个 AI 的未来...", 
-    "生成网络...",
-    "解释神经网络如何...",
-    "用..."
+    "创建一幅未来主义城市的艺术作品",
+    "帮我搜索最新的AI技术发展", 
+    "生成一个温馨的家庭场景插画",
+    "解释人工智能的工作原理",
+    "创作一首关于科技的诗"
   ];
 
   return (
     <PaymentCheck featureType="chat">
-      <div className="min-h-screen bg-black relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 relative overflow-hidden">
         {/* 星空背景 */}
-        <div className="absolute inset-0" style={{
-          backgroundImage: `radial-gradient(circle at 25% 25%, white 1px, transparent 1px),
-                           radial-gradient(circle at 75% 75%, white 0.5px, transparent 0.5px),
-                           radial-gradient(circle at 50% 50%, white 0.8px, transparent 0.8px)`,
-          backgroundSize: '800px 800px, 600px 600px, 400px 400px',
-          opacity: 0.3
-        }}></div>
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              radial-gradient(circle at 25% 25%, white 1px, transparent 1px),
+              radial-gradient(circle at 75% 75%, white 0.5px, transparent 0.5px),
+              radial-gradient(circle at 50% 50%, white 0.8px, transparent 0.8px)
+            `,
+            backgroundSize: '800px 800px, 600px 600px, 400px 400px'
+          }}></div>
+        </div>
 
-        <div className="relative z-10 flex flex-col h-screen max-w-4xl mx-auto">
+        <div className="relative z-10 flex flex-col h-screen max-w-6xl mx-auto px-4">
           {/* 顶部标题区 */}
-          <div className="text-center py-8">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent mb-2">
-              大梦 AI
+          <div className="text-center py-6">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent mb-2">
+              Nexus AI
             </h1>
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-400 text-xs">
               {!checkPaymentStatus() && `剩余额度: ${remainingUsage}/10`}
             </p>
           </div>
 
           {/* 功能切换标签 */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-            <TabsList className="grid w-full grid-cols-3 bg-gray-900/50 border border-gray-700/50 mb-6">
+            <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 bg-gray-800/50 border border-gray-700/50 mb-4">
               <TabsTrigger value="chat" className="flex items-center gap-2 data-[state=active]:bg-purple-600">
                 <MessageSquare className="w-4 h-4" />
                 聊天
@@ -285,44 +378,52 @@ const Chat = () => {
 
             {/* 模型选择 */}
             <div className="flex justify-between items-center mb-4">
-              <Select value={selectedModel} onValueChange={setSelectedModel}>
-                <SelectTrigger className="w-48 bg-gray-900/50 border-gray-700 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {AI_MODELS.map((model) => (
-                    <SelectItem key={model.id} value={model.id}>
-                      {model.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {activeTab === 'voice' && (
-                <Select value={selectedVoice} onValueChange={setSelectedVoice}>
-                  <SelectTrigger className="w-32 bg-gray-900/50 border-gray-700 text-sm">
+              <div className="flex items-center gap-4">
+                <div className="text-xs text-gray-400">模型:</div>
+                <Select value={selectedModel} onValueChange={setSelectedModel}>
+                  <SelectTrigger className="w-40 bg-gray-800/50 border-gray-700 text-sm h-8">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {VOICE_OPTIONS.map((voice) => (
-                      <SelectItem key={voice.id} value={voice.id}>
-                        {voice.name}
+                    {AI_MODELS.map((model) => (
+                      <SelectItem key={model.id} value={model.id}>
+                        {model.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              )}
+
+                {activeTab === 'voice' && (
+                  <>
+                    <div className="text-xs text-gray-400">语音:</div>
+                    <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+                      <SelectTrigger className="w-32 bg-gray-800/50 border-gray-700 text-sm h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {VOICE_OPTIONS.map((voice) => (
+                          <SelectItem key={voice.id} value={voice.id}>
+                            {voice.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </>
+                )}
+              </div>
             </div>
 
             <TabsContent value="chat" className="flex-1 flex flex-col">
               <div className="flex-1 flex flex-col">
                 {messages.length === 0 ? (
-                  <div className="flex-1 flex flex-col justify-center items-center text-center py-20">
-                    <h2 className="text-2xl font-bold text-white mb-4">
-                      欢迎来到 DreamBig AI！我可以帮助您生成文本、图像等，您今天想创造什么？
+                  <div className="flex-1 flex flex-col justify-center items-center text-center py-12">
+                    <h2 className="text-2xl font-bold text-white mb-6">
+                      欢迎来到 Nexus AI！我可以帮助您生成文本、图像等，您今天想创造什么？
                     </h2>
                     
-                    <div className="mt-24 mb-8">
+                    <div className="h-32"></div>
+                    
+                    <div className="mt-8">
                       <p className="text-gray-400 mb-6">请尝试以下方法之一：</p>
                       <div className="flex flex-wrap gap-3 justify-center max-w-2xl">
                         {suggestedQuestions.map((question, index) => (
@@ -371,26 +472,69 @@ const Chat = () => {
             </TabsContent>
 
             <TabsContent value="image" className="flex-1 flex flex-col">
-              <div className="flex-1 flex flex-col items-center justify-center">
-                <p className="text-gray-400">图像生成功能敬请期待...</p>
+              <div className="flex-1 overflow-y-auto space-y-4 p-4">
+                {messages.map((message, index) => (
+                  <div key={index} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] p-4 rounded-2xl ${
+                      message.sender === 'user' 
+                        ? 'bg-purple-600 text-white' 
+                        : 'bg-gray-800/80 text-gray-100'
+                    }`}>
+                      {message.type === 'image' && message.imageUrl ? (
+                        <div>
+                          <img src={message.imageUrl} alt="Generated" className="rounded-lg mb-2 max-w-full" />
+                          <p className="text-sm">{message.text}</p>
+                        </div>
+                      ) : (
+                        <p>{message.text}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {isTyping && (
+                  <div className="flex justify-start">
+                    <div className="bg-gray-800/80 text-gray-100 p-4 rounded-2xl">
+                      正在生成图像...
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
               </div>
             </TabsContent>
 
             <TabsContent value="voice" className="flex-1 flex flex-col">
-              <div className="flex-1 flex flex-col items-center justify-center">
-                <p className="text-gray-400">语音合成功能敬请期待...</p>
+              <div className="flex-1 overflow-y-auto space-y-4 p-4">
+                {messages.map((message, index) => (
+                  <div key={index} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] p-4 rounded-2xl ${
+                      message.sender === 'user' 
+                        ? 'bg-purple-600 text-white' 
+                        : 'bg-gray-800/80 text-gray-100'
+                    }`}>
+                      <p>{message.text}</p>
+                    </div>
+                  </div>
+                ))}
+                {isTyping && (
+                  <div className="flex justify-start">
+                    <div className="bg-gray-800/80 text-gray-100 p-4 rounded-2xl">
+                      正在生成语音回复...
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
               </div>
             </TabsContent>
 
             {/* 输入区域 */}
-            <div className="p-6 border-t border-gray-800">
-              <div className="flex gap-3 items-end">
+            <div className="p-4 border-t border-gray-800">
+              <div className="flex gap-3 items-end max-w-4xl mx-auto">
                 <div className="flex-1">
                   <Textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="键入消息..."
-                    className="bg-gray-900/50 border-gray-700 text-white resize-none"
+                    className="bg-gray-800/50 border-gray-700 text-white resize-none"
                     rows={3}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
@@ -406,7 +550,7 @@ const Chat = () => {
                     disabled={isListening}
                     size="icon"
                     variant="outline"
-                    className="bg-gray-900/50 border-gray-700 hover:bg-gray-800"
+                    className="bg-gray-800/50 border-gray-700 hover:bg-gray-700"
                   >
                     {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                   </Button>

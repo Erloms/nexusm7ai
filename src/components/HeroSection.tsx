@@ -6,39 +6,41 @@ import { MessageSquare, Image, Volume2 } from 'lucide-react';
 
 const HeroSection = () => {
   return (
-    <section className="min-h-screen flex flex-col items-center justify-center px-4 relative overflow-hidden bg-black">
-      {/* 星空背景 */}
-      <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-black to-gray-900">
-        {/* 动态星点 */}
+    <section className="min-h-screen flex flex-col items-center justify-center px-8 py-20 relative overflow-hidden bg-gradient-to-br from-purple-950 via-black to-blue-950">
+      {/* 增强的星空背景 */}
+      <div className="absolute inset-0">
         <div className="absolute inset-0" style={{
-          backgroundImage: `radial-gradient(circle at 25% 25%, white 1px, transparent 1px),
-                           radial-gradient(circle at 75% 75%, white 0.5px, transparent 0.5px),
-                           radial-gradient(circle at 50% 50%, white 0.8px, transparent 0.8px),
-                           radial-gradient(circle at 80% 20%, white 0.3px, transparent 0.3px),
-                           radial-gradient(circle at 20% 80%, white 0.6px, transparent 0.6px)`,
-          backgroundSize: '800px 800px, 600px 600px, 400px 400px, 300px 300px, 500px 500px',
+          background: `
+            radial-gradient(circle at 20% 30%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.2) 0%, transparent 50%),
+            radial-gradient(circle at 40% 70%, rgba(119, 198, 255, 0.2) 0%, transparent 50%),
+            radial-gradient(circle at 25% 25%, white 1px, transparent 1px),
+            radial-gradient(circle at 75% 75%, white 0.5px, transparent 0.5px),
+            radial-gradient(circle at 50% 50%, white 0.8px, transparent 0.8px)
+          `,
+          backgroundSize: '800px 800px, 600px 600px, 400px 400px, 800px 800px, 600px 600px, 400px 400px',
           opacity: 0.6
         }}></div>
       </div>
 
-      {/* 浮动装饰图片 */}
+      {/* 浮动装饰元素 */}
       <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-2xl transform rotate-12 animate-pulse"></div>
       <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-green-500/20 to-cyan-500/20 rounded-xl transform -rotate-6 animate-pulse" style={{animationDelay: '1s'}}></div>
       <div className="absolute bottom-40 left-20 w-20 h-20 bg-gradient-to-br from-pink-500/20 to-red-500/20 rounded-lg transform rotate-45 animate-pulse" style={{animationDelay: '2s'}}></div>
       <div className="absolute bottom-20 right-40 w-28 h-28 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-2xl transform -rotate-12 animate-pulse" style={{animationDelay: '0.5s'}}></div>
 
       {/* 主要内容 */}
-      <div className="relative z-10 max-w-4xl mx-auto text-center">
-        <div className="mb-8 animate-fade-in">
-          <h1 className="text-6xl md:text-8xl font-bold mb-8 leading-tight">
+      <div className="relative z-10 max-w-6xl mx-auto text-center px-4">
+        <div className="mb-12 animate-fade-in">
+          <h1 className="text-4xl md:text-6xl font-bold mb-8 leading-tight">
             <span className="block bg-gradient-to-r from-white via-gray-200 to-white bg-clip-text text-transparent">
-              实时生成
+              头尔生成
             </span>
-            <span className="block bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent mt-4">
+            <span className="block bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent mt-4 text-3xl md:text-5xl">
               人工智能操场
             </span>
           </h1>
-          <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
             通过以下方式体验 AI 的强大功能，我们一个 generator一个explore
           </p>
         </div>
@@ -54,7 +56,7 @@ const HeroSection = () => {
         </div>
 
         {/* 功能卡片 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 max-w-4xl mx-auto">
           <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300">
             <MessageSquare className="h-12 w-12 text-purple-400 mb-4 mx-auto" />
             <h3 className="text-xl font-semibold text-white mb-2">互动聊天</h3>

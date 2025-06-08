@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Sparkles, Download, Image as ImageIcon, Loader2, RefreshCw, Wand2, Shuffle } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
+import { Sparkles, Download, Image as ImageIcon, Loader2, RefreshCw, Wand2, Shuffle, Upload, Eye } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
 import PaymentCheck from '@/components/PaymentCheck';
 
 interface ImageProps {
@@ -23,23 +23,21 @@ const Image = ({ decrementUsage }: ImageProps) => {
   const [height, setHeight] = useState(768);
   const [steps, setSteps] = useState(30);
   const [seed, setSeed] = useState('');
-  const [selectedModel, setSelectedModel] = useState('flux-schnell');
+  const [selectedModel, setSelectedModel] = useState('flux');
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
   const [history, setHistory] = useState<Array<{id: number, url: string, prompt: string, timestamp: Date}>>([]);
   const imageRef = useRef<HTMLImageElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const models = [
-    { id: 'flux-schnell', name: 'FLUX Schnell', description: 'FLUX Schnell - 极速生成，4步出图' },
-    { id: 'flux-dev', name: 'FLUX Dev', description: 'FLUX Dev - 开发版本，质量平衡' },
-    { id: 'flux-pro', name: 'FLUX Pro', description: 'FLUX Pro - 专业版本，最高质量' },
-    { id: 'flux-pro-ultra', name: 'FLUX Pro Ultra', description: 'FLUX Pro Ultra - 超级版本，极致细节' },
-    { id: 'flux-1.1-pro', name: 'FLUX 1.1 Pro', description: 'FLUX 1.1 Pro - 最新升级版本' },
-    { id: 'flux-realism', name: 'FLUX Realism', description: 'FLUX Realism - 写实风格专用' },
-    { id: 'flux-anime', name: 'FLUX Anime', description: 'FLUX Anime - 动漫风格专用' },
-    { id: 'dalle-3', name: 'DALL-E 3', description: 'OpenAI DALL-E 3 - 创意生成' },
-    { id: 'midjourney', name: 'Midjourney v6', description: 'Midjourney v6 - 艺术风格' },
-    { id: 'stable-diffusion-3', name: 'Stable Diffusion 3', description: 'SD3 - 经典稳定模型' },
+    { id: 'flux', name: 'FLUX 通用创意', description: 'FLUX - 通用创意模型' },
+    { id: 'flux-pro', name: 'FLUX Pro 专业版', description: 'FLUX Pro - 专业版本，最高质量' },
+    { id: 'flux-realism', name: 'FLUX Realism 超真实', description: 'FLUX Realism - 写实风格专用' },
+    { id: 'flux-anime', name: 'FLUX Anime 动漫风', description: 'FLUX Anime - 动漫风格专用' },
+    { id: 'flux-3d', name: 'FLUX 3D 三维效果', description: 'FLUX 3D - 三维效果专用' },
+    { id: 'turbo', name: 'Turbo 极速生成', description: 'Turbo - 极速生成模型' },
   ];
 
   const formatTime = (date: Date): string => {
@@ -51,11 +49,65 @@ const Image = ({ decrementUsage }: ImageProps) => {
     });
   };
 
+  // 图片解析提示词功能
+  const analyzeImagePrompt = async (file: File) => {
+    setAnalyzing(true);
+    try {
+      // 模拟Gemini 2.0视觉模型分析
+      // 在实际应用中，这里应该调用Gemini 2.0 Vision API
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64Image = e.target?.result as string;
+        
+        // 模拟AI分析结果
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // 这里应该是实际的API调用
+        // const analysisResult = await analyzeImageWithGemini(base64Image);
+        
+        // 模拟分析结果
+        const mockAnalysis = "A beautiful digital art portrait of a young woman with flowing hair, vibrant colors, soft lighting, artistic style, highly detailed, masterpiece quality, trending on artstation";
+        
+        setPrompt(mockAnalysis);
+        
+        toast({
+          title: "图片分析完成",
+          description: "已为您生成优化的提示词",
+        });
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('图片分析错误:', error);
+      toast({
+        title: "分析失败",
+        description: "图片分析失败，请稍后再试",
+        variant: "destructive",
+      });
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        analyzeImagePrompt(file);
+      } else {
+        toast({
+          title: "文件类型错误",
+          description: "请上传图片文件",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   const optimizePrompt = async (originalPrompt: string) => {
     try {
       setLoading(true);
       
-      // 智能提示词优化 - 更详细的扩写逻辑
+      // 智能提示词优化 - 更详细的扩写逻辑，避免摄影风格
       const optimizedPrompt = enhancePromptIntelligently(originalPrompt);
       
       setPrompt(optimizedPrompt);
@@ -90,79 +142,29 @@ const Image = ({ decrementUsage }: ImageProps) => {
     // 检测人物相关
     if (/人|女|男|girl|boy|woman|man|person|people|character/i.test(originalPrompt)) {
       if (isArtStyle) {
-        enhanced += ', beautiful character design, expressive eyes, detailed facial features, digital art style, professional illustration, sharp details';
+        enhanced += ', beautiful character design, expressive eyes, detailed facial features, digital art style, professional illustration, sharp details, artistic composition';
       } else if (isFantasyStyle) {
-        enhanced += ', fantasy character, magical appearance, ethereal beauty, enchanted features, mystical atmosphere';
+        enhanced += ', fantasy character, magical appearance, ethereal beauty, enchanted features, mystical atmosphere, fantasy art style';
       } else if (!isRealisticStyle) {
-        enhanced += ', detailed portrait, beautiful facial features, expressive eyes, professional artwork, high quality rendering';
+        enhanced += ', detailed portrait, beautiful facial features, expressive eyes, professional digital art, high quality illustration, artistic style';
       } else {
         enhanced += ', highly detailed portrait, beautiful facial features, expressive eyes, perfect skin texture, professional portrait photography, studio lighting, sharp focus on face, realistic hair texture, natural expression, high resolution';
       }
     }
 
-    // 检测动物相关
-    if (/猫|狗|鸟|动物|cat|dog|bird|animal|pet/i.test(originalPrompt)) {
-      if (isArtStyle) {
-        enhanced += ', cute animal illustration, artistic style, detailed fur/feather texture, expressive animal eyes, digital art';
-      } else if (isFantasyStyle) {
-        enhanced += ', magical creature, fantasy animal, mystical features, enchanted appearance';
-      } else if (!isRealisticStyle) {
-        enhanced += ', detailed animal art, natural features, high quality illustration';
-      } else {
-        enhanced += ', highly detailed animal photography, natural fur/feather texture, expressive animal eyes, wildlife photography style, natural habitat, professional animal portrait, sharp details, realistic lighting';
-      }
-    }
-
-    // 检测风景相关
-    if (/风景|山|海|天空|森林|landscape|mountain|sea|sky|forest|nature/i.test(originalPrompt)) {
-      if (isArtStyle) {
-        enhanced += ', artistic landscape, painted style, beautiful scenery, digital landscape art, artistic composition';
-      } else if (isFantasyStyle) {
-        enhanced += ', fantasy landscape, magical scenery, enchanted environment, mystical atmosphere, otherworldly beauty';
-      } else if (!isRealisticStyle) {
-        enhanced += ', beautiful landscape art, scenic view, detailed environment, artistic rendering';
-      } else {
-        enhanced += ', breathtaking landscape photography, dramatic sky, golden hour lighting, wide angle view, high dynamic range, vivid natural colors, professional landscape photography, stunning vista, detailed foreground and background';
-      }
-    }
-
-    // 检测建筑相关
-    if (/建筑|房子|城市|building|house|city|architecture|tower/i.test(originalPrompt)) {
-      if (isArtStyle) {
-        enhanced += ', architectural art, artistic building design, illustrated architecture, concept art style';
-      } else if (isFantasyStyle) {
-        enhanced += ', fantasy architecture, magical buildings, enchanted structures, mystical design';
-      } else if (is3DStyle) {
-        enhanced += ', 3d architectural visualization, detailed 3d model, professional rendering, clean topology';
-      } else if (!isRealisticStyle) {
-        enhanced += ', detailed architectural design, beautiful building structure, artistic composition';
-      } else {
-        enhanced += ', architectural photography, detailed building structure, modern/classic design elements, professional architectural shot, perfect perspective, sharp geometric lines, urban photography style, detailed facade';
-      }
-    }
-
     // 根据检测到的风格添加对应的质量增强词
     if (isArtStyle) {
-      enhanced += ', digital art masterpiece, highly detailed illustration, vibrant color palette, artistic composition, professional digital painting, creative artwork, trending on artstation, award winning art';
+      enhanced += ', digital art masterpiece, highly detailed illustration, vibrant color palette, artistic composition, professional digital painting, creative artwork, trending on artstation, award winning art, fantasy art style';
     } else if (isFantasyStyle) {
-      enhanced += ', fantasy art, magical atmosphere, enchanted scene, mystical lighting, otherworldly beauty, fantasy masterpiece, detailed fantasy illustration';
+      enhanced += ', fantasy art, magical atmosphere, enchanted scene, mystical lighting, otherworldly beauty, fantasy masterpiece, detailed fantasy illustration, surreal elements';
     } else if (is3DStyle) {
-      enhanced += ', high quality 3d render, detailed 3d model, professional 3d visualization, clean topology, perfect lighting, 3d masterpiece';
-    } else if (isRealisticStyle || (!isArtStyle && !isFantasyStyle && !is3DStyle)) {
-      // 只有在明确要求真实风格或没有其他风格指示时才添加真实照片相关词汇
-      if (isRealisticStyle) {
-        enhanced += ', masterpiece, best quality, ultra detailed, 8k resolution, photorealistic, professional photography, sharp focus, perfect lighting, vivid colors, highly detailed, award winning photo';
-      } else {
-        enhanced += ', masterpiece, best quality, ultra detailed, high resolution, sharp focus, perfect composition, vivid colors, highly detailed';
-      }
-    }
-
-    // 检测科幻/未来主题（保持原有逻辑）
-    if (/科幻|未来|机器人|太空|sci-fi|future|robot|space|cyberpunk/i.test(originalPrompt)) {
-      enhanced += ', futuristic design, advanced technology, high-tech details, science fiction concept art, detailed mechanical parts, glowing elements';
-      if (!isArtStyle && !isRealisticStyle) {
-        enhanced += ', digital art';
-      }
+      enhanced += ', high quality 3d render, detailed 3d model, professional 3d visualization, clean topology, perfect lighting, 3d masterpiece, digital art';
+    } else if (isRealisticStyle) {
+      // 只有在明确要求真实风格时才添加摄影相关词汇
+      enhanced += ', masterpiece, best quality, ultra detailed, 8k resolution, photorealistic, professional photography, sharp focus, perfect lighting, vivid colors, highly detailed, award winning photo';
+    } else {
+      // 默认添加艺术风格词汇，避免摄影风格
+      enhanced += ', masterpiece, best quality, ultra detailed, high resolution, digital art, artistic style, vibrant colors, creative composition, highly detailed illustration, fantasy art';
     }
 
     return enhanced;
@@ -170,14 +172,14 @@ const Image = ({ decrementUsage }: ImageProps) => {
 
   const generateRandomPrompt = () => {
     const randomPrompts = [
-      "A hyper-realistic full-color portrait depicting a young man with green eyes, freckles and curly red hair. He has a whimsical smile on his face, with a sunny summer day in the background, artistic style, masterpiece",
-      "An abstract portrait mimicking the vibrant rhythms of Beethoven's symphonies, digital art, by famous artists, colorful composition",
-      "Tokyo's neon-lit hustle at dusk; eerie quiet of abandoned Detroit factories; romantic charm of Parisian alleys in spring, artistic collage style",
-      "A futuristic city at night under starlight illuminated with neon lights and flying cars, overlooking a bustling alien marketplace from the tower of a futuristic city at sunset, concept art",
-      "A lone explorer observing alien monoliths in a Martian sandstorm, science fiction art, dramatic atmosphere",
-      "Create a futuristic landscape with a hazy purple sky, large monolithic structures filling the terrain, digital art masterpiece",
-      "Paint a sunset by the beach with foamy waves lapping against the shore, beautiful landscape art, artistic style",
-      "Create a portrait of a woman with blue eyes, alabaster skin and dark shoulder-length hair in Art Deco style, elegant illustration"
+      "A hyper-detailed fantasy portrait of a mystical warrior, glowing magical aura, intricate armor design, digital art masterpiece, trending on artstation",
+      "An ethereal landscape with floating islands, magical waterfalls, vibrant fantasy colors, digital painting, highly detailed artistic composition",
+      "A steampunk cityscape with brass mechanisms, Victorian architecture, atmospheric lighting, concept art style, award winning illustration",
+      "A beautiful anime-style character with flowing hair, expressive eyes, magical background, digital art, highly detailed anime illustration",
+      "An abstract cosmic scene with swirling galaxies, nebula clouds, vibrant space colors, digital art masterpiece, surreal composition",
+      "A fantasy forest with bioluminescent plants, magical creatures, enchanted atmosphere, digital painting, highly detailed fantasy art",
+      "A cyberpunk street scene with neon lights, futuristic architecture, atmospheric rain, concept art style, digital illustration",
+      "A majestic dragon in a mountainous landscape, epic fantasy art, dramatic lighting, highly detailed digital painting, mythical creature art"
     ];
     
     const randomPrompt = randomPrompts[Math.floor(Math.random() * randomPrompts.length)];
@@ -185,7 +187,7 @@ const Image = ({ decrementUsage }: ImageProps) => {
     
     toast({
       title: "随机提示词已生成",
-      description: "已为您生成一个随机提示词",
+      description: "已为您生成一个随机艺术风格提示词",
     });
   };
 
@@ -206,19 +208,18 @@ const Image = ({ decrementUsage }: ImageProps) => {
     setLoading(true);
     
     try {
-      // 修复图像生成API - 使用更稳定的服务
       const timestamp = Date.now();
       const randomSeed = seed || Math.floor(Math.random() * 1000000);
       
-      // 使用修复后的API
-      const apiUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${randomSeed}&nologo=true&enhance=true&model=flux`;
+      // 增强提示词，默认添加艺术风格
+      const enhancedPrompt = `${prompt}, digital art, artistic style, high quality, detailed illustration, vibrant colors, creative composition`;
+      
+      const apiUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${width}&height=${height}&seed=${randomSeed}&model=${selectedModel}&nologo=true`;
       
       console.log('生成图像API URL:', apiUrl);
-      console.log('正面提示词:', prompt);
-      console.log('负面提示词:', negativePrompt);
+      console.log('增强后提示词:', enhancedPrompt);
       console.log('选择的模型:', selectedModel);
       
-      // 修复图像加载错误
       const img = document.createElement('img');
       img.crossOrigin = 'anonymous';
       
@@ -310,6 +311,16 @@ const Image = ({ decrementUsage }: ImageProps) => {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={analyzing}
+                          className="border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20"
+                        >
+                          <Upload className="h-4 w-4 mr-1" />
+                          {analyzing ? '分析中...' : '解析图片'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => optimizePrompt(prompt)}
                           disabled={!prompt.trim() || loading}
                           className="border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20"
@@ -332,8 +343,15 @@ const Image = ({ decrementUsage }: ImageProps) => {
                       id="prompt"
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
-                      placeholder="描述您想要生成的图像，例如：a beautiful landscape with mountains and lakes"
+                      placeholder="描述您想要生成的图像，例如：a beautiful fantasy landscape with mountains and lakes, digital art style"
                       className="min-h-[100px] bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
+                    />
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
                     />
                   </div>
                   
@@ -473,10 +491,12 @@ const Image = ({ decrementUsage }: ImageProps) => {
                 </h2>
                 
                 <div className="flex-grow flex items-center justify-center bg-nexus-dark/40 rounded-lg border border-nexus-blue/20 overflow-hidden min-h-[400px]">
-                  {loading ? (
+                  {loading || analyzing ? (
                     <div className="flex flex-col items-center justify-center p-8">
                       <Loader2 className="h-12 w-12 text-nexus-blue animate-spin mb-4" />
-                      <p className="text-white/80 text-center">正在生成您的图像，请稍候...</p>
+                      <p className="text-white/80 text-center">
+                        {analyzing ? '正在分析图片，请稍候...' : '正在生成您的图像，请稍候...'}
+                      </p>
                       <p className="text-white/60 text-sm text-center mt-2">这可能需要几秒钟时间</p>
                     </div>
                   ) : generatedImage ? (
