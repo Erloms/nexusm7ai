@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageSquare, Image, Volume2, Mic, MicOff, Send, Copy, Download, Play, Pause } from 'lucide-react';
+import { MessageSquare, Image, Volume2, Mic, MicOff, Send, Copy, Download, Play, Pause, Upload } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 import PaymentCheck from '@/components/PaymentCheck';
@@ -334,23 +334,22 @@ const Chat = () => {
 
   return (
     <PaymentCheck featureType="chat">
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 relative overflow-hidden">
-        {/* 星空背景 */}
-        <div className="absolute inset-0 opacity-30">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden">
+        {/* 简化的背景装饰 */}
+        <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0" style={{
             backgroundImage: `
               radial-gradient(circle at 25% 25%, white 1px, transparent 1px),
-              radial-gradient(circle at 75% 75%, white 0.5px, transparent 0.5px),
-              radial-gradient(circle at 50% 50%, white 0.8px, transparent 0.8px)
+              radial-gradient(circle at 75% 75%, white 0.5px, transparent 0.5px)
             `,
-            backgroundSize: '800px 800px, 600px 600px, 400px 400px'
+            backgroundSize: '100px 100px, 50px 50px'
           }}></div>
         </div>
 
         <div className="relative z-10 flex flex-col h-screen max-w-6xl mx-auto px-4">
           {/* 顶部标题区 - 增加顶部间距 */}
-          <div className="text-center py-8 pt-12">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent mb-2">
+          <div className="text-center py-8 pt-16">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2">
               Nexus AI
             </h1>
             <p className="text-gray-400 text-xs">
@@ -361,15 +360,15 @@ const Chat = () => {
           {/* 功能切换标签 */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
             <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 bg-gray-800/50 border border-gray-700/50 mb-4">
-              <TabsTrigger value="chat" className="flex items-center gap-2 data-[state=active]:bg-purple-600">
+              <TabsTrigger value="chat" className="flex items-center gap-2 data-[state=active]:bg-blue-600">
                 <MessageSquare className="w-4 h-4" />
                 聊天
               </TabsTrigger>
-              <TabsTrigger value="image" className="flex items-center gap-2 data-[state=active]:bg-purple-600">
+              <TabsTrigger value="image" className="flex items-center gap-2 data-[state=active]:bg-blue-600">
                 <Image className="w-4 h-4" />
                 图像
               </TabsTrigger>
-              <TabsTrigger value="voice" className="flex items-center gap-2 data-[state=active]:bg-purple-600">
+              <TabsTrigger value="voice" className="flex items-center gap-2 data-[state=active]:bg-blue-600">
                 <Volume2 className="w-4 h-4" />
                 音频
               </TabsTrigger>
@@ -441,7 +440,7 @@ const Chat = () => {
                       <div key={index} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[80%] p-4 rounded-2xl ${
                           message.sender === 'user' 
-                            ? 'bg-purple-600 text-white' 
+                            ? 'bg-blue-600 text-white' 
                             : 'bg-gray-800/80 text-gray-100'
                         }`}>
                           {message.type === 'image' && message.imageUrl ? (
@@ -474,7 +473,7 @@ const Chat = () => {
                   <div key={index} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[80%] p-4 rounded-2xl ${
                       message.sender === 'user' 
-                        ? 'bg-purple-600 text-white' 
+                        ? 'bg-blue-600 text-white' 
                         : 'bg-gray-800/80 text-gray-100'
                     }`}>
                       {message.type === 'image' && message.imageUrl ? (
@@ -505,7 +504,7 @@ const Chat = () => {
                   <div key={index} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[80%] p-4 rounded-2xl ${
                       message.sender === 'user' 
-                        ? 'bg-purple-600 text-white' 
+                        ? 'bg-blue-600 text-white' 
                         : 'bg-gray-800/80 text-gray-100'
                     }`}>
                       <p>{message.text}</p>
@@ -524,7 +523,7 @@ const Chat = () => {
             </TabsContent>
 
             {/* 输入区域 - 固定在底部并增加底部间距 */}
-            <div className="p-4 pb-8 border-t border-gray-800 bg-gradient-to-br from-gray-900/90 via-purple-900/90 to-violet-900/90 backdrop-blur-sm">
+            <div className="p-4 pb-12 border-t border-gray-800 bg-gradient-to-br from-gray-900/90 via-gray-800/90 to-gray-900/90 backdrop-blur-sm">
               <div className="flex gap-3 items-end max-w-4xl mx-auto">
                 <div className="flex-1">
                   <Textarea
@@ -554,7 +553,7 @@ const Chat = () => {
                   <Button 
                     onClick={handleSend}
                     disabled={!input.trim() || isTyping}
-                    className="bg-purple-600 hover:bg-purple-700"
+                    className="bg-blue-600 hover:bg-blue-700"
                   >
                     <Send className="w-4 h-4" />
                   </Button>

@@ -29,23 +29,23 @@ const HeroSection = () => {
       <div className="absolute bottom-40 left-20 w-20 h-20 bg-gradient-to-br from-pink-500/20 to-red-500/20 rounded-lg transform rotate-45 animate-pulse" style={{animationDelay: '2s'}}></div>
       <div className="absolute bottom-20 right-40 w-28 h-28 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-2xl transform -rotate-12 animate-pulse" style={{animationDelay: '0.5s'}}></div>
 
-      {/* 主要内容 */}
+      {/* 主要内容 - 调整间距 */}
       <div className="relative z-10 max-w-6xl mx-auto text-center px-4">
-        <div className="mb-8 animate-fade-in">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+        <div className="mb-16 animate-fade-in">
+          <h1 className="text-4xl md:text-6xl font-bold mb-8 leading-tight">
             <span className="block bg-gradient-to-r from-white via-gray-200 to-white bg-clip-text text-transparent">
               头尔生成
             </span>
-            <span className="block bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent mt-4 text-2xl md:text-4xl">
+            <span className="block bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent mt-6 text-2xl md:text-4xl">
               人工智能操场
             </span>
           </h1>
-          <p className="text-lg md:text-xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
             通过以下方式体验 AI 的强大功能
           </p>
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12 animate-scale-in">
+        <div className="flex flex-col sm:flex-row gap-6 justify-center mb-20 animate-scale-in">
           <Button size="lg" asChild className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 hover:from-purple-700 hover:via-blue-700 hover:to-cyan-700 text-white text-lg px-10 py-6 rounded-2xl shadow-2xl transform hover:scale-105 transition-all duration-300 border-0">
             <Link to="/chat">
               <span className="relative z-10 flex items-center text-xl">
@@ -55,8 +55,8 @@ const HeroSection = () => {
           </Button>
         </div>
 
-        {/* 功能卡片 - 向下移动并优化融合 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 max-w-4xl mx-auto">
+        {/* 功能卡片 - 增加上方空白距离 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 max-w-4xl mx-auto">
           <div className="bg-gray-900/40 backdrop-blur-md rounded-2xl p-6 border border-gray-700/30 hover:border-purple-500/50 transition-all duration-300 hover:bg-gray-900/60">
             <MessageSquare className="h-10 w-10 text-purple-400 mb-4 mx-auto" />
             <h3 className="text-lg font-semibold text-white mb-2">互动聊天</h3>
