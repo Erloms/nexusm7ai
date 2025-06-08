@@ -15,58 +15,57 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Get usage counts from localStorage or initialize them
-  const [usageRemaining, setUsageRemaining] = useState(() => {
-    if (!isAuthenticated) return 0;
+  // 获取总额度使用情况（10个总额度）
+  const getTotalUsage = () => {
+    if (!isAuthenticated || !user?.id) return 0;
     
-    const usageData = localStorage.getItem(`nexusAi_${featureType}_usage_${user?.id}`);
-    if (usageData) {
-      const { remaining } = JSON.parse(usageData);
-      return remaining;
-    }
+    const chatUsage = JSON.parse(localStorage.getItem(`nexusAi_chat_usage_${user.id}`) || '{"remaining": 10}');
+    const imageUsage = JSON.parse(localStorage.getItem(`nexusAi_image_usage_${user.id}`) || '{"remaining": 10}');
+    const voiceUsage = JSON.parse(localStorage.getItem(`nexusAi_voice_usage_${user.id}`) || '{"remaining": 10}');
     
-    // Default free usage limits - all set to 10
-    const defaultLimits = {
-      chat: 10,   // 10 free chat interactions 
-      image: 10,  // 10 free image generations
-      voice: 10   // 10 free voice generations
-    };
-    
-    return defaultLimits[featureType];
-  });
+    const totalUsed = (10 - chatUsage.remaining) + (10 - imageUsage.remaining) + (10 - voiceUsage.remaining);
+    return Math.min(totalUsed, 10);
+  };
+
+  const remainingUsage = 10 - getTotalUsage();
 
   // Initialize usage when user logs in
   useEffect(() => {
     if (isAuthenticated && user?.id) {
-      const usageData = localStorage.getItem(`nexusAi_${featureType}_usage_${user.id}`);
-      if (!usageData) {
-        // Initialize free usage allowance - all set to 10
-        const initialRemaining = {
-          chat: 10,
-          image: 10,
-          voice: 10
-        };
-        
-        localStorage.setItem(`nexusAi_${featureType}_usage_${user.id}`, JSON.stringify({
-          remaining: initialRemaining[featureType as keyof typeof initialRemaining]
-        }));
-        
-        setUsageRemaining(initialRemaining[featureType as keyof typeof initialRemaining]);
+      const chatUsage = localStorage.getItem(`nexusAi_chat_usage_${user.id}`);
+      const imageUsage = localStorage.getItem(`nexusAi_image_usage_${user.id}`);
+      const voiceUsage = localStorage.getItem(`nexusAi_voice_usage_${user.id}`);
+      
+      if (!chatUsage) {
+        localStorage.setItem(`nexusAi_chat_usage_${user.id}`, JSON.stringify({ remaining: 10 }));
+      }
+      if (!imageUsage) {
+        localStorage.setItem(`nexusAi_image_usage_${user.id}`, JSON.stringify({ remaining: 10 }));
+      }
+      if (!voiceUsage) {
+        localStorage.setItem(`nexusAi_voice_usage_${user.id}`, JSON.stringify({ remaining: 10 }));
       }
     }
-  }, [isAuthenticated, user?.id, featureType]);
+  }, [isAuthenticated, user?.id]);
 
   // Function to be called when a feature is used
   const decrementUsage = () => {
     if (isAuthenticated && user?.id && !checkPaymentStatus()) {
-      const newRemaining = usageRemaining - 1;
+      if (remainingUsage <= 0) {
+        return false;
+      }
+      
+      // 从对应功能的存储中扣除1个额度
+      const currentUsage = JSON.parse(localStorage.getItem(`nexusAi_${featureType}_usage_${user.id}`) || '{"remaining": 10}');
+      const newRemaining = Math.max(0, currentUsage.remaining - 1);
+      
       localStorage.setItem(`nexusAi_${featureType}_usage_${user.id}`, JSON.stringify({
         remaining: newRemaining
       }));
-      setUsageRemaining(newRemaining);
-      return true; // Return true to indicate successful decrement
+      
+      return true;
     }
-    return false; // Return false if not decremented (VIP user or not authenticated)
+    return false;
   };
 
   if (!isAuthenticated) {
@@ -97,16 +96,16 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
     );
   }
 
-  if (!checkPaymentStatus() && usageRemaining <= 0) {
+  if (!checkPaymentStatus() && remainingUsage <= 0) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center py-20">
         <div className="card-glowing p-8 max-w-md w-full text-center">
-          <h2 className="text-2xl font-bold text-gradient mb-4">免费体验次数已用完</h2>
+          <h2 className="text-2xl font-bold text-gradient mb-4">免费额度已用完</h2>
           <p className="text-white/80 mb-6">
-            您已用完免费体验次数
+            您已用完免费体验额度，升级会员享受无限制使用
           </p>
           <p className="text-lg text-gradient-gold font-bold mb-6">
-            只需 ¥299 即可永久使用所有功能！
+            ¥199/年 或 ¥799/永久
           </p>
           <Button 
             onClick={() => navigate('/payment')}
@@ -121,14 +120,8 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
 
   // For non-paying users, render children but wrap them to track usage
   if (!checkPaymentStatus()) {
-    // Clone children and add usage tracking
     return (
       <div className="w-full h-full">
-        <div className="bg-nexus-blue/20 text-white text-center py-2 px-4 mb-4 rounded-md">
-          <p>您正在使用免费体验，还剩 <span className="font-bold text-nexus-cyan">{usageRemaining}</span> 次
-            {featureType === 'chat' ? '对话' : featureType === 'image' ? '图像生成' : '语音合成'}机会
-          </p>
-        </div>
         {React.cloneElement(children as React.ReactElement, { decrementUsage })}
       </div>
     );

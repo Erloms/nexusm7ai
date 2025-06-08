@@ -2,80 +2,78 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
-import { ArrowDown } from 'lucide-react';
+import { MessageSquare, Image, Volume2 } from 'lucide-react';
 
 const HeroSection = () => {
   return (
-    <section className="min-h-screen pt-20 flex flex-col items-center justify-center px-4 relative overflow-hidden">
-      {/* 科技粒子特效背景 */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-gray-900 to-black z-0"></div>
-      
-      {/* 动态粒子特效 */}
-      <div className="absolute inset-0 z-0" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3Ccircle cx='15' cy='15' r='0.5'/%3E%3Ccircle cx='45' cy='45' r='0.5'/%3E%3Ccircle cx='15' cy='45' r='0.3'/%3E%3Ccircle cx='45' cy='15' r='0.3'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-      }}></div>
-      
-      {/* 增强的动态光效 */}
-      <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-gradient-to-r from-cyan-500/10 to-blue-500/15 rounded-full blur-[100px] animate-pulse z-0"></div>
-      <div className="absolute top-1/2 right-1/4 w-[350px] h-[350px] bg-gradient-to-r from-purple-500/12 to-pink-500/10 rounded-full blur-[90px] animate-pulse z-0" style={{animationDelay: '1s'}}></div>
-      <div className="absolute bottom-1/4 left-1/2 w-[300px] h-[300px] bg-gradient-to-r from-indigo-500/8 to-cyan-500/12 rounded-full blur-[80px] animate-pulse z-0" style={{animationDelay: '2s'}}></div>
-      
-      {/* 科技线条特效 */}
-      <div className="absolute inset-0 opacity-20 z-0" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 50h100M50 0v100' stroke='%2300d4ff' stroke-width='0.2' opacity='0.3'/%3E%3C/svg%3E")`
-      }}></div>
-      
-      {/* 漂浮装饰元素 */}
-      <div className="absolute top-1/3 left-1/6 w-2 h-2 bg-cyan-400/40 rounded-full animate-bounce z-0" style={{animationDelay: '0.5s'}}></div>
-      <div className="absolute top-2/3 right-1/6 w-1.5 h-1.5 bg-blue-400/50 rounded-full animate-bounce z-0" style={{animationDelay: '1.5s'}}></div>
-      <div className="absolute top-1/2 left-3/4 w-2.5 h-2.5 bg-purple-400/30 rounded-full animate-bounce z-0" style={{animationDelay: '0.8s'}}></div>
-      <div className="absolute bottom-1/3 left-1/3 w-1 h-1 bg-pink-400/40 rounded-full animate-bounce z-0" style={{animationDelay: '2.2s'}}></div>
-      
-      {/* Hero content */}
-      <div className="relative z-10 max-w-5xl mx-auto text-center">
+    <section className="min-h-screen flex flex-col items-center justify-center px-4 relative overflow-hidden bg-black">
+      {/* 星空背景 */}
+      <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-black to-gray-900">
+        {/* 动态星点 */}
+        <div className="absolute inset-0" style={{
+          backgroundImage: `radial-gradient(circle at 25% 25%, white 1px, transparent 1px),
+                           radial-gradient(circle at 75% 75%, white 0.5px, transparent 0.5px),
+                           radial-gradient(circle at 50% 50%, white 0.8px, transparent 0.8px),
+                           radial-gradient(circle at 80% 20%, white 0.3px, transparent 0.3px),
+                           radial-gradient(circle at 20% 80%, white 0.6px, transparent 0.6px)`,
+          backgroundSize: '800px 800px, 600px 600px, 400px 400px, 300px 300px, 500px 500px',
+          opacity: 0.6
+        }}></div>
+      </div>
+
+      {/* 浮动装饰图片 */}
+      <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-2xl transform rotate-12 animate-pulse"></div>
+      <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-green-500/20 to-cyan-500/20 rounded-xl transform -rotate-6 animate-pulse" style={{animationDelay: '1s'}}></div>
+      <div className="absolute bottom-40 left-20 w-20 h-20 bg-gradient-to-br from-pink-500/20 to-red-500/20 rounded-lg transform rotate-45 animate-pulse" style={{animationDelay: '2s'}}></div>
+      <div className="absolute bottom-20 right-40 w-28 h-28 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-2xl transform -rotate-12 animate-pulse" style={{animationDelay: '0.5s'}}></div>
+
+      {/* 主要内容 */}
+      <div className="relative z-10 max-w-4xl mx-auto text-center">
         <div className="mb-8 animate-fade-in">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-            <span className="inline-block bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent drop-shadow-lg">
-              AI创作助手
+          <h1 className="text-6xl md:text-8xl font-bold mb-8 leading-tight">
+            <span className="block bg-gradient-to-r from-white via-gray-200 to-white bg-clip-text text-transparent">
+              实时生成
             </span>
-            <br />
-            <span className="inline-block bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent drop-shadow-lg">
-              三合一套餐
+            <span className="block bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent mt-4">
+              人工智能操场
             </span>
           </h1>
-          <h2 className="text-xl md:text-3xl font-semibold mb-8 text-white/90 drop-shadow-md">
-            对话、创想、发声，一站搞定！
-          </h2>
-          <p className="text-base md:text-lg text-white/75 mb-8 max-w-3xl mx-auto leading-relaxed">
-            体验前沿AI技术，释放无限创造力。从智能对话到艺术创作，从语音合成到图像生成，让AI成为你的创作伙伴。
+          <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed">
+            通过以下方式体验 AI 的强大功能，我们一个 generator一个explore
           </p>
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12 animate-scale-in">
-          <Button size="lg" asChild className="relative overflow-hidden bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 hover:from-cyan-600 hover:via-blue-600 hover:to-purple-600 text-white text-lg px-8 py-6 rounded-full shadow-2xl transform hover:scale-105 transition-all duration-300 border-0">
+        <div className="flex flex-col sm:flex-row gap-8 justify-center mb-16 animate-scale-in">
+          <Button size="lg" asChild className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 hover:from-purple-700 hover:via-blue-700 hover:to-cyan-700 text-white text-lg px-12 py-8 rounded-2xl shadow-2xl transform hover:scale-105 transition-all duration-300 border-0">
             <Link to="/chat">
-              <span className="relative z-10 flex items-center">
-                🚀 立即体验
+              <span className="relative z-10 flex items-center text-xl">
+                ✨ 进入 Playground →
               </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
             </Link>
           </Button>
         </div>
-        
-        <button 
-          onClick={() => document.getElementById('features')?.scrollIntoView({behavior: 'smooth'})}
-          className="animate-bounce flex items-center justify-center w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm mx-auto mt-12 hover:bg-white/20 transition-all duration-300 hover:scale-110 border border-white/20"
-        >
-          <ArrowDown size={28} className="text-white/80" />
-        </button>
+
+        {/* 功能卡片 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+          <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300">
+            <MessageSquare className="h-12 w-12 text-purple-400 mb-4 mx-auto" />
+            <h3 className="text-xl font-semibold text-white mb-2">互动聊天</h3>
+            <p className="text-gray-400 text-sm">与AI助手互动，进行自然对话和创意内容生成</p>
+          </div>
+          
+          <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 hover:border-blue-500/50 transition-all duration-300">
+            <Image className="h-12 w-12 text-blue-400 mb-4 mx-auto" />
+            <h3 className="text-xl font-semibold text-white mb-2">图像生成</h3>
+            <p className="text-gray-400 text-sm">利用AI最先进的图像生成功能，将您的想法转化为令人惊叹的视觉效果</p>
+          </div>
+          
+          <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 hover:border-cyan-500/50 transition-all duration-300">
+            <Volume2 className="h-12 w-12 text-cyan-400 mb-4 mx-auto" />
+            <h3 className="text-xl font-semibold text-white mb-2">语音响应</h3>
+            <p className="text-gray-400 text-sm">提出问题并接收来自AI的音频响应，带来更自然的交互体验</p>
+          </div>
+        </div>
       </div>
-      
-      {/* 底部装饰渐变 */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/90 via-gray-900/50 to-transparent z-0"></div>
-      
-      {/* 边缘光效 */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent"></div>
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent"></div>
     </section>
   );
 };
