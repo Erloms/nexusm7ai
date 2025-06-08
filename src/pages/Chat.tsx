@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -349,8 +348,8 @@ const Chat = () => {
         </div>
 
         <div className="relative z-10 flex flex-col h-screen max-w-6xl mx-auto px-4">
-          {/* 顶部标题区 */}
-          <div className="text-center py-6">
+          {/* 顶部标题区 - 增加顶部间距 */}
+          <div className="text-center py-8 pt-12">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent mb-2">
               Nexus AI
             </h1>
@@ -414,14 +413,12 @@ const Chat = () => {
             </div>
 
             <TabsContent value="chat" className="flex-1 flex flex-col">
-              <div className="flex-1 flex flex-col">
+              <div className="flex-1 flex flex-col min-h-0">
                 {messages.length === 0 ? (
                   <div className="flex-1 flex flex-col justify-center items-center text-center py-12">
                     <h2 className="text-2xl font-bold text-white mb-6">
                       欢迎来到 Nexus AI！我可以帮助您生成文本、图像等，您今天想创造什么？
                     </h2>
-                    
-                    <div className="h-32"></div>
                     
                     <div className="mt-8">
                       <p className="text-gray-400 mb-6">请尝试以下方法之一：</p>
@@ -439,7 +436,7 @@ const Chat = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex-1 overflow-y-auto space-y-4 p-4">
+                  <div className="flex-1 overflow-y-auto space-y-4 p-4 pb-20">
                     {messages.map((message, index) => (
                       <div key={index} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[80%] p-4 rounded-2xl ${
@@ -471,8 +468,8 @@ const Chat = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="image" className="flex-1 flex flex-col">
-              <div className="flex-1 overflow-y-auto space-y-4 p-4">
+            <TabsContent value="image" className="flex-1 flex flex-col min-h-0">
+              <div className="flex-1 overflow-y-auto space-y-4 p-4 pb-20">
                 {messages.map((message, index) => (
                   <div key={index} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[80%] p-4 rounded-2xl ${
@@ -502,8 +499,8 @@ const Chat = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="voice" className="flex-1 flex flex-col">
-              <div className="flex-1 overflow-y-auto space-y-4 p-4">
+            <TabsContent value="voice" className="flex-1 flex flex-col min-h-0">
+              <div className="flex-1 overflow-y-auto space-y-4 p-4 pb-20">
                 {messages.map((message, index) => (
                   <div key={index} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[80%] p-4 rounded-2xl ${
@@ -526,8 +523,8 @@ const Chat = () => {
               </div>
             </TabsContent>
 
-            {/* 输入区域 */}
-            <div className="p-4 border-t border-gray-800">
+            {/* 输入区域 - 固定在底部并增加底部间距 */}
+            <div className="p-4 pb-8 border-t border-gray-800 bg-gradient-to-br from-gray-900/90 via-purple-900/90 to-violet-900/90 backdrop-blur-sm">
               <div className="flex gap-3 items-end max-w-4xl mx-auto">
                 <div className="flex-1">
                   <Textarea
