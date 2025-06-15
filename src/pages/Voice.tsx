@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -8,17 +9,12 @@ import {
   Volume2, 
   Play, 
   Download, 
-  Clock, 
-  AlignLeft, 
-  RotateCcw,
-  Info,
   CheckCircle2
 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '@/contexts/AuthContext';
-import { Card } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 
 interface VoiceOption {
@@ -45,12 +41,11 @@ const Voice = () => {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [exactReading, setExactReading] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Voice options - expanded to 16 options
+  // Voice options - expanded to 16 options matching the screenshot
   const voiceOptions: VoiceOption[] = [
-    { id: 'alloy', name: 'Alloy', description: '平衡中性', color: '#4F46E5' },
+    { id: 'alloy', name: 'Alloy', description: '平衡中性', color: '#8B5CF6' },
     { id: 'echo', name: 'Echo', description: '深沉有力', color: '#6366F1' },
     { id: 'fable', name: 'Fable', description: '温暖讲述', color: '#8B5CF6' },
     { id: 'onyx', name: 'Onyx', description: '威严庄重', color: '#333333' },
@@ -58,7 +53,6 @@ const Voice = () => {
     { id: 'shimmer', name: 'Shimmer', description: '轻快明亮', color: '#60A5FA' },
     { id: 'coral', name: 'Coral', description: '温柔平静', color: '#F87171' },
     { id: 'verse', name: 'Verse', description: '生动诗意', color: '#FBBF24' },
-    // New voice options
     { id: 'ballad', name: 'Ballad', description: '抒情柔和', color: '#A78BFA' },
     { id: 'ash', name: 'Ash', description: '思考沉稳', color: '#4B5563' },
     { id: 'sage', name: 'Sage', description: '智慧老练', color: '#059669' },
@@ -66,7 +60,6 @@ const Voice = () => {
     { id: 'clover', name: 'Clover', description: '活泼年轻', color: '#EC4899' },
     { id: 'dan', name: 'Dan', description: '男声稳重', color: '#1F2937' },
     { id: 'elan', name: 'Elan', description: '优雅流利', color: '#7C3AED' },
-    { id: 'meadow', name: 'Meadow', description: '平和自然', color: '#34D399' },
   ];
 
   // Load history from localStorage
@@ -123,27 +116,12 @@ const Voice = () => {
     setLoading(true);
     
     try {
-      // Prepare the text with optional prefix for exact reading
-      let processedText = text;
-      if (exactReading) {
-        processedText = `请严格按照以下内容朗读，不要做任何修改或演绎：${text}`;
-      }
-
-      // Create the URL with the encoded text and selected voice
-      const url = `https://text.pollinations.ai/${encodeURIComponent(processedText)}?model=openai-audio&voice=${selectedVoice}&nologo=true`;
+      const url = `https://text.pollinations.ai/${encodeURIComponent(text)}?model=openai-audio&voice=${selectedVoice}&nologo=true`;
       
-      // For demo purposes, we'll simulate a delay
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // In a real app, you'd fetch the audio from the API
-      // const response = await fetch(url);
-      // const audioBlob = await response.blob();
-      // const audioUrl = URL.createObjectURL(audioBlob);
-      
-      // For now, we'll just use the URL directly as if it was successful
       setAudioUrl(url);
       
-      // Add to history
       const newHistoryItem: HistoryItem = {
         id: Date.now(),
         timestamp: new Date(),
@@ -171,16 +149,6 @@ const Voice = () => {
     }
   };
 
-  const handleClearHistory = () => {
-    if (confirm('确定要清空所有历史记录吗？')) {
-      setHistory([]);
-      toast({
-        title: "历史已清空",
-        description: "语音生成历史记录已被清除",
-      });
-    }
-  };
-
   const formatTime = (date: Date): string => {
     return date.toLocaleString('zh-CN', {
       year: 'numeric',
@@ -192,304 +160,254 @@ const Voice = () => {
   };
 
   return (
-    <div className="min-h-screen bg-nexus-dark flex flex-col">
+    <div className="min-h-screen bg-[#0a0f1e] text-white">
       <Navigation />
       
-      <main className="flex-grow p-4 pt-32 md:p-8 md:pt-32">
-        <div className="container mx-auto max-w-7xl">
-          {/* 页面标题 */}
-          <div className="w-full text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-gradient mb-2">AI 语音合成</h1>
-            <p className="text-white/70 text-lg">输入文本，选择语音风格，一键转换为自然流畅的语音</p>
+      <main className="pt-20 px-4">
+        <div className="max-w-7xl mx-auto">
+          {/* 标题区域 */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+              AI 文本转音频
+            </h1>
+            <p className="text-gray-400 mb-6">
+              输入文字，选择语音风格，一键转换字转换为自然流畅的语音。<br />
+              支持多种音色音调，帮您创建专业水准的音频内容。
+            </p>
+            <Button className="bg-cyan-500 hover:bg-cyan-600 text-white px-6">
+              免费体验
+            </Button>
           </div>
-          
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Left Panel - Text Input and Voice Selection */}
-            <div className="w-full md:w-1/2 flex flex-col gap-6">
-              <Card className="p-6 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm border-nexus-blue/20">
-                <h2 className="text-2xl font-bold mb-5 flex items-center text-white">
-                  <Volume2 className="mr-2 h-6 w-6 text-nexus-cyan" />
-                  选择语音风格
-                </h2>
-                
-                <RadioGroup 
-                  value={selectedVoice} 
-                  onValueChange={setSelectedVoice}
-                  className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6"
-                >
-                  {voiceOptions.map((voice) => (
-                    <div
-                      key={voice.id}
-                      className={`relative cursor-pointer p-3 rounded-lg border transition-all ${
-                        selectedVoice === voice.id
-                          ? 'border-nexus-cyan bg-nexus-cyan/10'
-                          : 'border-nexus-blue/20 bg-nexus-dark/40 hover:bg-nexus-dark/60'
-                      }`}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* 左侧控制面板 */}
+            <div className="space-y-6">
+              <Card className="bg-gray-800/50 border-cyan-500/20">
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-bold mb-6 text-white">语音生成</h3>
+                  
+                  <div className="mb-6">
+                    <h4 className="text-cyan-400 font-medium mb-4">选择语音风格</h4>
+                    <p className="text-gray-400 text-sm mb-4">
+                      每种风格都有其独特的音色和表现力，选择最适合您内容的声音
+                    </p>
+                    
+                    <RadioGroup 
+                      value={selectedVoice} 
+                      onValueChange={setSelectedVoice}
+                      className="grid grid-cols-3 gap-3"
                     >
-                      <RadioGroupItem
-                        value={voice.id}
-                        id={`voice-${voice.id}`}
-                        className="absolute opacity-0"
-                      />
-                      <label
-                        htmlFor={`voice-${voice.id}`}
-                        className="flex flex-col items-center cursor-pointer"
-                      >
-                        {selectedVoice === voice.id && (
-                          <div className="absolute -top-2 -right-2 bg-nexus-cyan rounded-full">
-                            <CheckCircle2 className="h-5 w-5" />
-                          </div>
-                        )}
+                      {voiceOptions.map((voice) => (
                         <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center mb-2"
-                          style={{ backgroundColor: voice.color }}
+                          key={voice.id}
+                          className={`relative cursor-pointer p-3 rounded-lg border transition-all ${
+                            selectedVoice === voice.id
+                              ? 'border-cyan-400 bg-cyan-400/10'
+                              : 'border-gray-600 bg-gray-800/40 hover:bg-gray-700/40'
+                          }`}
                         >
-                          <Volume2 className="h-5 w-5 text-white" />
+                          <RadioGroupItem
+                            value={voice.id}
+                            id={`voice-${voice.id}`}
+                            className="absolute opacity-0"
+                          />
+                          <label
+                            htmlFor={`voice-${voice.id}`}
+                            className="flex flex-col items-center cursor-pointer"
+                          >
+                            {selectedVoice === voice.id && (
+                              <div className="absolute -top-2 -right-2 bg-cyan-400 rounded-full">
+                                <CheckCircle2 className="h-4 w-4 text-white" />
+                              </div>
+                            )}
+                            <div className="text-white font-medium text-sm">{voice.name}</div>
+                            <div className="text-gray-400 text-xs">{voice.description}</div>
+                          </label>
                         </div>
-                        <div className="text-white font-medium">{voice.name}</div>
-                        <div className="text-white/60 text-sm">{voice.description}</div>
-                      </label>
-                    </div>
-                  ))}
-                </RadioGroup>
-                
-                <div className="mb-4">
-                  <Label htmlFor="text-input" className="text-white mb-2 block">输入文本</Label>
-                  <Textarea
-                    id="text-input"
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    placeholder="输入需要转换为语音的文本内容..."
-                    className="min-h-[200px] bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
-                  />
-                </div>
-                
-                <div className="flex flex-col space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4 text-white/70 text-sm">
-                      <div className="flex items-center">
-                        <AlignLeft className="h-4 w-4 mr-1" />
-                        <span>字符数: {text.length}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Clock className="h-4 w-4 mr-1" />
-                        <span>预计时长: {Math.max(1, Math.ceil(text.length / 150))}秒</span>
-                      </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+
+                  <div className="mb-6">
+                    <Label htmlFor="text-input" className="text-cyan-400 font-medium mb-3 block">输入文本</Label>
+                    <Textarea
+                      id="text-input"
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                      placeholder="使用中国官方说明语法，如测试AI视频合成，可以直接文字转换前缀：请保持文本"
+                      className="min-h-[150px] bg-gray-900/50 border-gray-600 text-white placeholder-gray-400 focus:border-cyan-400"
+                    />
+                    <div className="flex justify-between items-center mt-2">
+                      <p className="text-gray-400 text-sm">字符数: {text.length}</p>
+                      <p className="text-gray-400 text-sm">色彩节律: 不调整</p>
                     </div>
                   </div>
-                  
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-nexus-dark/50 rounded-lg border border-nexus-blue/20">
-                    <div className="flex items-center mb-3 sm:mb-0">
-                      <div className="flex items-center">
-                        <div className={`w-3 h-3 rounded-full mr-2 ${exactReading ? 'bg-nexus-cyan' : 'bg-nexus-blue/50'}`}></div>
-                        <span className="text-white font-medium mr-2">朗读模式:</span>
-                      </div>
-                      <div className="relative flex items-center space-x-2">
-                        <span className={`text-sm ${!exactReading ? 'text-white' : 'text-white/50'}`}>智能演绎</span>
-                        <Switch
-                          checked={exactReading}
-                          onCheckedChange={setExactReading}
-                        />
-                        <span className={`text-sm ${exactReading ? 'text-white' : 'text-white/50'}`}>严格原文</span>
-                      </div>
-                    </div>
-                    
-                    <Button 
-                      onClick={handleGenerateVoice} 
+
+                  <div className="flex justify-between mb-6">
+                    <Button
+                      onClick={handleGenerateVoice}
                       disabled={loading || !text.trim()}
-                      className="bg-nexus-blue hover:bg-nexus-blue/80 w-full sm:w-auto"
+                      className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-2"
                     >
                       {loading ? "生成中..." : "生成语音"}
                     </Button>
+                    <Button variant="ghost" className="text-gray-400 hover:text-white">
+                      按住对话 (Ctrl + ↵ Enter)
+                    </Button>
                   </div>
-                </div>
-                
-                <div className="mt-4 bg-nexus-blue/10 border border-nexus-blue/20 rounded-lg p-3">
-                  <div className="flex items-start">
-                    <Info className="h-5 w-5 text-nexus-cyan mr-2 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-white/80">
-                      {exactReading
-                        ? "严格朗读模式已开启，AI将按原文精确朗读，不添加任何语气或演绎。"
-                        : "智能演绎模式已开启，AI可能会对文本进行自然语气调整，使朗读更加自然流畅。"}
-                    </p>
+
+                  <div className="bg-gray-900/50 rounded-lg p-4">
+                    <h4 className="text-white font-medium mb-2">使用小技巧</h4>
+                    <ul className="text-gray-400 text-sm space-y-1 list-disc pl-5">
+                      <li>输入适当的可明确描述的音频的简话和语调变化</li>
+                      <li>不同音频风格适合不同场景，可以尝试多种风格找到最适合的</li>
+                      <li>大段文本可以分为多个短段，生成后合并，效果更佳</li>
+                      <li>特殊专业术语可能需要注音或微调以获得更准确的发音</li>
+                    </ul>
                   </div>
-                </div>
-                
-                {/* 使用小技巧 */}
-                <div className="mt-6 bg-nexus-dark/40 rounded-lg border border-nexus-blue/20 p-4">
-                  <h3 className="text-white font-medium mb-2 flex items-center">
-                    <Info className="h-4 w-4 mr-2 text-nexus-cyan" />
-                    使用小技巧
-                  </h3>
-                  <ul className="text-white/70 text-sm space-y-1 list-disc pl-5">
-                    <li>输入标点符号可以增加语音的自然停顿和语调变化</li>
-                    <li>不同音频风格适合不同场景，可以尝试多种风格找到最适合的</li>
-                    <li>大段文本可以分为多个短段，生成后合并，效果更佳</li>
-                    <li>特殊专业术语可能需要注音或微调以获得更准确的发音</li>
-                  </ul>
-                </div>
+                </CardContent>
               </Card>
             </div>
-            
-            {/* Right Panel - Audio Output and History */}
-            <div className="w-full md:w-1/2 flex flex-col gap-6">
-              <Card className="p-6 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm border-nexus-blue/20">
-                <h2 className="text-2xl font-bold mb-5 flex items-center text-white">
-                  <Play className="mr-2 h-6 w-6 text-nexus-cyan" />
-                  语音播放
-                </h2>
-                
-                {audioUrl ? (
-                  <div>
-                    <div className="mb-4 p-4 bg-nexus-dark/40 rounded-lg border border-nexus-blue/20">
-                      <div className="flex items-center mb-3">
-                        <div 
-                          className="w-8 h-8 rounded-full flex items-center justify-center mr-3"
-                          style={{ 
-                            backgroundColor: voiceOptions.find(v => v.id === selectedVoice)?.color || '#4F46E5' 
-                          }}
-                        >
-                          <Volume2 className="h-4 w-4 text-white" />
-                        </div>
-                        <div>
-                          <div className="text-white font-medium">
-                            {voiceOptions.find(v => v.id === selectedVoice)?.name || 'Voice'}
-                          </div>
-                          <div className="text-white/60 text-xs">
-                            {voiceOptions.find(v => v.id === selectedVoice)?.description}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <audio ref={audioRef} controls className="w-full" src={audioUrl}></audio>
-                    </div>
-                    
-                    <div className="flex justify-between">
-                      <Button variant="outline" onClick={() => setAudioUrl(null)} className="border-nexus-blue/30 text-white">
-                        <RotateCcw className="mr-2 h-4 w-4" />
-                        重新生成
-                      </Button>
-                      
-                      <Button 
-                        onClick={() => {
-                          // In a real app, you would trigger a download here
-                          toast({
-                            title: "下载开始",
-                            description: "语音文件下载已开始",
-                          });
-                        }} 
-                        className="bg-nexus-blue hover:bg-nexus-blue/80"
-                      >
-                        <Download className="mr-2 h-4 w-4" />
-                        下载语音
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-64 bg-nexus-dark/40 rounded-lg border border-nexus-blue/20 text-white/50">
-                    <Volume2 className="h-16 w-16 mb-4 opacity-30" />
-                    <p className="text-lg">尚未生成语音</p>
-                    <p className="text-sm">在左侧输入文本并选择声音后生成</p>
-                  </div>
-                )}
-                
-                {/* 语音特性 */}
-                <div className="mt-6 bg-nexus-dark/40 rounded-lg border border-nexus-blue/20 p-4">
-                  <h3 className="text-white font-medium mb-2">语音特性</h3>
-                  <ul className="space-y-2">
-                    <li className="flex items-start text-white/70 text-sm">
-                      <div className="h-5 w-5 text-nexus-cyan mr-2 flex-shrink-0">
-                        <Volume2 className="h-4 w-4" />
-                      </div>
-                      <span>自然流畅的语音合成，接近真人发音</span>
-                    </li>
-                    <li className="flex items-start text-white/70 text-sm">
-                      <div className="h-5 w-5 text-nexus-cyan mr-2 flex-shrink-0">
-                        <Volume2 className="h-4 w-4" />
-                      </div>
-                      <span>多种声音风格可选，满足不同场景需求</span>
-                    </li>
-                    <li className="flex items-start text-white/70 text-sm">
-                      <div className="h-5 w-5 text-nexus-cyan mr-2 flex-shrink-0">
-                        <Volume2 className="h-4 w-4" />
-                      </div>
-                      <span>支持文本转语音转换，适合各种内容创作</span>
-                    </li>
-                    <li className="flex items-start text-white/70 text-sm">
-                      <div className="h-5 w-5 text-nexus-cyan mr-2 flex-shrink-0">
-                        <Volume2 className="h-4 w-4" />
-                      </div>
-                      <span>一键下载MP3格式音频，可用于多平台分享</span>
-                    </li>
-                  </ul>
-                </div>
-              </Card>
-              
-              <Card className="p-6 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm border-nexus-blue/20">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold flex items-center text-white">
-                    <Clock className="mr-2 h-5 w-5 text-nexus-cyan" />
-                    历史记录
-                  </h2>
+
+            {/* 右侧音频预览区域 */}
+            <div className="space-y-6">
+              <Card className="bg-gray-800/50 border-cyan-500/20">
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-bold mb-4 text-white">音频预览</h3>
                   
-                  {history.length > 0 && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={handleClearHistory}
-                      className="border-red-500/50 text-red-400 hover:bg-red-500/10"
-                    >
-                      清空
-                    </Button>
-                  )}
-                </div>
-                
-                {history.length > 0 ? (
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                    {history.map((item) => (
-                      <div 
-                        key={item.id}
-                        className="p-3 rounded-lg bg-nexus-dark/40 border border-nexus-blue/10 hover:border-nexus-blue/30 transition-all"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="flex items-center">
-                            <div 
-                              className="w-6 h-6 rounded-full flex items-center justify-center mr-2"
-                              style={{ 
-                                backgroundColor: voiceOptions.find(v => v.id === item.voice)?.color || '#4F46E5' 
-                              }}
-                            >
-                              <Volume2 className="h-3 w-3 text-white" />
-                            </div>
-                            <span className="text-white font-medium text-sm">
-                              {voiceOptions.find(v => v.id === item.voice)?.name || item.voice}
-                            </span>
+                  {audioUrl ? (
+                    <div className="space-y-4">
+                      <div className="bg-gray-900/50 rounded-lg p-4">
+                        <div className="flex items-center mb-3">
+                          <div 
+                            className="w-8 h-8 rounded-full flex items-center justify-center mr-3"
+                            style={{ 
+                              backgroundColor: voiceOptions.find(v => v.id === selectedVoice)?.color || '#8B5CF6' 
+                            }}
+                          >
+                            <Volume2 className="h-4 w-4 text-white" />
                           </div>
-                          <span className="text-white/50 text-xs">{formatTime(item.timestamp)}</span>
+                          <div>
+                            <div className="text-white font-medium">
+                              {voiceOptions.find(v => v.id === selectedVoice)?.name || 'Voice'}
+                            </div>
+                            <div className="text-gray-400 text-xs">
+                              {voiceOptions.find(v => v.id === selectedVoice)?.description}
+                            </div>
+                          </div>
                         </div>
                         
-                        <p className="text-white/80 text-sm mt-1 line-clamp-2">{item.text}</p>
+                        <audio ref={audioRef} controls className="w-full mb-4" src={audioUrl}></audio>
                         
-                        {item.audioUrl && (
-                          <div className="mt-2 flex justify-end">
+                        <div className="flex justify-end">
+                          <Button 
+                            onClick={() => {
+                              toast({
+                                title: "下载开始",
+                                description: "语音文件下载已开始",
+                              });
+                            }} 
+                            className="bg-cyan-500 hover:bg-cyan-600"
+                          >
+                            <Download className="mr-2 h-4 w-4" />
+                            下载
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-64 bg-gray-900/50 rounded-lg flex items-center justify-center">
+                      <p className="text-gray-400">
+                        {loading ? '正在生成语音，请稍等...' : '尚未生成语音'}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gray-800/50 border-cyan-500/20">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-bold text-white">历史记录</h3>
+                    <Button 
+                      variant="ghost" 
+                      className="text-red-400 hover:text-red-300 text-sm bg-red-400/10 hover:bg-red-400/20"
+                    >
+                      清空记录
+                    </Button>
+                  </div>
+                  
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 mb-4">
+                    <p className="text-yellow-400 text-sm">
+                      生成记录提醒：后台正在处理，请等待下载。
+                    </p>
+                  </div>
+
+                  {history.length > 0 ? (
+                    <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                      {history.map((item) => (
+                        <div 
+                          key={item.id}
+                          className="bg-gray-900/50 rounded-lg p-3 border border-gray-700"
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex items-center">
+                              <div className="w-2 h-2 bg-cyan-400 rounded-full mr-2"></div>
+                              <span className="text-cyan-400 font-medium text-sm">
+                                {voiceOptions.find(v => v.id === item.voice)?.name || item.voice}
+                              </span>
+                            </div>
+                            <span className="text-gray-400 text-xs">{formatTime(item.timestamp)}</span>
+                          </div>
+                          
+                          <p className="text-white text-sm mb-2 line-clamp-2">{item.text}</p>
+                          
+                          <div className="flex justify-end">
                             <Button 
                               size="sm"
-                              variant="ghost"
-                              className="text-nexus-cyan hover:text-nexus-cyan/80 hover:bg-nexus-blue/10"
+                              className="bg-cyan-500 hover:bg-cyan-600 text-xs"
                               onClick={() => setAudioUrl(item.audioUrl)}
                             >
-                              <Play className="mr-1 h-3 w-3" /> 播放
+                              下载
                             </Button>
                           </div>
-                        )}
-                      </div>
-                    ))}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-gray-400">暂无历史记录</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gray-800/50 border-cyan-500/20">
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-bold text-white mb-4">语音特性</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
+                      <span className="text-white text-sm">自然流畅的语音合成，接近真人发音</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
+                      <span className="text-white text-sm">多种声音风格可选，满足不同场景需求</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
+                      <span className="text-white text-sm">支持长文本转语音转换，适合各种内容创作</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
+                      <span className="text-white text-sm">一键下载MP3格式音频，可用于多平台分享</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
+                      <span className="text-white text-sm">本地保存历史记录，方便重复使用和批量处理</span>
+                    </div>
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-24 text-white/50">
-                    <p>暂无历史记录</p>
-                  </div>
-                )}
+                </CardContent>
               </Card>
             </div>
           </div>
