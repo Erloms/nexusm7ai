@@ -77,7 +77,7 @@ const HeroSection = () => {
       </div>
 
       {/* 添加渐变以平滑过渡到下一部分 */}
-      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#101014] to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-[#101014] to-transparent" />
     </section>
   );
 };

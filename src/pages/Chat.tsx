@@ -58,16 +58,10 @@ const Chat = () => {
   const { user, checkPaymentStatus } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // 获取总额度使用情况（统一10个额度）
   const getTotalUsage = () => {
     if (!user?.id) return 0;
-    
-    const chatUsage = JSON.parse(localStorage.getItem(`nexusAi_chat_usage_${user.id}`) || '{"remaining": 10}');
-    const imageUsage = JSON.parse(localStorage.getItem(`nexusAi_image_usage_${user.id}`) || '{"remaining": 10}');
-    const voiceUsage = JSON.parse(localStorage.getItem(`nexusAi_voice_usage_${user.id}`) || '{"remaining": 10}');
-    
-    const totalUsed = (10 - chatUsage.remaining) + (10 - imageUsage.remaining) + (10 - voiceUsage.remaining);
-    return Math.min(totalUsed, 10);
+    const usage = JSON.parse(localStorage.getItem(`nexusAi_usage_${user.id}`) || '{"used": 0}');
+    return usage.used;
   };
 
   const remainingUsage = 10 - getTotalUsage();
@@ -84,21 +78,20 @@ const Chat = () => {
       return false;
     }
 
-    // 统一从总额度中扣除
     const currentUsed = getTotalUsage();
-    const newUsed = currentUsed + 1;
-    
-    // 更新到对应功能的本地存储
-    const storageKey = activeTab === 'chat' ? 'chat' : activeTab === 'image' ? 'image' : 'voice';
-    const currentStorage = JSON.parse(localStorage.getItem(`nexusAi_${storageKey}_usage_${user.id}`) || '{"remaining": 10}');
-    const newRemaining = Math.max(0, currentStorage.remaining - 1);
-    
-    localStorage.setItem(`nexusAi_${storageKey}_usage_${user.id}`, JSON.stringify({
-      remaining: newRemaining
-    }));
+    localStorage.setItem(`nexusAi_usage_${user.id}`, JSON.stringify({ used: currentUsed + 1 }));
 
     return true;
   };
+
+  useEffect(() => {
+    if (user?.id) {
+        const usage = localStorage.getItem(`nexusAi_usage_${user.id}`);
+        if (!usage) {
+            localStorage.setItem(`nexusAi_usage_${user.id}`, JSON.stringify({ used: 0 }));
+        }
+    }
+  }, [user?.id]);
 
   // 搜索功能
   const searchWeb = async (query: string): Promise<string> => {
@@ -359,7 +352,7 @@ const Chat = () => {
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden flex flex-col">
         <Navigation />
         
-        <div className="relative z-10 flex flex-col flex-grow max-w-6xl mx-auto px-4 w-full">
+        <div className="relative z-10 flex flex-col flex-grow max-w-6xl mx-auto px-4 w-full pt-8">
           {/* 顶部标题区 - 调整布局 */}
           <div className="text-center py-8">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2">

@@ -1,4 +1,3 @@
-
 import React, { ReactNode, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -15,58 +14,22 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // 获取总额度使用情况（10个总额度）
   const getTotalUsage = () => {
     if (!isAuthenticated || !user?.id) return 0;
-    
-    const chatUsage = JSON.parse(localStorage.getItem(`nexusAi_chat_usage_${user.id}`) || '{"remaining": 10}');
-    const imageUsage = JSON.parse(localStorage.getItem(`nexusAi_image_usage_${user.id}`) || '{"remaining": 10}');
-    const voiceUsage = JSON.parse(localStorage.getItem(`nexusAi_voice_usage_${user.id}`) || '{"remaining": 10}');
-    
-    const totalUsed = (10 - chatUsage.remaining) + (10 - imageUsage.remaining) + (10 - voiceUsage.remaining);
-    return Math.min(totalUsed, 10);
+    const usage = JSON.parse(localStorage.getItem(`nexusAi_usage_${user.id}`) || '{"used": 0}');
+    return usage.used;
   };
 
   const remainingUsage = 10 - getTotalUsage();
 
-  // Initialize usage when user logs in
   useEffect(() => {
     if (isAuthenticated && user?.id) {
-      const chatUsage = localStorage.getItem(`nexusAi_chat_usage_${user.id}`);
-      const imageUsage = localStorage.getItem(`nexusAi_image_usage_${user.id}`);
-      const voiceUsage = localStorage.getItem(`nexusAi_voice_usage_${user.id}`);
-      
-      if (!chatUsage) {
-        localStorage.setItem(`nexusAi_chat_usage_${user.id}`, JSON.stringify({ remaining: 10 }));
-      }
-      if (!imageUsage) {
-        localStorage.setItem(`nexusAi_image_usage_${user.id}`, JSON.stringify({ remaining: 10 }));
-      }
-      if (!voiceUsage) {
-        localStorage.setItem(`nexusAi_voice_usage_${user.id}`, JSON.stringify({ remaining: 10 }));
+      const usage = localStorage.getItem(`nexusAi_usage_${user.id}`);
+      if (!usage) {
+        localStorage.setItem(`nexusAi_usage_${user.id}`, JSON.stringify({ used: 0 }));
       }
     }
   }, [isAuthenticated, user?.id]);
-
-  // Function to be called when a feature is used
-  const decrementUsage = () => {
-    if (isAuthenticated && user?.id && !checkPaymentStatus()) {
-      if (remainingUsage <= 0) {
-        return false;
-      }
-      
-      // 从对应功能的存储中扣除1个额度
-      const currentUsage = JSON.parse(localStorage.getItem(`nexusAi_${featureType}_usage_${user.id}`) || '{"remaining": 10}');
-      const newRemaining = Math.max(0, currentUsage.remaining - 1);
-      
-      localStorage.setItem(`nexusAi_${featureType}_usage_${user.id}`, JSON.stringify({
-        remaining: newRemaining
-      }));
-      
-      return true;
-    }
-    return false;
-  };
 
   if (!isAuthenticated) {
     return (
@@ -122,7 +85,7 @@ const PaymentCheck = ({ children, featureType }: PaymentCheckProps) => {
   if (!checkPaymentStatus()) {
     return (
       <div className="w-full h-full">
-        {React.cloneElement(children as React.ReactElement, { decrementUsage })}
+        {children}
       </div>
     );
   }
