@@ -5,9 +5,10 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import AdminUserManagement from '@/components/AdminUserManagement';
 import AlipayConfig from '@/components/AlipayConfig';
+import PaymentRequests from '@/components/PaymentRequests';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Users, Settings, BarChart, CreditCard, Shield, Database } from 'lucide-react';
+import { Users, CreditCard, Shield, Database, Settings, BarChart } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface User {
@@ -27,7 +28,7 @@ const Admin = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
-  const [activeTab, setActiveTab] = useState('users');
+  const [activeTab, setActiveTab] = useState('overview');
 
   // Check if user is admin
   const isAdmin = user && user.email === 'morphy.realm@gmail.com';
@@ -71,13 +72,10 @@ const Admin = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'users':
-        return <AdminUserManagement users={users} setUsers={setUsers} />;
-      case 'alipay':
-        return <AlipayConfig />;
-      case 'statistics':
+      case 'overview':
         return (
-          <div className="space-y-6">
+          <div className="space-y-8">
+            {/* 数据概览 */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-nexus-dark/50 p-6 rounded-xl border border-nexus-blue/20">
                 <h3 className="text-lg font-bold text-nexus-cyan mb-2">总用户数</h3>
@@ -105,66 +103,44 @@ const Admin = () => {
                 <p className="text-sm text-white/60 mt-1">累计收入金额</p>
               </div>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-nexus-dark/50 p-6 rounded-xl border border-nexus-blue/20">
-                <h3 className="text-xl font-bold text-white mb-4">AI对话使用情况</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-white/70">总对话次数:</span>
-                    <span className="text-white font-bold">
-                      {users.reduce((sum, user) => sum + user.usage.chat, 0)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-white/70">平均每用户:</span>
-                    <span className="text-white font-bold">
-                      {users.length > 0 ? (users.reduce((sum, user) => sum + user.usage.chat, 0) / users.length).toFixed(1) : 0}
-                    </span>
-                  </div>
-                </div>
-              </div>
 
-              <div className="bg-nexus-dark/50 p-6 rounded-xl border border-nexus-blue/20">
-                <h3 className="text-xl font-bold text-white mb-4">AI图像使用情况</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-white/70">总生成次数:</span>
-                    <span className="text-white font-bold">
-                      {users.reduce((sum, user) => sum + user.usage.image, 0)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-white/70">平均每用户:</span>
-                    <span className="text-white font-bold">
-                      {users.length > 0 ? (users.reduce((sum, user) => sum + user.usage.image, 0) / users.length).toFixed(1) : 0}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-nexus-dark/50 p-6 rounded-xl border border-nexus-blue/20">
-                <h3 className="text-xl font-bold text-white mb-4">AI语音使用情况</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-white/70">总合成次数:</span>
-                    <span className="text-white font-bold">
-                      {users.reduce((sum, user) => sum + user.usage.voice, 0)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-white/70">平均每用户:</span>
-                    <span className="text-white font-bold">
-                      {users.length > 0 ? (users.reduce((sum, user) => sum + user.usage.voice, 0) / users.length).toFixed(1) : 0}
-                    </span>
-                  </div>
-                </div>
+            {/* 快速操作 */}
+            <div className="bg-nexus-dark/50 p-6 rounded-xl border border-nexus-blue/20">
+              <h3 className="text-xl font-bold text-white mb-4">快速操作</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Button
+                  onClick={() => setActiveTab('users')}
+                  className="bg-nexus-blue hover:bg-nexus-blue/80 flex items-center justify-center gap-2"
+                >
+                  <Users className="h-4 w-4" />
+                  用户管理
+                </Button>
+                <Button
+                  onClick={() => setActiveTab('payments')}
+                  className="bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2"
+                >
+                  <CreditCard className="h-4 w-4" />
+                  支付管理
+                </Button>
+                <Button
+                  onClick={() => setActiveTab('alipay')}
+                  className="bg-blue-600 hover:bg-blue-700 flex items-center justify-center gap-2"
+                >
+                  <Settings className="h-4 w-4" />
+                  支付宝配置
+                </Button>
               </div>
             </div>
           </div>
         );
-      default:
+      case 'users':
         return <AdminUserManagement users={users} setUsers={setUsers} />;
+      case 'payments':
+        return <PaymentRequests />;
+      case 'alipay':
+        return <AlipayConfig />;
+      default:
+        return null;
     }
   };
 
@@ -172,18 +148,31 @@ const Admin = () => {
     <div className="min-h-screen bg-nexus-dark flex flex-col">
       <Navigation />
       
-      <main className="flex-grow p-4 pt-16 md:p-8">
+      <main className="flex-grow p-4 pt-24 md:p-8 md:pt-24">
         <div className="w-full max-w-7xl mx-auto">
           <div className="flex items-center mb-8">
             <Shield className="mr-3 h-8 w-8 text-red-500" />
             <h1 className="text-3xl font-bold text-gradient">管理员控制台</h1>
             <span className="ml-4 px-3 py-1 bg-red-500/20 border border-red-500/30 rounded-full text-red-300 text-sm">
-              仅限管理员访问
+              管理员专用
             </span>
           </div>
           
           {/* Tab Navigation */}
           <div className="flex flex-wrap gap-2 mb-8">
+            <Button
+              variant={activeTab === 'overview' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('overview')}
+              className={`${
+                activeTab === 'overview' 
+                  ? 'bg-nexus-blue text-white' 
+                  : 'bg-transparent border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20'
+              }`}
+            >
+              <BarChart className="h-4 w-4 mr-2" />
+              概览
+            </Button>
+            
             <Button
               variant={activeTab === 'users' ? 'default' : 'outline'}
               onClick={() => setActiveTab('users')}
@@ -194,7 +183,20 @@ const Admin = () => {
               }`}
             >
               <Users className="h-4 w-4 mr-2" />
-              会员管理
+              用户管理
+            </Button>
+            
+            <Button
+              variant={activeTab === 'payments' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('payments')}
+              className={`${
+                activeTab === 'payments' 
+                  ? 'bg-nexus-blue text-white' 
+                  : 'bg-transparent border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20'
+              }`}
+            >
+              <CreditCard className="h-4 w-4 mr-2" />
+              支付管理
             </Button>
             
             <Button
@@ -206,21 +208,8 @@ const Admin = () => {
                   : 'bg-transparent border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20'
               }`}
             >
-              <CreditCard className="h-4 w-4 mr-2" />
-              支付宝MCP设置
-            </Button>
-            
-            <Button
-              variant={activeTab === 'statistics' ? 'default' : 'outline'}
-              onClick={() => setActiveTab('statistics')}
-              className={`${
-                activeTab === 'statistics' 
-                  ? 'bg-nexus-blue text-white' 
-                  : 'bg-transparent border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20'
-              }`}
-            >
-              <BarChart className="h-4 w-4 mr-2" />
-              数据统计
+              <Database className="h-4 w-4 mr-2" />
+              支付宝配置
             </Button>
           </div>
           
