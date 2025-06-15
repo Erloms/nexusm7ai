@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -228,10 +229,9 @@ const Payment = () => {
                 
                 <div className="text-center">
                   <p className="text-white font-bold mb-2">请使用支付宝扫码支付</p>
-                  <p className="text-white/70 text-sm mb-4">
-                    <span className="text-red-500 font-bold">重要：</span> 
-                    请在下方输入订单信息
-                  </p>
+                  <div className="text-gradient-gold text-4xl font-bold mb-4">
+                    ¥{planDetails[selectedPlan].total}
+                  </div>
                   
                   <div className="flex flex-col space-y-3 mb-4">
                     <div>
