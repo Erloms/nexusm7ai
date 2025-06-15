@@ -25,7 +25,7 @@ const Login = () => {
     <div className="min-h-screen bg-nexus-dark flex flex-col">
       <Navigation />
       
-      <div className="flex-grow flex items-center justify-center px-4 py-20">
+      <div className="flex-grow flex items-center justify-center px-4 py-32">
         <div className="w-full max-w-md">
           <div className="card-glowing p-8">
             <h1 className="text-3xl font-bold text-center mb-8 text-gradient">登录 Nexus AI</h1>

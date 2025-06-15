@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -196,7 +195,7 @@ const Voice = () => {
     <div className="min-h-screen bg-nexus-dark flex flex-col">
       <Navigation />
       
-      <main className="flex-grow p-4 pt-20 md:p-8">
+      <main className="flex-grow p-4 pt-32 md:p-8 md:pt-32">
         <div className="container mx-auto max-w-7xl">
           {/* 页面标题 */}
           <div className="w-full text-center mb-8">
@@ -310,7 +309,7 @@ const Voice = () => {
                     <Info className="h-5 w-5 text-nexus-cyan mr-2 flex-shrink-0 mt-0.5" />
                     <p className="text-sm text-white/80">
                       {exactReading
-                        ? "严格朗读模式已开启，AI将按原文精确朗读，不添加额外语气或演绎。"
+                        ? "严格朗读模式已开启，AI将按原文精确朗读，不添加任何语气或演绎。"
                         : "智能演绎模式已开启，AI可能会对文本进行自然语气调整，使朗读更加自然流畅。"}
                     </p>
                   </div>

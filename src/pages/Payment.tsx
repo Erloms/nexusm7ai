@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -118,7 +117,7 @@ const Payment = () => {
     <div className="min-h-screen bg-nexus-dark flex flex-col">
       <Navigation />
       
-      <div className="flex-grow flex items-center justify-center px-4 py-20">
+      <div className="flex-grow flex items-center justify-center px-4 py-32">
         <div className="w-full max-w-4xl">
           <div className="card-glowing p-8">
             <h1 className="text-3xl font-bold text-center mb-8 text-gradient">Nexus AI 会员支付</h1>
