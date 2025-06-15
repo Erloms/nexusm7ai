@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
@@ -5,8 +6,8 @@ import { MessageSquare, Image, Volume2 } from 'lucide-react';
 
 const HeroSection = () => {
   return (
-    <section className="flex flex-col items-center justify-center px-8 py-32 relative overflow-hidden bg-gradient-to-br from-purple-950 via-black to-blue-950">
-      {/* 增强的星空背景 */}
+    <section className="flex flex-col items-center justify-center px-8 py-20 relative overflow-hidden min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800">
+      {/* 星空背景 */}
       <div className="absolute inset-0">
         <div className="absolute inset-0" style={{
           background: `
@@ -22,62 +23,61 @@ const HeroSection = () => {
         }}></div>
       </div>
 
-      {/* 浮动装饰元素 */}
-      <div className="absolute top-32 left-10 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-2xl transform rotate-12 animate-pulse"></div>
-      <div className="absolute top-52 right-20 w-24 h-24 bg-gradient-to-br from-green-500/20 to-cyan-500/20 rounded-xl transform -rotate-6 animate-pulse" style={{animationDelay: '1s'}}></div>
-      <div className="absolute bottom-40 left-20 w-20 h-20 bg-gradient-to-br from-pink-500/20 to-red-500/20 rounded-lg transform rotate-45 animate-pulse" style={{animationDelay: '2s'}}></div>
-      <div className="absolute bottom-20 right-40 w-28 h-28 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-2xl transform -rotate-12 animate-pulse" style={{animationDelay: '0.5s'}}></div>
-
-      {/* 主要内容 - 增加顶部间距，整体下调 */}
-      <div className="relative z-10 max-w-6xl mx-auto text-center px-4 mt-16">
-        <div className="mb-20 animate-fade-in">
-          <h1 className="text-4xl md:text-6xl font-bold mb-8 leading-tight">
-            <span className="block bg-gradient-to-r from-white via-gray-200 to-white bg-clip-text text-transparent">
-              实时生成
-            </span>
-            <span className="block bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent mt-8 text-2xl md:text-4xl">
-              人工智能操场
+      {/* 主要内容 */}
+      <div className="relative z-10 max-w-6xl mx-auto text-center px-4">
+        <div className="mb-16 animate-fade-in">
+          <h1 className="text-6xl md:text-8xl font-bold mb-8 leading-tight">
+            <span className="block bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+              AI
             </span>
           </h1>
-          <p className="text-lg md:text-xl text-gray-300 mb-16 max-w-3xl mx-auto leading-relaxed">
-            通过以下方式体验 AI 的强大功能
+          <p className="text-2xl md:text-3xl text-gray-300 mb-4 max-w-3xl mx-auto leading-relaxed">
+            探索未来 · 释放创造力
           </p>
         </div>
-        
-        <div className="flex flex-col sm:flex-row gap-6 justify-center mb-24 animate-scale-in">
-          <Button size="lg" asChild className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 hover:from-purple-700 hover:via-blue-700 hover:to-cyan-700 text-white text-lg px-10 py-6 rounded-2xl shadow-2xl transform hover:scale-105 transition-all duration-300 border-0">
-            <Link to="/chat">
-              <span className="relative z-10 flex items-center text-xl">
-                ✨ 进入 Playground →
-              </span>
-            </Link>
-          </Button>
-        </div>
 
-        {/* 功能卡片 - 增加更多间距 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-24 max-w-4xl mx-auto">
-          <div className="bg-gray-900/40 backdrop-blur-md rounded-2xl p-8 border border-gray-700/30 hover:border-purple-500/50 transition-all duration-300 hover:bg-gray-900/60">
-            <MessageSquare className="h-12 w-12 text-purple-400 mb-6 mx-auto" />
-            <h3 className="text-xl font-semibold text-white mb-4">互动聊天</h3>
-            <p className="text-gray-400 text-sm">与AI助手互动，进行自然对话和创意内容生成</p>
-          </div>
-          
-          <div className="bg-gray-900/40 backdrop-blur-md rounded-2xl p-8 border border-gray-700/30 hover:border-blue-500/50 transition-all duration-300 hover:bg-gray-900/60">
-            <Image className="h-12 w-12 text-blue-400 mb-6 mx-auto" />
-            <h3 className="text-xl font-semibold text-white mb-4">图像生成</h3>
-            <p className="text-gray-400 text-sm">利用AI最先进的图像生成功能，将您的想法转化为令人惊叹的视觉效果</p>
-          </div>
-          
-          <div className="bg-gray-900/40 backdrop-blur-md rounded-2xl p-8 border border-gray-700/30 hover:border-cyan-500/50 transition-all duration-300 hover:bg-gray-900/60">
-            <Volume2 className="h-12 w-12 text-cyan-400 mb-6 mx-auto" />
-            <h3 className="text-xl font-semibold text-white mb-4">语音响应</h3>
-            <p className="text-gray-400 text-sm">提出问题并接收来自AI的音频响应，带来更自然的交互体验</p>
-          </div>
+        {/* 功能卡片 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-16">
+          <Link to="/chat">
+            <div className="bg-gray-900/60 backdrop-blur-md rounded-2xl p-12 border border-cyan-500/30 hover:border-cyan-400/60 transition-all duration-300 hover:bg-gray-900/80 hover:scale-105 cursor-pointer group">
+              <MessageSquare className="h-16 w-16 text-cyan-400 mb-8 mx-auto group-hover:scale-110 transition-transform" />
+              <h3 className="text-2xl font-bold text-white mb-6">AI智能对话</h3>
+              <p className="text-gray-300 text-base leading-relaxed mb-8">
+                强大的AI助手助您办理各种任务，可以回答问题、提供创意建议、编写文本，基于前沿深度学习技术构建，完全免费，无限制使用。
+              </p>
+              <div className="inline-block px-8 py-3 bg-cyan-500/20 border border-cyan-400 rounded-lg text-cyan-400 font-medium hover:bg-cyan-500/30 transition-colors">
+                开始对话
+              </div>
+            </div>
+          </Link>
+
+          <Link to="/image">
+            <div className="bg-gray-900/60 backdrop-blur-md rounded-2xl p-12 border border-pink-500/30 hover:border-pink-400/60 transition-all duration-300 hover:bg-gray-900/80 hover:scale-105 cursor-pointer group">
+              <Image className="h-16 w-16 text-pink-400 mb-8 mx-auto group-hover:scale-110 transition-transform" />
+              <h3 className="text-2xl font-bold text-white mb-6">AI图像生成</h3>
+              <p className="text-gray-300 text-base leading-relaxed mb-8">
+                将您的想法转化为惊艳艺术，只需输入文本描述，AI将为您创造令人印象深刻的图像。支持多种风格和高分辨率导出。
+              </p>
+              <div className="inline-block px-8 py-3 bg-pink-500/20 border border-pink-400 rounded-lg text-pink-400 font-medium hover:bg-pink-500/30 transition-colors">
+                生成图像
+              </div>
+            </div>
+          </Link>
+
+          <Link to="/voice">
+            <div className="bg-gray-900/60 backdrop-blur-md rounded-2xl p-12 border border-purple-500/30 hover:border-purple-400/60 transition-all duration-300 hover:bg-gray-900/80 hover:scale-105 cursor-pointer group">
+              <Volume2 className="h-16 w-16 text-purple-400 mb-8 mx-auto group-hover:scale-110 transition-transform" />
+              <h3 className="text-2xl font-bold text-white mb-6">AI语音合成</h3>
+              <p className="text-gray-300 text-base leading-relaxed mb-8">
+                文字转换为自然真实的语音，支持多种音色和语调，适用于创作内容、教育材料或个人使用。
+              </p>
+              <div className="inline-block px-8 py-3 bg-purple-500/20 border border-purple-400 rounded-lg text-purple-400 font-medium hover:bg-purple-500/30 transition-colors">
+                转换语音
+              </div>
+            </div>
+          </Link>
         </div>
       </div>
-
-      {/* 添加渐变以平滑过渡到下一部分 */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#101014] to-transparent" />
     </section>
   );
 };

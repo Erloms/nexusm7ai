@@ -1,21 +1,20 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
-import Footer from '@/components/Footer';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { 
   Volume2, 
-  Play, 
   Download, 
-  CheckCircle2
+  CheckCircle2,
+  ArrowLeft
 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Link } from 'react-router-dom';
 
 interface VoiceOption {
   id: string;
@@ -43,7 +42,7 @@ const Voice = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Voice options - expanded to 16 options matching the screenshot
+  // Voice options - expanded to 15 options matching the screenshot
   const voiceOptions: VoiceOption[] = [
     { id: 'alloy', name: 'Alloy', description: '平衡中性', color: '#8B5CF6' },
     { id: 'echo', name: 'Echo', description: '深沉有力', color: '#6366F1' },
@@ -160,50 +159,53 @@ const Voice = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0f1e] text-white">
+    <div className="min-h-screen bg-white">
       <Navigation />
       
-      <main className="pt-20 px-4">
+      <main className="pt-24 px-6">
         <div className="max-w-7xl mx-auto">
-          {/* 标题区域 */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+          {/* 标题区域 - 更宽敞 */}
+          <div className="text-center mb-16">
+            <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
               AI 文本转音频
             </h1>
-            <p className="text-gray-400 mb-6">
-              输入文字，选择语音风格，一键转换字转换为自然流畅的语音。<br />
+            <p className="text-gray-600 mb-8 text-lg">
+              输入文字，选择语音风格，一键转换为自然流畅的语音。<br />
               支持多种音色音调，帮您创建专业水准的音频内容。
             </p>
-            <Button className="bg-cyan-500 hover:bg-cyan-600 text-white px-6">
-              免费体验
+            <Button asChild className="bg-gray-800 hover:bg-gray-700 text-white px-8 py-3">
+              <Link to="/">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                返回主页
+              </Link>
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* 左侧控制面板 */}
-            <div className="space-y-6">
-              <Card className="bg-gray-800/50 border-cyan-500/20">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-bold mb-6 text-white">语音生成</h3>
+            <div className="space-y-8">
+              <Card className="bg-gray-50 border-gray-200">
+                <CardContent className="p-8">
+                  <h3 className="text-2xl font-bold mb-8 text-gray-800">语音生成</h3>
                   
-                  <div className="mb-6">
-                    <h4 className="text-cyan-400 font-medium mb-4">选择语音风格</h4>
-                    <p className="text-gray-400 text-sm mb-4">
+                  <div className="mb-8">
+                    <h4 className="text-cyan-600 font-medium mb-6 text-lg">选择语音风格</h4>
+                    <p className="text-gray-500 text-sm mb-6">
                       每种风格都有其独特的音色和表现力，选择最适合您内容的声音
                     </p>
                     
                     <RadioGroup 
                       value={selectedVoice} 
                       onValueChange={setSelectedVoice}
-                      className="grid grid-cols-3 gap-3"
+                      className="grid grid-cols-3 gap-4"
                     >
                       {voiceOptions.map((voice) => (
                         <div
                           key={voice.id}
-                          className={`relative cursor-pointer p-3 rounded-lg border transition-all ${
+                          className={`relative cursor-pointer p-4 rounded-lg border transition-all ${
                             selectedVoice === voice.id
-                              ? 'border-cyan-400 bg-cyan-400/10'
-                              : 'border-gray-600 bg-gray-800/40 hover:bg-gray-700/40'
+                              ? 'border-cyan-400 bg-cyan-50'
+                              : 'border-gray-200 bg-white hover:bg-gray-50'
                           }`}
                         >
                           <RadioGroupItem
@@ -220,45 +222,45 @@ const Voice = () => {
                                 <CheckCircle2 className="h-4 w-4 text-white" />
                               </div>
                             )}
-                            <div className="text-white font-medium text-sm">{voice.name}</div>
-                            <div className="text-gray-400 text-xs">{voice.description}</div>
+                            <div className="text-gray-800 font-medium text-sm">{voice.name}</div>
+                            <div className="text-gray-500 text-xs">{voice.description}</div>
                           </label>
                         </div>
                       ))}
                     </RadioGroup>
                   </div>
 
-                  <div className="mb-6">
-                    <Label htmlFor="text-input" className="text-cyan-400 font-medium mb-3 block">输入文本</Label>
+                  <div className="mb-8">
+                    <Label htmlFor="text-input" className="text-cyan-600 font-medium mb-4 block text-lg">输入文本</Label>
                     <Textarea
                       id="text-input"
                       value={text}
                       onChange={(e) => setText(e.target.value)}
                       placeholder="使用中国官方说明语法，如测试AI视频合成，可以直接文字转换前缀：请保持文本"
-                      className="min-h-[150px] bg-gray-900/50 border-gray-600 text-white placeholder-gray-400 focus:border-cyan-400"
+                      className="min-h-[180px] bg-white border-gray-300 text-gray-800 placeholder-gray-500 focus:border-cyan-400 text-base"
                     />
-                    <div className="flex justify-between items-center mt-2">
-                      <p className="text-gray-400 text-sm">字符数: {text.length}</p>
-                      <p className="text-gray-400 text-sm">色彩节律: 不调整</p>
+                    <div className="flex justify-between items-center mt-3">
+                      <p className="text-gray-500 text-sm">字符数: {text.length}</p>
+                      <p className="text-gray-500 text-sm">色彩节律: 不调整</p>
                     </div>
                   </div>
 
-                  <div className="flex justify-between mb-6">
+                  <div className="flex justify-between mb-8">
                     <Button
-                      onClick={handleGenerateVoice}
+                      onClick={handleGenerateVoice} // Replace with actual function
                       disabled={loading || !text.trim()}
-                      className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-2"
+                      className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-10 py-3 text-base"
                     >
                       {loading ? "生成中..." : "生成语音"}
                     </Button>
-                    <Button variant="ghost" className="text-gray-400 hover:text-white">
+                    <Button variant="ghost" className="text-gray-500 hover:text-gray-700">
                       按住对话 (Ctrl + ↵ Enter)
                     </Button>
                   </div>
 
-                  <div className="bg-gray-900/50 rounded-lg p-4">
-                    <h4 className="text-white font-medium mb-2">使用小技巧</h4>
-                    <ul className="text-gray-400 text-sm space-y-1 list-disc pl-5">
+                  <div className="bg-gray-100 rounded-lg p-6">
+                    <h4 className="text-gray-800 font-medium mb-3 text-base">使用小技巧</h4>
+                    <ul className="text-gray-600 text-sm space-y-2 list-disc pl-5">
                       <li>输入适当的可明确描述的音频的简话和语调变化</li>
                       <li>不同音频风格适合不同场景，可以尝试多种风格找到最适合的</li>
                       <li>大段文本可以分为多个短段，生成后合并，效果更佳</li>
@@ -269,35 +271,35 @@ const Voice = () => {
               </Card>
             </div>
 
-            {/* 右侧音频预览区域 */}
-            <div className="space-y-6">
-              <Card className="bg-gray-800/50 border-cyan-500/20">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-bold mb-4 text-white">音频预览</h3>
+            {/* 右侧音频预览和历史区域 */}
+            <div className="space-y-8">
+              <Card className="bg-gray-50 border-gray-200">
+                <CardContent className="p-8">
+                  <h3 className="text-2xl font-bold mb-6 text-gray-800">音频预览</h3>
                   
                   {audioUrl ? (
-                    <div className="space-y-4">
-                      <div className="bg-gray-900/50 rounded-lg p-4">
-                        <div className="flex items-center mb-3">
+                    <div className="space-y-6">
+                      <div className="bg-white rounded-lg p-6 border border-gray-200">
+                        <div className="flex items-center mb-4">
                           <div 
-                            className="w-8 h-8 rounded-full flex items-center justify-center mr-3"
+                            className="w-10 h-10 rounded-full flex items-center justify-center mr-4"
                             style={{ 
                               backgroundColor: voiceOptions.find(v => v.id === selectedVoice)?.color || '#8B5CF6' 
                             }}
                           >
-                            <Volume2 className="h-4 w-4 text-white" />
+                            <Volume2 className="h-5 w-5 text-white" />
                           </div>
                           <div>
-                            <div className="text-white font-medium">
+                            <div className="text-gray-800 font-medium text-base">
                               {voiceOptions.find(v => v.id === selectedVoice)?.name || 'Voice'}
                             </div>
-                            <div className="text-gray-400 text-xs">
+                            <div className="text-gray-500 text-sm">
                               {voiceOptions.find(v => v.id === selectedVoice)?.description}
                             </div>
                           </div>
                         </div>
                         
-                        <audio ref={audioRef} controls className="w-full mb-4" src={audioUrl}></audio>
+                        <audio ref={audioRef} controls className="w-full mb-6" src={audioUrl}></audio>
                         
                         <div className="flex justify-end">
                           <Button 
@@ -316,8 +318,8 @@ const Voice = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="h-64 bg-gray-900/50 rounded-lg flex items-center justify-center">
-                      <p className="text-gray-400">
+                    <div className="h-80 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                      <p className="text-gray-500 text-base">
                         {loading ? '正在生成语音，请稍等...' : '尚未生成语音'}
                       </p>
                     </div>
@@ -325,42 +327,42 @@ const Voice = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gray-800/50 border-cyan-500/20">
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-bold text-white">历史记录</h3>
+              <Card className="bg-gray-50 border-gray-200">
+                <CardContent className="p-8">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-2xl font-bold text-gray-800">历史记录</h3>
                     <Button 
                       variant="ghost" 
-                      className="text-red-400 hover:text-red-300 text-sm bg-red-400/10 hover:bg-red-400/20"
+                      className="text-red-500 hover:text-red-600 text-sm bg-red-50 hover:bg-red-100"
                     >
                       清空记录
                     </Button>
                   </div>
                   
-                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 mb-4">
-                    <p className="text-yellow-400 text-sm">
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                    <p className="text-yellow-600 text-sm">
                       生成记录提醒：后台正在处理，请等待下载。
                     </p>
                   </div>
 
                   {history.length > 0 ? (
-                    <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                    <div className="space-y-4 max-h-[400px] overflow-y-auto">
                       {history.map((item) => (
                         <div 
                           key={item.id}
-                          className="bg-gray-900/50 rounded-lg p-3 border border-gray-700"
+                          className="bg-white rounded-lg p-4 border border-gray-200"
                         >
-                          <div className="flex justify-between items-start mb-2">
+                          <div className="flex justify-between items-start mb-3">
                             <div className="flex items-center">
-                              <div className="w-2 h-2 bg-cyan-400 rounded-full mr-2"></div>
-                              <span className="text-cyan-400 font-medium text-sm">
+                              <div className="w-3 h-3 bg-cyan-400 rounded-full mr-3"></div>
+                              <span className="text-cyan-600 font-medium text-sm">
                                 {voiceOptions.find(v => v.id === item.voice)?.name || item.voice}
                               </span>
                             </div>
-                            <span className="text-gray-400 text-xs">{formatTime(item.timestamp)}</span>
+                            <span className="text-gray-500 text-xs">{formatTime(item.timestamp)}</span>
                           </div>
                           
-                          <p className="text-white text-sm mb-2 line-clamp-2">{item.text}</p>
+                          <p className="text-gray-800 text-sm mb-3 line-clamp-2">{item.text}</p>
                           
                           <div className="flex justify-end">
                             <Button 
@@ -375,46 +377,16 @@ const Voice = () => {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8">
-                      <p className="text-gray-400">暂无历史记录</p>
+                    <div className="text-center py-12">
+                      <p className="text-gray-500">暂无历史记录</p>
                     </div>
                   )}
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gray-800/50 border-cyan-500/20">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-bold text-white mb-4">语音特性</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
-                      <span className="text-white text-sm">自然流畅的语音合成，接近真人发音</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
-                      <span className="text-white text-sm">多种声音风格可选，满足不同场景需求</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
-                      <span className="text-white text-sm">支持长文本转语音转换，适合各种内容创作</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
-                      <span className="text-white text-sm">一键下载MP3格式音频，可用于多平台分享</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
-                      <span className="text-white text-sm">本地保存历史记录，方便重复使用和批量处理</span>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             </div>
           </div>
         </div>
       </main>
-      
-      <Footer />
     </div>
   );
 };
