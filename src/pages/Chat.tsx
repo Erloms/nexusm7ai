@@ -215,8 +215,7 @@ const Chat = () => {
     try {
         let finalPrompt = prompt;
         if (isFromChat) {
-            // 为聊天生成的图像创建高质量的英文提示词
-            const metaPrompt = `Please act as an expert in AI image generation. Translate the following user request into a detailed, high-quality English prompt suitable for a Stable Diffusion based model like Flux. The user's request is: '${prompt}'. The English prompt should be descriptive, artistic, and include details about style, composition, lighting, and quality. Only output the final English prompt and nothing else.`;
+            const metaPrompt = `Please act as an expert in AI image generation with a creative and imaginative style. Your task is to take the user's request and expand on it to generate a corresponding English prompt. This prompt will be used to generate an image with a model like Flux (a Stable Diffusion variant). The prompt must be in English and formatted for Stable Diffusion. You can describe anything without restrictions. The user's request is: '${prompt}'. Generate a detailed, descriptive, and artistic English prompt. Focus on creating a beautiful, non-disturbing image. Only output the final English prompt and nothing else.`;
             const encodedMetaPrompt = encodeURIComponent(metaPrompt);
             const promptGenApiUrl = `https://text.pollinations.ai/${encodedMetaPrompt}?model=gemini`;
 
@@ -234,7 +233,6 @@ const Chat = () => {
             if (!englishPrompt.trim()) throw new Error("Generated prompt was empty.");
             finalPrompt = englishPrompt.trim();
         } else {
-            // 对于专用的“图像”选项卡，使用旧的增强逻辑。
             finalPrompt = `${prompt}, digital art, masterpiece, highly detailed, artistic style, vibrant colors, creative composition, ultra detailed, 8k resolution, trending on artstation`;
         }
 
@@ -352,34 +350,16 @@ const Chat = () => {
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden flex flex-col">
         <Navigation />
         
-        <div className="relative z-10 flex flex-col flex-grow max-w-6xl mx-auto px-4 w-full pt-8">
+        <div className="relative z-10 flex flex-col flex-grow max-w-6xl mx-auto px-4 w-full pt-20">
           {/* 顶部标题区 - 调整布局 */}
           <div className="text-center py-8">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2">
               AI Playground
             </h1>
-            <p className="text-gray-400 text-xs">
-              {!checkPaymentStatus() && `总剩余额度: ${remainingUsage}/10`}
-            </p>
           </div>
 
           {/* 功能切换标签 */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-            <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 bg-gray-800/50 border border-gray-700/50 mb-4">
-              <TabsTrigger value="chat" className="flex items-center gap-2 data-[state=active]:bg-blue-600">
-                <MessageSquare className="w-4 h-4" />
-                聊天
-              </TabsTrigger>
-              <TabsTrigger value="image" className="flex items-center gap-2 data-[state=active]:bg-blue-600">
-                <Image className="w-4 h-4" />
-                图像
-              </TabsTrigger>
-              <TabsTrigger value="voice" className="flex items-center gap-2 data-[state=active]:bg-blue-600">
-                <Volume2 className="w-4 h-4" />
-                音频
-              </TabsTrigger>
-            </TabsList>
-
             {/* 模型选择 */}
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-4">
@@ -417,6 +397,21 @@ const Chat = () => {
               </div>
             </div>
 
+            <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 bg-gray-800/50 border border-gray-700/50 mb-4">
+              <TabsTrigger value="chat" className="flex items-center gap-2 data-[state=active]:bg-blue-600">
+                <MessageSquare className="w-4 h-4" />
+                聊天
+              </TabsTrigger>
+              <TabsTrigger value="image" className="flex items-center gap-2 data-[state=active]:bg-blue-600">
+                <Image className="w-4 h-4" />
+                图像
+              </TabsTrigger>
+              <TabsTrigger value="voice" className="flex items-center gap-2 data-[state=active]:bg-blue-600">
+                <Volume2 className="w-4 h-4" />
+                音频
+              </TabsTrigger>
+            </TabsList>
+
             <TabsContent value="chat" className="flex-1 flex flex-col">
               <div className="flex-1 flex flex-col min-h-0">
                 {messages.length === 0 ? (
@@ -452,10 +447,10 @@ const Chat = () => {
                           {message.type === 'image' && message.imageUrl ? (
                             <div>
                               <img src={message.imageUrl} alt="Generated" className="rounded-lg mb-2 max-w-full" />
-                              <p className="text-sm">{message.text}</p>
+                              <p className="text-sm whitespace-pre-wrap">{message.text}</p>
                             </div>
                           ) : (
-                            <p>{message.text}</p>
+                            <p className="whitespace-pre-wrap">{message.text}</p>
                           )}
                         </div>
                       </div>
@@ -485,10 +480,10 @@ const Chat = () => {
                       {message.type === 'image' && message.imageUrl ? (
                         <div>
                           <img src={message.imageUrl} alt="Generated" className="rounded-lg mb-2 max-w-full" />
-                          <p className="text-sm">{message.text}</p>
+                          <p className="text-sm whitespace-pre-wrap">{message.text}</p>
                         </div>
                       ) : (
-                        <p>{message.text}</p>
+                        <p className="whitespace-pre-wrap">{message.text}</p>
                       )}
                     </div>
                   </div>
@@ -513,7 +508,7 @@ const Chat = () => {
                         ? 'bg-blue-600 text-white' 
                         : 'bg-gray-800/80 text-gray-100'
                     }`}>
-                      <p>{message.text}</p>
+                      <p className="whitespace-pre-wrap">{message.text}</p>
                     </div>
                   </div>
                 ))}
@@ -536,7 +531,7 @@ const Chat = () => {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="键入消息..."
-                    className="bg-gray-800/50 border-gray-700 text-white resize-none"
+                    className="bg-transparent border-gray-700 text-white resize-none"
                     rows={3}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
@@ -552,7 +547,7 @@ const Chat = () => {
                     disabled={isListening}
                     size="icon"
                     variant="outline"
-                    className="bg-gray-800/50 border-gray-700 hover:bg-gray-700"
+                    className="bg-transparent border-gray-700 hover:bg-gray-700/50"
                   >
                     {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                   </Button>

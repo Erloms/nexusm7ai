@@ -5,7 +5,7 @@ import { MessageSquare, Image, Volume2 } from 'lucide-react';
 
 const HeroSection = () => {
   return (
-    <section className="min-h-screen flex flex-col items-center justify-center px-8 py-32 relative overflow-hidden bg-gradient-to-br from-purple-950 via-black to-blue-950">
+    <section className="flex flex-col items-center justify-center px-8 py-32 relative overflow-hidden bg-gradient-to-br from-purple-950 via-black to-blue-950">
       {/* 增强的星空背景 */}
       <div className="absolute inset-0">
         <div className="absolute inset-0" style={{
@@ -55,7 +55,7 @@ const HeroSection = () => {
         </div>
 
         {/* 功能卡片 - 增加更多间距 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-32 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-24 max-w-4xl mx-auto">
           <div className="bg-gray-900/40 backdrop-blur-md rounded-2xl p-8 border border-gray-700/30 hover:border-purple-500/50 transition-all duration-300 hover:bg-gray-900/60">
             <MessageSquare className="h-12 w-12 text-purple-400 mb-6 mx-auto" />
             <h3 className="text-xl font-semibold text-white mb-4">互动聊天</h3>
@@ -77,7 +77,7 @@ const HeroSection = () => {
       </div>
 
       {/* 添加渐变以平滑过渡到下一部分 */}
-      <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-[#101014] to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#101014] to-transparent" />
     </section>
   );
 };
