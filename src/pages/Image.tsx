@@ -308,18 +308,18 @@ const Image = ({ decrementUsage }: ImageProps) => {
       <Navigation />
       
       <PaymentCheck featureType="image">
-        <main className="flex-grow p-4 pt-16 md:p-8">
+        <main className="flex-grow p-8 pt-48 md:p-16 md:pt-48">
           <div className="w-full max-w-7xl mx-auto">
-            <div className="flex flex-col lg:flex-row gap-6 mb-8">
-              <div className="w-full lg:w-1/2 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-5">
-                <h2 className="text-2xl font-bold mb-6 flex items-center text-white">
+            <div className="flex flex-col lg:flex-row gap-12 mb-16">
+              <div className="w-full lg:w-1/2 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-8">
+                <h2 className="text-2xl font-bold mb-12 flex items-center text-white">
                   <Sparkles className="mr-2 h-6 w-6 text-nexus-cyan" />
                   AI 图像生成
                 </h2>
                 
-                <div className="space-y-6">
+                <div className="space-y-8">
                   <div>
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-4">
                       <label htmlFor="prompt" className="block text-sm font-medium text-white">
                         提示词
                       </label>
@@ -360,7 +360,7 @@ const Image = ({ decrementUsage }: ImageProps) => {
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
                       placeholder="描述您想要生成的图像，例如：a beautiful fantasy landscape with mountains and lakes, digital art style"
-                      className="min-h-[100px] bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
+                      className="min-h-[120px] bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
                     />
                     <input
                       ref={fileInputRef}
@@ -372,7 +372,7 @@ const Image = ({ decrementUsage }: ImageProps) => {
                   </div>
                   
                   <div>
-                    <label htmlFor="negative-prompt" className="block text-sm font-medium text-white mb-2">
+                    <label htmlFor="negative-prompt" className="block text-sm font-medium text-white mb-4">
                       负面提示词
                     </label>
                     <Textarea
@@ -380,12 +380,12 @@ const Image = ({ decrementUsage }: ImageProps) => {
                       value={negativePrompt}
                       onChange={(e) => setNegativePrompt(e.target.value)}
                       placeholder="描述您不希望在图像中出现的元素"
-                      className="min-h-[80px] bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
+                      className="min-h-[100px] bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
                     />
                   </div>
                   
                   <div>
-                    <label htmlFor="model" className="block text-sm font-medium text-white mb-2">
+                    <label htmlFor="model" className="block text-sm font-medium text-white mb-4">
                       选择模型
                     </label>
                     <Select value={selectedModel} onValueChange={setSelectedModel}>
@@ -409,9 +409,9 @@ const Image = ({ decrementUsage }: ImageProps) => {
                     </Select>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <label htmlFor="width" className="block text-sm font-medium text-white mb-2">
+                      <label htmlFor="width" className="block text-sm font-medium text-white mb-4">
                         宽度
                       </label>
                       <Input
@@ -423,7 +423,7 @@ const Image = ({ decrementUsage }: ImageProps) => {
                       />
                     </div>
                     <div>
-                      <label htmlFor="height" className="block text-sm font-medium text-white mb-2">
+                      <label htmlFor="height" className="block text-sm font-medium text-white mb-4">
                         高度
                       </label>
                       <Input
@@ -437,7 +437,7 @@ const Image = ({ decrementUsage }: ImageProps) => {
                   </div>
                   
                   <div>
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-4">
                       <label htmlFor="steps" className="block text-sm font-medium text-white">
                         步数: {steps}
                       </label>
@@ -450,12 +450,12 @@ const Image = ({ decrementUsage }: ImageProps) => {
                       step={1}
                       value={[steps]}
                       onValueChange={(value) => setSteps(value[0])}
-                      className="py-4"
+                      className="py-6"
                     />
                   </div>
                   
                   <div>
-                    <label htmlFor="seed" className="block text-sm font-medium text-white mb-2">
+                    <label htmlFor="seed" className="block text-sm font-medium text-white mb-4">
                       种子值 (留空为随机)
                     </label>
                     <div className="flex gap-2">
@@ -474,14 +474,14 @@ const Image = ({ decrementUsage }: ImageProps) => {
                         <RefreshCw className="h-4 w-4" />
                       </Button>
                     </div>
-                    <p className="text-xs text-white/60 mt-1">使用相同的种子值可以生成相似的图像</p>
+                    <p className="text-xs text-white/60 mt-2">使用相同的种子值可以生成相似的图像</p>
                   </div>
 
-                  <div className="mt-6">
+                  <div className="mt-12">
                     <Button 
                       onClick={handleGenerateImage} 
                       disabled={loading || !prompt.trim()}
-                      className="w-full bg-nexus-blue hover:bg-nexus-blue/80 text-white py-6"
+                      className="w-full bg-nexus-blue hover:bg-nexus-blue/80 text-white py-8"
                     >
                       {loading ? (
                         <>
@@ -499,23 +499,23 @@ const Image = ({ decrementUsage }: ImageProps) => {
                 </div>
               </div>
               
-              <div className="w-full lg:w-1/2 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-5 flex flex-col">
-                <h2 className="text-2xl font-bold mb-4 flex items-center text-white">
+              <div className="w-full lg:w-1/2 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-8 flex flex-col">
+                <h2 className="text-2xl font-bold mb-8 flex items-center text-white">
                   <ImageIcon className="mr-2 h-6 w-6 text-nexus-cyan" />
                   图像预览
                 </h2>
                 
-                <div className="flex-grow flex items-center justify-center bg-nexus-dark/40 rounded-lg border border-nexus-blue/20 overflow-hidden min-h-[400px]">
+                <div className="flex-grow flex items-center justify-center bg-nexus-dark/40 rounded-lg border border-nexus-blue/20 overflow-hidden min-h-[500px]">
                   {loading || analyzing ? (
-                    <div className="flex flex-col items-center justify-center p-8">
-                      <Loader2 className="h-12 w-12 text-nexus-blue animate-spin mb-4" />
+                    <div className="flex flex-col items-center justify-center p-12">
+                      <Loader2 className="h-12 w-12 text-nexus-blue animate-spin mb-6" />
                       <p className="text-white/80 text-center">
                         {analyzing ? '正在分析图片，请稍候...' : '正在生成您的图像，请稍候...'}
                       </p>
-                      <p className="text-white/60 text-sm text-center mt-2">这可能需要几秒钟时间</p>
+                      <p className="text-white/60 text-sm text-center mt-4">这可能需要几秒钟时间</p>
                     </div>
                   ) : generatedImage ? (
-                    <div className="relative w-full h-full flex items-center justify-center p-4">
+                    <div className="relative w-full h-full flex items-center justify-center p-6">
                       <img 
                         ref={imageRef}
                         src={generatedImage} 
@@ -524,15 +524,15 @@ const Image = ({ decrementUsage }: ImageProps) => {
                       />
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center p-8">
-                      <ImageIcon className="h-16 w-16 text-white/20 mb-4" />
+                    <div className="flex flex-col items-center justify-center p-12">
+                      <ImageIcon className="h-16 w-16 text-white/20 mb-6" />
                       <p className="text-white/60 text-center">填写左侧表单并点击"生成图像"按钮</p>
                     </div>
                   )}
                 </div>
                 
                 {generatedImage && (
-                  <div className="mt-4 flex justify-end">
+                  <div className="mt-8 flex justify-end">
                     <Button 
                       onClick={handleDownload}
                       className="bg-nexus-blue hover:bg-nexus-blue/80 text-white"
@@ -546,12 +546,12 @@ const Image = ({ decrementUsage }: ImageProps) => {
             </div>
 
             {history.length > 0 && (
-              <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-8">
-                <h3 className="text-2xl font-bold mb-8 text-white flex items-center">
+              <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-12">
+                <h3 className="text-2xl font-bold mb-12 text-white flex items-center">
                   <ImageIcon className="mr-2 h-6 w-6 text-nexus-cyan" />
                   历史记录
                 </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-12">
                   {history.map((item) => (
                     <div 
                       key={item.id}
