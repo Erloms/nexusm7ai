@@ -9,6 +9,108 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      agent_customization_projects: {
+        Row: {
+          category: string
+          contact_info: string | null
+          created_at: string
+          description: string | null
+          features: string[] | null
+          id: string
+          is_active: boolean
+          price_info: string | null
+          sort_order: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          contact_info?: string | null
+          created_at?: string
+          description?: string | null
+          features?: string[] | null
+          id?: string
+          is_active?: boolean
+          price_info?: string | null
+          sort_order?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          contact_info?: string | null
+          created_at?: string
+          description?: string | null
+          features?: string[] | null
+          id?: string
+          is_active?: boolean
+          price_info?: string | null
+          sort_order?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agents: {
+        Row: {
+          avatar_url: string | null
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          creator_name: string | null
+          credits_per_message: number | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_premium: boolean | null
+          model: string | null
+          name: string
+          rating: number | null
+          system_prompt: string | null
+          tags: string[] | null
+          updated_at: string | null
+          users_count: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          creator_name?: string | null
+          credits_per_message?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_premium?: boolean | null
+          model?: string | null
+          name: string
+          rating?: number | null
+          system_prompt?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+          users_count?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          creator_name?: string | null
+          credits_per_message?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_premium?: boolean | null
+          model?: string | null
+          name?: string
+          rating?: number | null
+          system_prompt?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+          users_count?: number | null
+        }
+        Relationships: []
+      }
       ai_conversations: {
         Row: {
           conversation_type: string
@@ -43,6 +145,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ai_website_projects: {
+        Row: {
+          created_at: string
+          demo_url: string | null
+          description: string | null
+          icon_name: string
+          id: string
+          is_active: boolean
+          long_description: string | null
+          screenshot_url: string | null
+          sort_order: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          demo_url?: string | null
+          description?: string | null
+          icon_name: string
+          id?: string
+          is_active?: boolean
+          long_description?: string | null
+          screenshot_url?: string | null
+          sort_order?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          demo_url?: string | null
+          description?: string | null
+          icon_name?: string
+          id?: string
+          is_active?: boolean
+          long_description?: string | null
+          screenshot_url?: string | null
+          sort_order?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      credit_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string
+          id: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description: string
+          id?: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string
+          id?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       ppt_generations: {
         Row: {
@@ -141,6 +312,167 @@ export type Database = {
           phase?: number | null
           title?: string
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scheduled_tasks: {
+        Row: {
+          created_at: string
+          cron_expression: string
+          id: string
+          is_active: boolean
+          model: string
+          name: string
+          system_prompt: string | null
+          task_prompt: string
+          tools: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          cron_expression: string
+          id?: string
+          is_active?: boolean
+          model: string
+          name: string
+          system_prompt?: string | null
+          task_prompt: string
+          tools?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          cron_expression?: string
+          id?: string
+          is_active?: boolean
+          model?: string
+          name?: string
+          system_prompt?: string | null
+          task_prompt?: string
+          tools?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      task_executions: {
+        Row: {
+          duration_ms: number | null
+          error_message: string | null
+          executed_at: string
+          id: string
+          result: Json | null
+          status: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          duration_ms?: number | null
+          error_message?: string | null
+          executed_at?: string
+          id?: string
+          result?: Json | null
+          status: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          duration_ms?: number | null
+          error_message?: string | null
+          executed_at?: string
+          id?: string
+          result?: Json | null
+          status?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_executions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_credits: {
+        Row: {
+          created_at: string | null
+          credits: number
+          id: string
+          membership_expires_at: string | null
+          membership_type: string | null
+          total_earned: number
+          total_spent: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          credits?: number
+          id?: string
+          membership_expires_at?: string | null
+          membership_type?: string | null
+          total_earned?: number
+          total_spent?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          credits?: number
+          id?: string
+          membership_expires_at?: string | null
+          membership_type?: string | null
+          total_earned?: number
+          total_spent?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_custom_tools: {
+        Row: {
+          api_url: string
+          body_template: string | null
+          created_at: string
+          enabled: boolean
+          headers: Json | null
+          id: string
+          method: string
+          name: string
+          result_path: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_url: string
+          body_template?: string | null
+          created_at?: string
+          enabled?: boolean
+          headers?: Json | null
+          id?: string
+          method?: string
+          name: string
+          result_path?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_url?: string
+          body_template?: string | null
+          created_at?: string
+          enabled?: boolean
+          headers?: Json | null
+          id?: string
+          method?: string
+          name?: string
+          result_path?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

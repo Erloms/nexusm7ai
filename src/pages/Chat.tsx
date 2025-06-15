@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import Navigation from '@/components/Navigation';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -215,23 +216,47 @@ const Chat = () => {
     }
   };
 
-  const generateImage = async (prompt: string) => {
+  const generateImage = async (prompt: string, isFromChat: boolean) => {
     if (!decrementTotalUsage()) return null;
-    
+
     try {
-      // 优化提示词，增强艺术感
-      const enhancedPrompt = `${prompt}, digital art, masterpiece, highly detailed, artistic style, vibrant colors, creative composition, ultra detailed, 8k resolution, trending on artstation`;
-      const encodedPrompt = encodeURIComponent(enhancedPrompt);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true`;
-      return imageUrl;
+        let finalPrompt = prompt;
+        if (isFromChat) {
+            // 为聊天生成的图像创建高质量的英文提示词
+            const metaPrompt = `Please act as an expert in AI image generation. Translate the following user request into a detailed, high-quality English prompt suitable for a Stable Diffusion based model like Flux. The user's request is: '${prompt}'. The English prompt should be descriptive, artistic, and include details about style, composition, lighting, and quality. Only output the final English prompt and nothing else.`;
+            const encodedMetaPrompt = encodeURIComponent(metaPrompt);
+            const promptGenApiUrl = `https://text.pollinations.ai/${encodedMetaPrompt}?model=gemini`;
+
+            const promptGenResponse = await fetch(promptGenApiUrl);
+            if (!promptGenResponse.ok) throw new Error('Failed to generate prompt from API');
+
+            const reader = promptGenResponse.body!.getReader();
+            const decoder = new TextDecoder();
+            let englishPrompt = '';
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                englishPrompt += decoder.decode(value, { stream: true });
+            }
+            if (!englishPrompt.trim()) throw new Error("Generated prompt was empty.");
+            finalPrompt = englishPrompt.trim();
+        } else {
+            // 对于专用的“图像”选项卡，使用旧的增强逻辑。
+            finalPrompt = `${prompt}, digital art, masterpiece, highly detailed, artistic style, vibrant colors, creative composition, ultra detailed, 8k resolution, trending on artstation`;
+        }
+
+        const encodedPrompt = encodeURIComponent(finalPrompt);
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=768&seed=100&model=flux&nologo=true`;
+        return imageUrl;
+
     } catch (error) {
-      console.error("图像生成错误:", error);
-      toast({
-        title: "生成失败",
-        description: "图像生成失败，请重试",
-        variant: "destructive",
-      });
-      return null;
+        console.error("图像生成错误:", error);
+        toast({
+            title: "生成失败",
+            description: "图像生成失败，请重试",
+            variant: "destructive",
+        });
+        return null;
     }
   };
 
@@ -273,28 +298,24 @@ const Chat = () => {
 
     try {
       if (activeTab === 'chat') {
-        // 检查是否需要生成图片
         if (detectImagePrompt(currentInput)) {
-          // 提取图片描述
-          const imagePrompt = currentInput.replace(/画|绘制|生成图片|创建图像|画一个|画出|生成一张/g, '').trim();
-          const imageUrl = await generateImage(imagePrompt || currentInput);
+          setIsTyping(true);
+          const imagePrompt = currentInput.replace(/画|绘制|生成图片|创建图像|画一个|画出|生成一张/g, '').trim() || currentInput;
+          const imageUrl = await generateImage(imagePrompt, true);
           if (imageUrl) {
-            const aiMessage: Message = { 
-              text: `为您生成了图像：${imagePrompt || currentInput}`, 
-              sender: 'ai', 
-              type: 'image',
-              imageUrl 
-            };
+            const aiMessage: Message = { text: `为您生成了图像：${imagePrompt}`, sender: 'ai', type: 'image', imageUrl };
             setMessages(prev => [...prev, aiMessage]);
-            return;
           }
+          setIsTyping(false);
+          return;
         }
         
         const response = await callTextAPI(currentInput, selectedModel);
         const aiMessage: Message = { text: response, sender: 'ai' };
         setMessages(prev => [...prev, aiMessage]);
       } else if (activeTab === 'image') {
-        const imageUrl = await generateImage(currentInput);
+        setIsTyping(true);
+        const imageUrl = await generateImage(currentInput, false);
         if (imageUrl) {
           const aiMessage: Message = { 
             text: `为您生成了图像：${currentInput}`, 
@@ -304,6 +325,7 @@ const Chat = () => {
           };
           setMessages(prev => [...prev, aiMessage]);
         }
+        setIsTyping(false);
       } else if (activeTab === 'voice') {
         const response = await callTextAPI(currentInput, selectedModel);
         await synthesizeVoice(response, selectedVoice);
@@ -334,23 +356,14 @@ const Chat = () => {
 
   return (
     <PaymentCheck featureType="chat">
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden">
-        {/* 简化的背景装饰 */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `
-              radial-gradient(circle at 25% 25%, white 1px, transparent 1px),
-              radial-gradient(circle at 75% 75%, white 0.5px, transparent 0.5px)
-            `,
-            backgroundSize: '100px 100px, 50px 50px'
-          }}></div>
-        </div>
-
-        <div className="relative z-10 flex flex-col h-screen max-w-6xl mx-auto px-4">
-          {/* 顶部标题区 - 大幅增加顶部间距 */}
-          <div className="text-center py-8 pt-24">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden flex flex-col">
+        <Navigation />
+        
+        <div className="relative z-10 flex flex-col flex-grow max-w-6xl mx-auto px-4 w-full">
+          {/* 顶部标题区 - 调整布局 */}
+          <div className="text-center py-8">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2">
-              Nexus AI
+              AI Playground
             </h1>
             <p className="text-gray-400 text-xs">
               {!checkPaymentStatus() && `总剩余额度: ${remainingUsage}/10`}

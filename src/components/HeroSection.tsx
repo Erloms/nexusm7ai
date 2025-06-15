@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
@@ -76,6 +75,9 @@ const HeroSection = () => {
           </div>
         </div>
       </div>
+
+      {/* 添加渐变以平滑过渡到下一部分 */}
+      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#101014] to-transparent" />
     </section>
   );
 };
