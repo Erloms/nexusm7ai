@@ -6,14 +6,14 @@ import { Star } from 'lucide-react';
 
 const FeaturesSection = () => {
   return (
-    <section id="features" className="py-40 px-4 relative overflow-hidden">
+    <section id="features" className="py-20 px-4 relative overflow-hidden">
       {/* Background elements */}
       <div className="absolute inset-0 bg-grid-pattern bg-[length:30px_30px] opacity-10 z-0"></div>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-nexus-cyan/10 rounded-full blur-[80px] z-0"></div>
       
       <div className="max-w-6xl mx-auto relative z-10">
         <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 p-12 md:p-16 rounded-2xl border border-nexus-blue/30 backdrop-blur-md">
-          <div className="flex items-center justify-center mb-12">
+          <div className="flex items-center justify-center mb-8">
             <Star className="h-8 w-8 text-nexus-cyan mr-3" />
             <h2 className="text-3xl md:text-4xl font-bold text-gradient">支持的模型</h2>
           </div>
