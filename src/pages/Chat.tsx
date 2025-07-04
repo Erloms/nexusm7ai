@@ -176,7 +176,7 @@ const Chat = () => {
       }
       
       const encodedPrompt = encodeURIComponent(finalPrompt);
-      const apiUrl = `https://text.pollinations.ai/${encodedPrompt}?model=${modelId}`;
+      const apiUrl = `https://text.pollinations.ai/${encodedPrompt}${modelId ? '?model=' + modelId : ''}`;
       
       const response = await fetch(apiUrl);
       if (!response.ok) {
@@ -287,11 +287,23 @@ const Chat = () => {
     setInput('');
 
     try {
-      
+      // 检测是否为图像生成请求
+      if (detectImagePrompt(currentInput)) {
+        const imageUrl = await generateImage(currentInput, true);
+        if (imageUrl) {
+          const aiImageMessage: Message = { 
+            text: `为您生成了图像：${currentInput}`, 
+            sender: 'ai', 
+            type: 'image',
+            imageUrl: imageUrl 
+          };
+          setMessages(prev => [...prev, aiImageMessage]);
+        }
+      } else {
         const response = await callTextAPI(currentInput, selectedModel);
         const aiMessage: Message = { text: response, sender: 'ai' };
         setMessages(prev => [...prev, aiMessage]);
-      
+      }
     } catch (error) {
       console.error('发送失败:', error);
       toast({
@@ -317,7 +329,7 @@ const Chat = () => {
     <PaymentCheck featureType="chat">
     <div className="min-h-screen flex flex-col w-full bg-gradient-to-br from-[#151A25] via-[#181f33] to-[#10141e] overflow-hidden">
       <Navigation />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden pt-16">
         <ChatSidebar
           aiModels={AI_MODELS}
           selectedModel={selectedModel}
@@ -325,7 +337,7 @@ const Chat = () => {
           suggestedQuestions={SUGGESTED_QUESTIONS}
           onSuggestClick={handleSuggestClick}
         />
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 ml-8">
           <ChatMain
             messages={messages}
             input={input}

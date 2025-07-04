@@ -173,12 +173,6 @@ const Voice = () => {
               输入文字，选择语音风格，一键转换为自然流畅的语音。<br />
               支持多种音色音调，帮您创建专业水准的音频内容。
             </p>
-            <Button asChild className="bg-gray-800 hover:bg-gray-700 text-white px-8 py-3">
-              <Link to="/">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                返回主页
-              </Link>
-            </Button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">

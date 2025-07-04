@@ -154,7 +154,7 @@ const Image: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
-      <div style={{ minHeight: "calc(100vh - 64px)", background: "radial-gradient(ellipse at 25% 33%, #182d3d 0%, #101b26 100%)", position: "relative" }}>
+      <div style={{ minHeight: "calc(100vh - 64px)", background: "radial-gradient(ellipse at 25% 33%, #182d3d 0%, #101b26 100%)", position: "relative", paddingTop: "80px" }}>
         <canvas ref={starsRef} className="pointer-events-none fixed inset-0 w-full h-full z-0" />
 
       <div className="main-title"
@@ -170,14 +170,6 @@ const Image: React.FC = () => {
       <div className="main-desc" style={{ textAlign: "center", color: "#7db7ea", fontSize: "1.1rem", marginBottom: 18, letterSpacing: "1.2px" }}>
         智能AI驱动的视觉增强创作平台
       </div>
-      <Button asChild className="back-btn block mx-auto mb-5 bg-[#192735] border border-[#1cdfff] text-[#1cdfff] px-6 py-2 font-bold rounded-md shadow"
-        style={{
-          fontSize: 16, letterSpacing: 2, fontWeight: "bold",
-        }}>
-        <Link to="/">
-          <ArrowLeft className="inline-block mr-1" /> 返回首页
-        </Link>
-      </Button>
 
       <div className="main-panel-wrap flex flex-col md:flex-row justify-center items-start gap-8 max-w-5xl mx-auto z-20 relative flex-wrap">
 
@@ -264,17 +256,6 @@ const Image: React.FC = () => {
               style={{ padding: "6px 14px", borderRadius: 6 }}
             >随机</Button>
           </div>
-          <div className="form-group flex items-center mb-3">
-            <label>
-              <input
-                type="checkbox"
-                className="form-checkbox mr-2 accent-[#1cdfff]"
-                checked={removeWatermark}
-                onChange={e => setRemoveWatermark(e.target.checked)}
-              />
-              移除水印
-            </label>
-          </div>
           <div className="form-actions flex gap-4 mt-4">
             <Button
               disabled={isGenerating || !prompt.trim()}
@@ -296,13 +277,13 @@ const Image: React.FC = () => {
           </div>
         </form>
         {/* 右边图片展示区域 */}
-        <div className="preview-panel bg-[#192735] rounded-xl border border-[#1cdfff33] p-8 flex flex-col items-center min-h-[340px] max-w-[520px] min-w-[320px] flex-1 shadow">
+        <div className="preview-panel bg-[#192735] rounded-xl border border-[#1cdfff33] p-8 flex flex-col items-center min-h-[600px] max-w-[520px] min-w-[320px] flex-1 shadow">
           {generatedImage ? (
             <div className="w-full h-full flex flex-col items-center justify-center">
               <img
                 src={generatedImage}
                 alt="生成图像"
-                className="rounded-xl border border-[#1cdfff88] max-h-[350px] mx-auto object-contain mb-5 shadow-lg transition"
+                className="rounded-xl border border-[#1cdfff88] max-h-[500px] mx-auto object-contain mb-5 shadow-lg transition"
               />
               <Button
                 className="bg-[#1cdfff] hover:bg-[#0ee4ff] text-[#17212c] px-5 font-bold rounded"
@@ -318,7 +299,7 @@ const Image: React.FC = () => {
               </Button>
             </div>
           ) : (
-            <div className="preview-placeholder w-full h-[320px] flex items-center justify-center text-[#83a8c7] text-lg rounded-xl border border-dashed border-[#1cdfff33] bg-[#18222f]">
+            <div className="preview-placeholder w-full h-[520px] flex items-center justify-center text-[#83a8c7] text-lg rounded-xl border border-dashed border-[#1cdfff33] bg-[#18222f]">
               点击“生成图像”快进到你的创作
             </div>
           )}
