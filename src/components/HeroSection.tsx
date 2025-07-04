@@ -156,14 +156,14 @@ const HeroSection = () => {
       </header>
 
       {/* 内容卡片区 */}
-      <div className="flex flex-row flex-wrap gap-5 md:gap-10 justify-center items-center max-w-[950px] w-full px-2 mx-auto mt-2 md:mt-2 mb-14 z-10 relative">
+      <div className="flex flex-row flex-wrap gap-6 md:gap-8 justify-center items-center max-w-[1100px] w-full px-4 mx-auto mt-2 md:mt-2 mb-14 z-10 relative">
         {cards.map((card, i) => (
           <div
             key={card.title}
             className={`
               group relative 
               bg-[rgba(20,22,46,0.98)] rounded-[18px] shadow-xl border-2 border-transparent 
-              transition-all duration-200 min-w-[210px] max-w-[260px] h-[215px] flex-1 px-6 py-7 mx-1
+              transition-all duration-300 min-w-[280px] max-w-[320px] h-[280px] flex-1 px-8 py-8 mx-1
               flex flex-col items-center justify-between
               hover:scale-105 hover:shadow-[0_8px_36px_0_rgba(24,255,255,0.15)]
               ${i === 0
@@ -202,19 +202,6 @@ const HeroSection = () => {
         ))}
       </div>
 
-      {/* 模型买断文案版块 */}
-      <div className="relative z-10 rounded-xl bg-[#1b2536ee] border border-cyan-700/30 shadow pt-9 pb-8 px-5 mt-8 mb-12 max-w-xl mx-auto text-center">
-        <div className="font-bold text-lg md:text-xl text-cyan-300 mb-3 tracking-wide">支持的模型</div>
-        <div className="text-base md:text-lg text-[#d2f7ff] leading-relaxed whitespace-pre-line font-medium" style={{lineHeight: 2}}>
-          无需月付和年费，799元即可永久解锁。
-          <br />
-          集成GPT-4级对话、Gemini 2.0 Pro、DeepSeek R1等多款顶级大模型。
-          <br />
-          Flux全系列AI创作工具，无限使用。
-          <br />
-          功能全面，体验自由，无需反复付费，让每一次创造更纯粹。
-        </div>
-      </div>
 
       {/* 浮动语言球，不变 */}
       <div

@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import Navigation from "@/components/Navigation";
 import { Download, ArrowLeft, Trash } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -58,9 +59,14 @@ const useStars = (canvasRef: React.RefObject<HTMLCanvasElement>, color = "#1cdff
 };
 
 const modelOptions = [
-  { id: 'flux', name: 'Flux (高清风格, 逼真大模型推荐)', },
-  { id: 'flux-pro', name: 'Flux Pro (艺术风格, 进阶增强)', },
-  { id: 'flux-3d', name: 'Flux 3D (三维立体)', }
+  { id: 'flux', name: 'Flux (通用创意)', },
+  { id: 'flux-pro', name: 'Flux Pro (专业版)', },
+  { id: 'flux-realism', name: 'Flux Realism (超真实效果)', },
+  { id: 'flux-anime', name: 'Flux Anime (动漫风格)', },
+  { id: 'flux-3d', name: 'Flux 3D (三维效果)', },
+  { id: 'flux-cablyai', name: 'Flux CablyAI (创意艺术)', },
+  { id: 'turbo', name: 'Turbo (极速生成)', },
+  { id: 'cogview-3-flash', name: 'CogView-3-Flash (智谱AI)', }
 ];
 
 const defaultNegativePrompt = "worst quality, blurry";
@@ -146,8 +152,10 @@ const Image: React.FC = () => {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse at 25% 33%, #182d3d 0%, #101b26 100%)", position: "relative" }}>
-      <canvas ref={starsRef} className="pointer-events-none fixed inset-0 w-full h-full z-0" />
+    <div className="min-h-screen flex flex-col">
+      <Navigation />
+      <div style={{ minHeight: "calc(100vh - 64px)", background: "radial-gradient(ellipse at 25% 33%, #182d3d 0%, #101b26 100%)", position: "relative" }}>
+        <canvas ref={starsRef} className="pointer-events-none fixed inset-0 w-full h-full z-0" />
 
       <div className="main-title"
         style={{
@@ -193,7 +201,7 @@ const Image: React.FC = () => {
             <input
               value={negativePrompt}
               onChange={e => setNegativePrompt(e.target.value)}
-              className="form-input bg-[#14202c] border border-[#2e4258] text-white rounded-lg px-3 py-2"
+              className="form-input bg-[#14202c] border border-[#2e4258] text-white rounded-lg px-3 py-2 w-full"
               placeholder="如不需要可留空"
               id="negative_prompt"
             />
@@ -265,17 +273,6 @@ const Image: React.FC = () => {
                 onChange={e => setRemoveWatermark(e.target.checked)}
               />
               移除水印
-            </label>
-          </div>
-          <div className="form-group flex items-center mb-3">
-            <label>
-              <input
-                type="checkbox"
-                className="form-checkbox mr-2 accent-[#1cdfff]"
-                checked={safeMode}
-                onChange={e => setSafeMode(e.target.checked)}
-              />
-              安全模式（记得不准搞黄色）
             </label>
           </div>
           <div className="form-actions flex gap-4 mt-4">
@@ -361,6 +358,7 @@ const Image: React.FC = () => {
       <footer className="footer text-center text-[#6e869a] text-sm opacity-80 select-none mt-7 mb-4 z-10">
         © 2025 Azad实验室出品　|　前方高能
       </footer>
+      </div>
     </div>
   );
 };

@@ -1,27 +1,34 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ChatSidebar from "@/components/ChatSidebar";
 import ChatMain from "@/components/ChatMain";
+import Navigation from "@/components/Navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 import PaymentCheck from '@/components/PaymentCheck';
 
 const AI_MODELS = [
   { id: "gemini", name: "Gemini 2.0 Flash", group: "Google" },
+  { id: "gemini-thinking", name: "Gemini 2.0 Flash Thinking", group: "Google" },
   { id: "openai", name: "OpenAI GPT-4o-mini", group: "OpenAI" },
   { id: "openai-large", name: "OpenAI GPT-4o", group: "OpenAI" },
   { id: "openai-reasoning", name: "OpenAI o1-mini", group: "OpenAI" },
+  { id: "claude", name: "Claude 3.5 Haiku", group: "Anthropic" },
+  { id: "claude-sonnet", name: "Claude 3.5 Sonnet", group: "Anthropic" },
   { id: "llama", name: "Llama 3.3 70B", group: "Meta" },
   { id: "llamalight", name: "Llama 3.1 8B Instruct", group: "Meta" },
-  { id: "mistral", name: "Mistral Nemo", group: "Mistral" },
+  { id: "llama-vision", name: "Llama 3.2 Vision", group: "Meta" },
   { id: "deepseek", name: "DeepSeek-V3", group: "DeepSeek" },
   { id: "deepseek-r1", name: "DeepSeek-R1 Distill Qwen 32B", group: "DeepSeek" },
   { id: "deepseek-reasoner", name: "DeepSeek R1 - Full", group: "DeepSeek" },
   { id: "deepseek-r1-llama", name: "DeepSeek R1 - Llama 70B", group: "DeepSeek" },
-  { id: "claude", name: "Claude 3.5 Haiku", group: "Anthropic" },
-  { id: "gemini-thinking", name: "Gemini 2.0 Flash Thinking", group: "Google" },
+  { id: "mistral", name: "Mistral Nemo", group: "Mistral" },
+  { id: "mistral-large", name: "Mistral Large", group: "Mistral" },
   { id: "phi", name: "Phi-4 Multimodal Instruct", group: "Microsoft" },
   { id: "qwen-coder", name: "Qwen 2.5 Coder 32B", group: "Qwen" },
-  { id: "searchgpt", name: "SearchGPT", group: "Search" }
+  { id: "qwen-math", name: "Qwen 2.5 Math", group: "Qwen" },
+  { id: "yi-large", name: "Yi Large", group: "01.AI" },
+  { id: "searchgpt", name: "SearchGPT", group: "Search" },
+  { id: "perplexity", name: "Perplexity", group: "Search" }
 ];
 
 const SUGGESTED_QUESTIONS = [
@@ -308,24 +315,27 @@ const Chat = () => {
 
   return (
     <PaymentCheck featureType="chat">
-    <div className="min-h-screen flex w-full bg-gradient-to-br from-[#151A25] via-[#181f33] to-[#10141e] overflow-hidden">
-      <ChatSidebar
-        aiModels={AI_MODELS}
-        selectedModel={selectedModel}
-        onModelChange={handleModelChange}
-        suggestedQuestions={SUGGESTED_QUESTIONS}
-        onSuggestClick={handleSuggestClick}
-      />
-      <div className="flex-1 flex flex-col min-h-0">
-        <ChatMain
-          messages={messages}
-          input={input}
-          setInput={setInput}
-          isTyping={isTyping}
-          isListening={isListening}
-          onSend={handleSend}
-          onStartListening={handleStartListening}
+    <div className="min-h-screen flex flex-col w-full bg-gradient-to-br from-[#151A25] via-[#181f33] to-[#10141e] overflow-hidden">
+      <Navigation />
+      <div className="flex flex-1 overflow-hidden">
+        <ChatSidebar
+          aiModels={AI_MODELS}
+          selectedModel={selectedModel}
+          onModelChange={handleModelChange}
+          suggestedQuestions={SUGGESTED_QUESTIONS}
+          onSuggestClick={handleSuggestClick}
         />
+        <div className="flex-1 flex flex-col min-h-0">
+          <ChatMain
+            messages={messages}
+            input={input}
+            setInput={setInput}
+            isTyping={isTyping}
+            isListening={isListening}
+            onSend={handleSend}
+            onStartListening={handleStartListening}
+          />
+        </div>
       </div>
     </div>
     </PaymentCheck>
