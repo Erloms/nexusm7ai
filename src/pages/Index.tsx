@@ -1,6 +1,5 @@
 
 import React from 'react';
-import Navigation from '@/components/Navigation';
 import HeroSection from '@/components/HeroSection';
 import FeaturesSection from '@/components/FeaturesSection';
 import AIDemo from '@/components/AIDemo';
@@ -12,7 +11,6 @@ import Footer from '@/components/Footer';
 const Index = () => {
   return (
     <div className="min-h-screen bg-nexus-dark relative">
-      <Navigation />
       <HeroSection />
       <FeaturesSection />
       <AIDemo />

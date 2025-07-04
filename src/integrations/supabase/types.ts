@@ -188,6 +188,42 @@ export type Database = {
         }
         Relationships: []
       }
+      content_templates: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          is_public: boolean | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string
+          id?: string
+          is_public?: boolean | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_public?: boolean | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           amount: number
@@ -212,6 +248,72 @@ export type Database = {
           id?: string
           type?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      daily_checkins: {
+        Row: {
+          checkin_date: string
+          created_at: string
+          credits_earned: number
+          id: string
+          user_id: string
+        }
+        Insert: {
+          checkin_date: string
+          created_at?: string
+          credits_earned?: number
+          id?: string
+          user_id: string
+        }
+        Update: {
+          checkin_date?: string
+          created_at?: string
+          credits_earned?: number
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      payment_orders: {
+        Row: {
+          amount: number
+          body: string | null
+          created_at: string | null
+          id: string
+          order_id: string
+          order_type: string
+          status: string
+          subject: string
+          trade_no: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          body?: string | null
+          created_at?: string | null
+          id?: string
+          order_id: string
+          order_type: string
+          status?: string
+          subject: string
+          trade_no?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          body?: string | null
+          created_at?: string | null
+          id?: string
+          order_id?: string
+          order_type?: string
+          status?: string
+          subject?: string
+          trade_no?: string | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -261,6 +363,8 @@ export type Database = {
           created_at: string | null
           email: string | null
           id: string
+          membership_expires_at: string | null
+          membership_type: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           updated_at: string | null
           username: string | null
@@ -269,6 +373,8 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           id: string
+          membership_expires_at?: string | null
+          membership_type?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
           username?: string | null
@@ -277,6 +383,8 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           id?: string
+          membership_expires_at?: string | null
+          membership_type?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
           username?: string | null
@@ -358,6 +466,27 @@ export type Database = {
         }
         Relationships: []
       }
+      system_settings: {
+        Row: {
+          created_at: string | null
+          setting_key: string
+          setting_value: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          setting_key: string
+          setting_value: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          setting_key?: string
+          setting_value?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       task_executions: {
         Row: {
           duration_ms: number | null
@@ -398,6 +527,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_content_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          elements: string[] | null
+          hooks: string[] | null
+          id: string
+          name: string
+          sample_text: string | null
+          style: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          elements?: string[] | null
+          hooks?: string[] | null
+          id?: string
+          name: string
+          sample_text?: string | null
+          style: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          elements?: string[] | null
+          hooks?: string[] | null
+          id?: string
+          name?: string
+          sample_text?: string | null
+          style?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_credits: {
         Row: {
@@ -477,11 +645,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_workspaces: {
+        Row: {
+          created_at: string
+          generated_content: Json | null
+          id: string
+          topics: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          generated_content?: Json | null
+          id?: string
+          topics?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          generated_content?: Json | null
+          id?: string
+          topics?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      add_user_credits: {
+        Args: { p_user_id: string; p_credits: number; p_description: string }
+        Returns: undefined
+      }
       is_admin: {
         Args: { user_id: string }
         Returns: boolean

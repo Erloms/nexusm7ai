@@ -70,19 +70,16 @@ const FeaturesSection = () => {
             <div className="text-center lg:text-left">
               <div className="text-lg md:text-xl text-white/90 mb-8 leading-relaxed">
                 <p className="mb-4">
-                  <span className="text-gradient-gold font-bold text-2xl">告别月月付费，拒绝年年涨价！</span>
+                  <span className="font-bold">无需月付和年费，799元即可永久解锁。</span>
                 </p>
                 <p className="mb-4">
-                  <span className="font-bold">Nexus AI 只需799元，买断！终身！</span>
+                  <span className="font-bold">集成GPT-4级对话、Gemini 2.0 Pro、DeepSeek R1等多款顶级大模型。</span>
                 </p>
                 <p className="mb-4">
-                  <span className="font-bold">GPT-4级对话、Gemini 2.0 Pro、DeepSeek R1...顶级大模型随便撩！</span>
-                </p>
-                <p className="mb-4">
-                  <span className="font-bold">Flux全系列AI创作工具，无限畅用！</span>
+                  <span className="font-bold">Flux全系列AI创作工具，无限使用。</span>
                 </p>
                 <p className="text-white font-bold">
-                  成年人不做选择，Nexus AI 让你全都要！
+                  功能全面，体验自由，无需反复付费，让每一次创造更纯粹。
                 </p>
               </div>
               
