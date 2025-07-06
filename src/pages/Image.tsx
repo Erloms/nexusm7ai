@@ -125,7 +125,7 @@ const Image: React.FC = () => {
   const [removeWatermark, setRemoveWatermark] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState('');
-  const [history, setHistory] = useState(staticHistory);
+  const [history, setHistory] = useState<Array<{image: string; title: string; model: string}>>([]);
 
   // 星空
   const starsRef = useRef<HTMLCanvasElement>(null);
@@ -178,24 +178,57 @@ const Image: React.FC = () => {
           style={{ marginBottom: 0 }}>
           <div className="form-group mb-4">
             <label className="form-label block mb-2 text-[#96b7d4]" htmlFor="prompt">提示词 (Prompt)</label>
+            <div className="flex gap-2 mb-2">
+              <Button
+                type="button"
+                className="bg-[#1cdfff] text-[#17212c] px-3 py-1 text-sm rounded font-medium"
+                onClick={() => {
+                  const randomPrompts = [
+                    "一只可爱的小猫咪在花园里玩耍，阳光明媚",
+                    "科幻城市夜景，霓虹灯闪烁，未来感十足",
+                    "中国风山水画，水墨画风格，意境深远",
+                    "宇宙星空，行星环绕，深邃神秘",
+                    "森林中的精灵，梦幻光影，魔幻风格",
+                    "现代建筑设计，简约时尚，几何美感"
+                  ];
+                  const randomPrompt = randomPrompts[Math.floor(Math.random() * randomPrompts.length)];
+                  setPrompt(randomPrompt);
+                }}
+              >
+                随机提示词
+              </Button>
+              <Button
+                type="button"
+                className="bg-[#60aaff] text-white px-3 py-1 text-sm rounded font-medium"
+                onClick={() => {
+                  if (prompt.trim()) {
+                    const enhancedPrompt = `${prompt}, masterpiece, best quality, highly detailed, ultra realistic, cinematic lighting, vibrant colors, professional photography, 8k resolution`;
+                    setPrompt(enhancedPrompt);
+                  }
+                }}
+              >
+                优化提示词
+              </Button>
+            </div>
             <Textarea
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
               id="prompt"
               placeholder="描述你希望生成的绘画内容..."
-              className="form-textarea bg-[#14202c] border border-[#2e4258] text-white rounded-lg px-3 py-2 mb-2"
+              className="form-textarea bg-[#14202c] border border-[#2e4258] text-white rounded-lg px-3 py-2"
               rows={4}
               style={{ fontSize: "1rem" }}
             />
           </div>
           <div className="form-group mb-4">
             <label className="form-label block mb-2 text-[#96b7d4]" htmlFor="negative_prompt">负面词 (Negative Prompt)</label>
-            <input
+            <Textarea
               value={negativePrompt}
               onChange={e => setNegativePrompt(e.target.value)}
               className="form-input bg-[#14202c] border border-[#2e4258] text-white rounded-lg px-3 py-2 w-full"
               placeholder="如不需要可留空"
               id="negative_prompt"
+              rows={2}
             />
           </div>
           <div className="form-group mb-4">
@@ -317,7 +350,7 @@ const Image: React.FC = () => {
             <Trash className="mr-2" size={18} /> 清空历史
           </Button>
         </div>
-        <div className="history-list grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-7">
+        <div className="history-list grid grid-cols-2 md:grid-cols-4 gap-7">
           {history.length === 0 ? (
             <div className="col-span-full text-[#83a8c7] text-center py-10 opacity-75">
               暂无历史记录

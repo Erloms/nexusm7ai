@@ -47,16 +47,14 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             <Button
               key={idx}
               size="sm"
-              className="rounded-lg mb-1 font-medium bg-gradient-to-r from-[#283d54] to-[#14223b] hover:from-cyan-700 hover:to-blue-700 text-gray-100 text-left shadow-none transition"
+              className="rounded-lg mb-1 font-medium bg-gradient-to-r from-[#283d54] to-[#14223b] hover:from-cyan-700 hover:to-blue-700 text-gray-100 text-left shadow-none transition flex items-center justify-start w-full"
               onClick={() => onSuggestClick(q)}
             >
-              <MessageSquare size={16} className="mr-2 text-cyan-300" /> {q}
+              <MessageSquare size={16} className="mr-2 text-cyan-300 flex-shrink-0" /> 
+              <span className="text-left">{q}</span>
             </Button>
           ))}
         </div>
-      </div>
-      <div className="mt-auto opacity-40 text-xs text-gray-400 text-center select-none">
-        © 2025 Azad实验室
       </div>
     </aside>
   );

@@ -40,10 +40,11 @@ const ChatMain: React.FC<ChatMainProps> = ({
   return (
     <div className="flex-1 flex flex-col w-full min-h-0">
       {/* 顶部标题+装饰 */}
-      <div className="py-10 mb-3">
+      <div className="py-12 mb-6">
         <h1 className="text-3xl md:text-4xl font-black bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent text-center drop-shadow-lg tracking-tight">
-          AI Playground
+          智能创作工作台
         </h1>
+        <p className="text-center text-gray-400 mt-3 text-lg">集成20+顶级AI模型，支持对话、绘画、创作一体化体验</p>
       </div>
       {/* 聊天内容 */}
       <div className="flex-1 overflow-y-auto px-0 md:px-8 max-h-[62vh] min-h-[320px] pb-6">
@@ -93,7 +94,7 @@ const ChatMain: React.FC<ChatMainProps> = ({
       </div>
       {/* 输入区（操作条悬浮底部） */}
       <div className="fixed inset-x-0 bottom-0 z-30 flex justify-center items-end w-full pointer-events-none">
-        <div className="pointer-events-auto w-full max-w-2xl mb-8 px-4">
+        <div className="pointer-events-auto w-full max-w-3xl mb-8 px-4 ml-64">
           <div className="px-3 py-3 bg-gradient-to-b from-[#151b2a] to-[#213548] rounded-2xl flex gap-3 shadow-2xl border border-[#243655]/60">
             <Textarea
               value={input}
