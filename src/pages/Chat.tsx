@@ -250,7 +250,7 @@ const Chat = () => {
     }
   };
 
-  const synthesizeVoice = async (text: string, voice: string) => {
+  const synthesizeVoice = async (text: string, voice: string = 'alloy') => {
     if (!decrementTotalUsage()) return null;
     
     try {
@@ -299,7 +299,17 @@ const Chat = () => {
           };
           setMessages(prev => [...prev, aiImageMessage]);
         }
-      } else {
+      } 
+      // 检测是否为语音合成请求
+      else if (/语音|朗读|播放|说出来/.test(currentInput)) {
+        const response = await callTextAPI(currentInput, selectedModel);
+        const aiMessage: Message = { text: response, sender: 'ai' };
+        setMessages(prev => [...prev, aiMessage]);
+        
+        // 自动合成语音
+        await synthesizeVoice(response);
+      }
+      else {
         const response = await callTextAPI(currentInput, selectedModel);
         const aiMessage: Message = { text: response, sender: 'ai' };
         setMessages(prev => [...prev, aiMessage]);
@@ -346,6 +356,7 @@ const Chat = () => {
             isListening={isListening}
             onSend={handleSend}
             onStartListening={handleStartListening}
+            onSynthesizeVoice={synthesizeVoice}
           />
         </div>
       </div>

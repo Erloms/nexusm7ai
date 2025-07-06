@@ -86,6 +86,7 @@ const Payment = () => {
         </div>
       </div>
     </div>
+  );
 };
 
 export default Payment;

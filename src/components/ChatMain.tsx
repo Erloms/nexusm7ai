@@ -20,6 +20,7 @@ interface ChatMainProps {
   isListening: boolean;
   onSend: () => void;
   onStartListening: () => void;
+  onSynthesizeVoice?: (text: string) => void;
 }
 
 const ChatMain: React.FC<ChatMainProps> = ({
@@ -30,6 +31,7 @@ const ChatMain: React.FC<ChatMainProps> = ({
   isListening,
   onSend,
   onStartListening,
+  onSynthesizeVoice,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -63,22 +65,34 @@ const ChatMain: React.FC<ChatMainProps> = ({
                     : "justify-start"
                 }`}
               >
-                <div
-                  className={`max-w-[80%] rounded-2xl p-4 shadow ${
-                    msg.sender === "user"
-                      ? "bg-gradient-to-br from-[#22498e] to-[#22cbed] text-white"
-                      : "bg-[#1a2740] text-gray-100 border border-[#203042]/60"
-                  }`}
-                >
-                  {msg.type === "image" && msg.imageUrl ? (
-                    <img
-                      src={msg.imageUrl}
-                      alt="AI生成图像"
-                      className="rounded mb-2 max-w-full border border-[#203042]/30"
-                    />
-                  ) : null}
-                  <span className="whitespace-pre-line text-base leading-relaxed">{msg.text}</span>
-                </div>
+                 <div
+                   className={`max-w-[80%] rounded-2xl p-4 shadow relative ${
+                     msg.sender === "user"
+                       ? "bg-gradient-to-br from-[#22498e] to-[#22cbed] text-white"
+                       : "bg-[#1a2740] text-gray-100 border border-[#203042]/60"
+                   }`}
+                 >
+                   {msg.type === "image" && msg.imageUrl ? (
+                     <img
+                       src={msg.imageUrl}
+                       alt="AI生成图像"
+                       className="rounded mb-2 max-w-full border border-[#203042]/30"
+                     />
+                   ) : null}
+                   <span className="whitespace-pre-line text-base leading-relaxed">{msg.text}</span>
+                   
+                   {/* AI消息添加语音播放按钮 */}
+                   {msg.sender === "ai" && onSynthesizeVoice && (
+                     <Button
+                       size="sm"
+                       variant="ghost"
+                       className="absolute top-2 right-2 p-1 h-6 w-6 text-cyan-400 hover:bg-cyan-800/20"
+                       onClick={() => onSynthesizeVoice(msg.text)}
+                     >
+                       <Mic className="h-3 w-3" />
+                     </Button>
+                   )}
+                 </div>
               </div>
             ))}
             {isTyping && (
@@ -94,7 +108,7 @@ const ChatMain: React.FC<ChatMainProps> = ({
       </div>
       {/* 输入区（操作条悬浮底部） */}
       <div className="fixed inset-x-0 bottom-0 z-30 flex justify-center items-end w-full pointer-events-none">
-        <div className="pointer-events-auto w-full max-w-3xl mb-8 px-4 ml-64">
+        <div className="pointer-events-auto w-full max-w-3xl mb-8 px-4 ml-80">
           <div className="px-3 py-3 bg-gradient-to-b from-[#151b2a] to-[#213548] rounded-2xl flex gap-3 shadow-2xl border border-[#243655]/60">
             <Textarea
               value={input}

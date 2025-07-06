@@ -69,7 +69,7 @@ const modelOptions = [
   { id: 'cogview-3-flash', name: 'CogView-3-Flash (智谱AI)', }
 ];
 
-const defaultNegativePrompt = "worst quality, blurry";
+const defaultNegativePrompt = "worst quality, low quality, blurry, out of focus, distorted, deformed, bad anatomy, watermark, signature, logo, text, copyright, trademark, artifacts, jpeg artifacts, noise, grain, pixelated, poor lighting, overexposed, underexposed";
 const staticHistory = [
   {
     image: "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80",
@@ -131,7 +131,6 @@ const Image: React.FC = () => {
   const starsRef = useRef<HTMLCanvasElement>(null);
   useStars(starsRef, "#1cdfff");
 
-  // 生成图片功能未改动
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       toast({ title: "请输入详细的提示词", description: "提示词不能为空", variant: "destructive", });
@@ -139,15 +138,51 @@ const Image: React.FC = () => {
     }
     setIsGenerating(true);
     try {
-      const fullPrompt = `${prompt}${negativePrompt ? `, ${negativePrompt}` : ''}`;
-      const encodedPrompt = encodeURIComponent(fullPrompt);
-      const randomSeed = seed === '-1' ? Math.floor(Math.random() * 100000) : seed;
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${randomSeed}&model=${model}&nologo=true`;
+      let imageUrl = '';
+      
+      if (model === 'cogview-3-flash') {
+        // 对接智谱AI的CogView-3-Flash
+        try {
+          const response = await fetch('https://open.bigmodel.cn/api/paas/v4/images/generations', {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer 924d10ce4718479a9a089ffdc62aafff.d69Or12B5PEdYUco',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: 'cogview-3-flash',
+              prompt: prompt,
+              size: `${width}x${height}`
+            })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            imageUrl = data.data[0].url;
+          } else {
+            throw new Error('CogView API调用失败');
+          }
+        } catch (error) {
+          console.error('CogView API error:', error);
+          // 降级到Pollinations API
+          const encodedPrompt = encodeURIComponent(`${prompt}, ${negativePrompt ? `NOT: ${negativePrompt}` : ''}`);
+          const randomSeed = seed === '-1' ? Math.floor(Math.random() * 100000) : seed;
+          imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${randomSeed}&model=flux&nologo=true`;
+        }
+      } else {
+        // 使用Pollinations API
+        const encodedPrompt = encodeURIComponent(`${prompt}, masterpiece, best quality, highly detailed, ultra realistic, ${negativePrompt ? `NOT: ${negativePrompt}` : ''}`);
+        const randomSeed = seed === '-1' ? Math.floor(Math.random() * 100000) : seed;
+        imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${randomSeed}&model=${model}&nologo=true`;
+      }
+      
       await new Promise(res => setTimeout(res, 1200));
       setGeneratedImage(imageUrl);
       setHistory(prev => [{ image: imageUrl, title: prompt, model: modelOptions.find(m=>m.id===model)?.name || model }, ...prev].slice(0, 12));
       toast({ title: "图片生成完成" });
-    } catch { }
+    } catch { 
+      toast({ title: "生成失败", description: "请重试", variant: "destructive" });
+    }
     setIsGenerating(false);
   };
 
@@ -351,21 +386,44 @@ const Image: React.FC = () => {
           </Button>
         </div>
         <div className="history-list grid grid-cols-2 md:grid-cols-4 gap-7">
-          {history.length === 0 ? (
-            <div className="col-span-full text-[#83a8c7] text-center py-10 opacity-75">
-              暂无历史记录
-            </div>
-          ) : history.map((item, idx) => (
-            <div key={idx} className="history-item bg-[#17212c] rounded-lg px-3 py-3 flex flex-col items-center shadow">
-              <img
-                className="history-image w-full max-w-[110px] min-h-[90px] max-h-[100px] rounded-[9px] mb-2 object-cover bg-[#1c222b]"
-                src={item.image}
-                alt={item.title}
-              />
-              <div className="history-item-title text-sm font-semibold mb-1 truncate w-full text-center text-white">{item.title}</div>
-              <div className="history-item-model text-[#1cdfff] font-bold text-xs">{item.model}</div>
-            </div>
-          ))}
+            {history.length === 0 ? (
+              <div className="col-span-full text-[#83a8c7] text-center py-10 opacity-75">
+                暂无历史记录
+              </div>
+            ) : history.map((item, idx) => (
+              <div key={idx} className="history-item bg-[#17212c] rounded-lg px-3 py-3 flex flex-col items-center shadow relative">
+                <img
+                  className="history-image w-full max-w-[150px] min-h-[120px] max-h-[130px] rounded-[9px] mb-2 object-cover bg-[#1c222b] cursor-pointer"
+                  src={item.image}
+                  alt={item.title}
+                  onClick={() => setGeneratedImage(item.image)}
+                />
+                <div className="history-item-title text-sm font-semibold mb-1 truncate w-full text-center text-white">{item.title}</div>
+                <div className="history-item-model text-[#1cdfff] font-bold text-xs mb-2">{item.model}</div>
+                <div className="flex gap-1">
+                  <Button
+                    size="sm"
+                    className="bg-[#1cdfff] hover:bg-[#0ee4ff] text-[#17212c] px-2 py-1 text-xs"
+                    onClick={() => {
+                      setPrompt(item.title);
+                      handleGenerate();
+                    }}
+                  >
+                    重绘
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-orange-500 hover:bg-orange-600 text-white px-2 py-1 text-xs"
+                    onClick={() => {
+                      // 图转视频功能 - 这里可以对接CogVideoX-Flash
+                      toast({ title: "图转视频功能开发中", description: "即将上线", });
+                    }}
+                  >
+                    转视频
+                  </Button>
+                </div>
+              </div>
+            ))}
         </div>
       </div>
       {/* 页脚 */}
