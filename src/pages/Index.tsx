@@ -1,7 +1,6 @@
 
 import React from 'react';
 import HeroSection from '@/components/HeroSection';
-import FeaturesSection from '@/components/FeaturesSection';
 import AIDemo from '@/components/AIDemo';
 import ImageShowcase from '@/components/ImageShowcase';
 import TestimonialsSection from '@/components/TestimonialsSection';
@@ -12,7 +11,6 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-nexus-dark relative">
       <HeroSection />
-      <FeaturesSection />
       <AIDemo />
       <ImageShowcase />
       <TestimonialsSection />

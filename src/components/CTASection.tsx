@@ -25,7 +25,7 @@ const CTASection = () => {
           </h2>
           
           <p className="text-xl text-center text-white/80 mb-10 max-w-2xl mx-auto">
-            <span className="text-gradient-gold font-bold text-2xl">￥199/年</span> 或 <span className="text-gradient-gold font-bold text-2xl">￥799永久</span>，即可永久使用全部功能，无需订阅，没有隐藏费用。
+            <span className="text-gradient-gold font-bold text-2xl">￥99/年</span> 或 <span className="text-gradient-gold font-bold text-2xl">￥399永久</span>，即可永久使用全部功能，无需订阅，没有隐藏费用。
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
@@ -48,10 +48,10 @@ const CTASection = () => {
               </p>
               <div className="flex flex-col gap-3 w-full">
                 <Button size="lg" asChild className="bg-nexus-blue hover:bg-nexus-blue/80 text-white w-full text-lg py-6">
-                  <Link to="/payment">￥199/年 立即购买</Link>
+                  <Link to="/payment">￥99/年 立即购买</Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild className="border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20 w-full text-lg py-6">
-                  <Link to="/payment">￥799 永久会员</Link>
+                  <Link to="/payment">￥399 永久会员</Link>
                 </Button>
               </div>
               <p className="text-white/60 text-sm mt-4">

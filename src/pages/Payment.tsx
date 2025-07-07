@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -21,16 +22,16 @@ const Payment = () => {
 
   const planDetails = {
     annual: { 
-      price: '199', 
+      price: '99', 
       period: '/年', 
-      total: '199',
+      total: '99',
       description: '年会员 - 性价比之选',
       features: ['无限次AI对话', '无限次图像生成', '无限次语音合成', '优先客服支持']
     },
     lifetime: { 
-      price: '799', 
+      price: '399', 
       period: '/永久', 
-      total: '799',
+      total: '399',
       description: '永久会员 - 一次付费终身享用',
       features: ['所有年会员功能', '永久免费更新', '专属VIP标识', '优先体验新功能', '30%收益分成']
     }

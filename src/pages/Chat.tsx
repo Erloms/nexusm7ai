@@ -1,7 +1,7 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import ChatSidebar from "@/components/ChatSidebar";
 import ChatMain from "@/components/ChatMain";
+import ChatHistory from "@/components/ChatHistory";
 import Navigation from "@/components/Navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
@@ -55,6 +55,7 @@ const Chat = () => {
   const [selectedModel, setSelectedModel] = useState(AI_MODELS[0].id);
   const [isTyping, setIsTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [currentSession, setCurrentSession] = useState<any>(null);
   const { toast } = useToast();
   const { user, checkPaymentStatus } = useAuth();
 
@@ -384,18 +385,61 @@ const Chat = () => {
     startListening();
   };
 
+  // 创建新的对话会话
+  useEffect(() => {
+    if (messages.length > 0 && !currentSession) {
+      const newSession = {
+        id: Date.now().toString(),
+        title: messages[0]?.text?.slice(0, 30) + '...' || '新对话',
+        timestamp: new Date(),
+        messages: messages.map((msg, index) => ({
+          id: index,
+          text: msg.text,
+          isUser: msg.sender === 'user',
+          timestamp: new Date()
+        })),
+        model: selectedModel
+      };
+      setCurrentSession(newSession);
+    }
+  }, [messages, currentSession, selectedModel]);
+
+  // 加载历史对话
+  const handleLoadSession = (session: any) => {
+    const loadedMessages = session.messages.map((msg: any) => ({
+      text: msg.text,
+      sender: msg.isUser ? 'user' : 'ai',
+      type: 'text'
+    }));
+    setMessages(loadedMessages);
+    setCurrentSession(session);
+    setSelectedModel(session.model || AI_MODELS[0].id);
+  };
+
+  // 保存当前对话
+  const handleSaveCurrentSession = (title: string) => {
+    // 这个功能由ChatHistory组件内部处理
+  };
+
   return (
     <PaymentCheck featureType="chat">
     <div className="min-h-screen flex flex-col w-full bg-gradient-to-br from-[#151A25] via-[#181f33] to-[#10141e] overflow-hidden">
       <Navigation />
       <div className="flex flex-1 overflow-hidden pt-16">
-        <ChatSidebar
-          aiModels={AI_MODELS}
-          selectedModel={selectedModel}
-          onModelChange={handleModelChange}
-          suggestedQuestions={SUGGESTED_QUESTIONS}
-          onSuggestClick={handleSuggestClick}
-        />
+        <div className="flex gap-4 p-4">
+          <ChatSidebar
+            aiModels={AI_MODELS}
+            selectedModel={selectedModel}
+            onModelChange={handleModelChange}
+            suggestedQuestions={SUGGESTED_QUESTIONS}
+            onSuggestClick={handleSuggestClick}
+          />
+          <ChatHistory
+            onLoadSession={handleLoadSession}
+            currentSession={currentSession}
+            onSaveCurrentSession={handleSaveCurrentSession}
+          />
+        </div>
         <div className="flex-1 flex flex-col min-h-0 ml-8">
           <ChatMain
             messages={messages}
