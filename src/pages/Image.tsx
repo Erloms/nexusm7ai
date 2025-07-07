@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import Navigation from "@/components/Navigation";
-import { Download, ArrowLeft, Trash, RotateCcw, Video } from 'lucide-react';
+import { Download, ArrowLeft, Trash, RotateCcw, Video, Wand2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // 星空动画
@@ -68,7 +68,52 @@ const modelOptions = [
   { id: 'turbo', name: 'Turbo (极速生成)', },
 ];
 
-const defaultNegativePrompt = "worst quality, low quality, blurry, out of focus, distorted, deformed, bad anatomy, watermark, signature, logo, text, copyright, trademark, artifacts, jpeg artifacts, noise, grain, pixelated, poor lighting, overexposed, underexposed, chinese text, asian text, chinese characters";
+// 大师级提示词库
+const MASTER_PROMPTS = [
+  // 场景与环境
+  "A bustling futuristic cityscape at night, neon lights reflecting on wet streets, flying cars in the sky, cinematic lighting, ultra detailed, by Syd Mead, trending on ArtStation, 8k resolution",
+  "A mystical forest with ancient tall trees, glowing magical orbs floating in the air, soft morning mist, ethereal atmosphere, intricate details, by Greg Rutkowski, fantasy art, beautiful light rays",
+  "A grand medieval castle atop a hill, dramatic sunrise in the background, lush green landscape, highly detailed architecture, epic atmosphere, by Raphael Lacoste, masterpiece, 4k",
+  "An underwater coral kingdom, vibrant marine life, sunlight beams piercing the blue water, dreamy and magical, highly realistic, by Pascal Blanche, trending on ArtStation",
+  "A serene Japanese garden in spring, cherry blossoms falling, stone lanterns and koi pond, peaceful atmosphere, traditional art style, by Makoto Shinkai, ultra detailed",
+  
+  // 角色与人物
+  "A regal elven queen sitting on a crystal throne, long flowing silver hair, intricate crown, delicate facial features, magical aura, surrounded by glowing butterflies, highly detailed, Artgerm style, fantasy illustration, beautiful lighting",
+  "A cyberpunk samurai warrior, neon-lit armor, katana glowing with blue energy, standing in a rainy alley, dynamic pose, cinematic composition, by WLOP, ultra realistic",
+  "A Victorian gentleman detective, sharp suit and top hat, holding a cane, standing under a gas street lamp in the foggy night, Sherlock Holmes vibes, highly detailed, by Loish, moody atmosphere",
+  "A futuristic female mech pilot in exosuit, holographic interface displays, inside a high-tech cockpit, intense expression, glowing blue and purple lighting, by H.R. Giger, 8k resolution, sci-fi concept art",
+  "A fantasy dragon coiled around a mountain peak, golden scales shimmering in sunlight, clouds swirling below, majestic and powerful, highly detailed, by Ruan Jia, epic mood",
+  
+  // 艺术风格
+  "Impressionist city street at dusk, lively crowd, blurred brushstrokes, warm glowing lights, inspired by Claude Monet, beautiful color blending, painterly texture, masterpiece",
+  "Surreal dreamscape, floating islands in a pink sky, melting clocks, by Salvador Dali, highly detailed, surrealism, trippy atmosphere, vivid colors",
+  "Baroque palace interior, ornate golden details, dramatic shadows, grand staircase, rich textures, inspired by Gian Lorenzo Bernini, ultra realistic, masterpiece",
+  "Abstract geometric pattern, vibrant primary colors, bold lines and shapes, inspired by Piet Mondrian, minimal background, modern art, clean composition",
+  "Watercolor portrait of a young woman, soft pastel colors, gentle expression, flowing hair, inspired by Yumeji Takehisa, delicate brushwork, poetic mood",
+  
+  // 构图与光影
+  "Close-up portrait of a mysterious woman, dramatic rim lighting, deep shadows, high detail, glossy lips, cinematic composition, by Ilya Kuvshinov, 8k resolution",
+  "Wide-angle view of a mountain valley at golden hour, long shadows, warm sunlight, atmospheric perspective, rich color palette, by Albert Bierstadt, landscape painting",
+  "Top-down view of an ancient map, intricate details, parchment texture, compass rose and decorative borders, fantasy world, by John Blanche, highly detailed illustration",
+  "Backlit silhouette of a lone traveler on a cliff, sun setting behind, glowing orange and pink sky, strong contrast, moody atmosphere, by Ivan Shishkin",
+  "Dynamic action shot, character leaping through rain, motion blur, intense energy, cinematic style, trending on ArtStation, high detail",
+  
+  // 细节与质感
+  "Ultra detailed mechanical watch, exposed gears and cogs, polished metal, glass reflections, macro perspective, hyper realistic, 8k, by Peter Mohrbacher",
+  "Close-up of dewdrops on a spiderweb, bokeh background, sunlight refraction, natural beauty, highly detailed, by Steve McCurry, macro photography style",
+  "Silky flowing fabric, soft folds and highlights, pastel color palette, gentle lighting, detailed texture, by Lois van Baarle, fashion illustration",
+  "Rain-soaked city street, puddles reflecting neon signs, people with umbrellas, vibrant colors, cinematic mood, by Beeple, hyper realistic",
+  "Intricate stained glass window, sunlight streaming through, colorful patterns projected on the floor, highly detailed, gothic cathedral, by Gustav Klimt",
+  
+  // 情绪氛围
+  "A cozy cottage interior, warm fireplace glow, rustic furniture, soft blankets, inviting atmosphere, by Norman Rockwell, highly detailed, storybook style",
+  "A mysterious forest at midnight, thick fog, twisted trees, glowing eyes in the darkness, eerie and suspenseful, by H.P. Lovecraft, high detail",
+  "A joyful festival scene, lanterns hanging overhead, people dancing, confetti in the air, vibrant colors, lively and celebratory, by Hayao Miyazaki, animated style",
+  "A melancholic rainy cityscape, reflections on wet pavement, lone figure with an umbrella, cool blue and gray palette, atmospheric, by Edward Hopper",
+  "A romantic rooftop dinner under the stars, string lights, soft candle glow, gentle breeze, dreamy and intimate, by Pascal Campion, painterly style"
+];
+
+const defaultNegativePrompt = "worst quality, low quality, blurry, out of focus, distorted, deformed, bad anatomy, watermark, signature, logo, text, copyright, trademark, artifacts, jpeg artifacts, noise, grain, pixelated, poor lighting, overexposed, underexposed, chinese text, asian text, chinese characters, cropped, duplicated, ugly, extra fingers, bad hands, missing fingers, mutated hands";
 
 const Image: React.FC = () => {
   const { toast } = useToast();
@@ -79,6 +124,7 @@ const Image: React.FC = () => {
   const [height, setHeight] = useState('768');
   const [seed, setSeed] = useState('-1');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isOptimizing, setIsOptimizing] = useState(false);
   const [generatedImage, setGeneratedImage] = useState('');
   const [history, setHistory] = useState<Array<{image: string; title: string; model: string; prompt: string}>>([]);
 
@@ -86,11 +132,17 @@ const Image: React.FC = () => {
   const starsRef = useRef<HTMLCanvasElement>(null);
   useStars(starsRef, "#1cdfff");
 
-  // 生成优化的英文提示词
-  const generateOptimizedPrompt = async (originalPrompt: string): Promise<string> => {
+  // 智能提示词优化
+  const optimizePrompt = async (originalPrompt: string): Promise<string> => {
+    if (!originalPrompt.trim()) return originalPrompt;
+    
     try {
-      const enhancerPrompt = `Convert this to a high-quality English stable diffusion prompt with artistic details, style specifications, and quality keywords. Input: "${originalPrompt}". Output only the optimized English prompt without explanations.`;
-      const encodedPrompt = encodeURIComponent(enhancerPrompt);
+      setIsOptimizing(true);
+      
+      // 构建优化提示
+      const optimizerPrompt = `Enhance this image generation prompt by adding artistic details, composition elements, lighting descriptions, and quality keywords. Keep the original concept but make it more detailed and artistic. Original prompt: "${originalPrompt}". Output only the enhanced English prompt without explanations.`;
+      
+      const encodedPrompt = encodeURIComponent(optimizerPrompt);
       const response = await fetch(`https://text.pollinations.ai/${encodedPrompt}?model=openai`);
       
       if (response.ok) {
@@ -104,12 +156,18 @@ const Image: React.FC = () => {
           optimizedPrompt += decoder.decode(value, { stream: true });
         }
         
-        return optimizedPrompt.trim();
+        // 添加高质量后缀
+        const enhancedPrompt = `${optimizedPrompt.trim()}, masterpiece, best quality, highly detailed, ultra realistic, cinematic lighting, vibrant colors, professional photography, 8k resolution, award winning, trending on artstation`;
+        
+        return enhancedPrompt;
       }
       return originalPrompt;
     } catch (error) {
       console.error('提示词优化失败:', error);
+      toast({ title: "优化失败", description: "使用原提示词继续", variant: "destructive" });
       return originalPrompt;
+    } finally {
+      setIsOptimizing(false);
     }
   };
 
@@ -121,19 +179,11 @@ const Image: React.FC = () => {
     
     setIsGenerating(true);
     try {
-      // 优化提示词
-      const optimizedPrompt = await generateOptimizedPrompt(prompt);
-      
-      // 添加高质量关键词和负面词
-      const finalPrompt = `${optimizedPrompt}, masterpiece, best quality, highly detailed, ultra realistic, cinematic lighting, vibrant colors, professional photography, 8k resolution, award winning, trending on artstation`;
-      
-      // 构建完整的提示词，包含负面词
-      const fullPrompt = negativePrompt ? 
-        `${finalPrompt}. Negative prompt: ${negativePrompt}` : 
-        finalPrompt;
+      // 智能优化提示词
+      const optimizedPrompt = await optimizePrompt(prompt);
       
       // URL编码
-      const encodedPrompt = encodeURIComponent(fullPrompt);
+      const encodedPrompt = encodeURIComponent(optimizedPrompt);
       
       // 生成图像URL
       const finalSeed = seed === '-1' ? Math.floor(Math.random() * 1000000) : parseInt(seed);
@@ -142,10 +192,9 @@ const Image: React.FC = () => {
       console.log('生成图像URL:', imageUrl);
       console.log('原始提示词:', prompt);
       console.log('优化后提示词:', optimizedPrompt);
-      console.log('最终提示词:', fullPrompt);
       
       // 模拟生成时间
-      await new Promise(res => setTimeout(res, 1500));
+      await new Promise(res => setTimeout(res, 2000));
       
       setGeneratedImage(imageUrl);
       
@@ -175,16 +224,12 @@ const Image: React.FC = () => {
     
     setIsGenerating(true);
     try {
-      const finalPrompt = `${originalPrompt || originalTitle}, masterpiece, best quality, highly detailed, ultra realistic, cinematic lighting, vibrant colors, professional photography, 8k resolution, award winning, trending on artstation`;
-      const fullPrompt = negativePrompt ? 
-        `${finalPrompt}. Negative prompt: ${negativePrompt}` : 
-        finalPrompt;
-      
-      const encodedPrompt = encodeURIComponent(fullPrompt);
+      const optimizedPrompt = await optimizePrompt(promptToUse);
+      const encodedPrompt = encodeURIComponent(optimizedPrompt);
       const newSeed = Math.floor(Math.random() * 1000000);
       const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${newSeed}&model=${model}&nologo=true`;
       
-      await new Promise(res => setTimeout(res, 1500));
+      await new Promise(res => setTimeout(res, 2000));
       
       setGeneratedImage(imageUrl);
       
@@ -192,7 +237,7 @@ const Image: React.FC = () => {
         image: imageUrl, 
         title: originalTitle || originalPrompt, 
         model: modelOptions.find(m => m.id === model)?.name || model,
-        prompt: originalPrompt || originalTitle
+        prompt: optimizedPrompt
       };
       
       setHistory(prev => [historyItem, ...prev].slice(0, 12));
@@ -237,41 +282,33 @@ const Image: React.FC = () => {
                 type="button"
                 className="bg-[#1cdfff] text-[#17212c] px-3 py-1 text-sm rounded font-medium"
                 onClick={() => {
-                  const randomPrompts = [
-                    "一只可爱的小猫咪在花园里玩耍，阳光明媚",
-                    "科幻城市夜景，霓虹灯闪烁，未来感十足",
-                    "美丽的山水风景，青山绿水，意境深远",
-                    "宇宙星空，行星环绕，深邃神秘",
-                    "森林中的精灵，梦幻光影，魔幻风格",
-                    "现代建筑设计，简约时尚，几何美感",
-                    "海边日落，金色沙滩，浪漫温馨",
-                    "古典欧式城堡，石头建筑，历史厚重感"
-                  ];
-                  const randomPrompt = randomPrompts[Math.floor(Math.random() * randomPrompts.length)];
+                  const randomPrompt = MASTER_PROMPTS[Math.floor(Math.random() * MASTER_PROMPTS.length)];
                   setPrompt(randomPrompt);
                 }}
               >
-                随机提示词
+                大师提示词
               </Button>
               <Button
                 type="button"
-                className="bg-[#60aaff] text-white px-3 py-1 text-sm rounded font-medium"
+                className="bg-[#60aaff] text-white px-3 py-1 text-sm rounded font-medium flex items-center gap-1"
                 onClick={async () => {
                   if (prompt.trim()) {
-                    const optimized = await generateOptimizedPrompt(prompt);
+                    const optimized = await optimizePrompt(prompt);
                     setPrompt(optimized);
-                    toast({ title: "提示词已优化" });
+                    toast({ title: "提示词已智能优化" });
                   }
                 }}
+                disabled={isOptimizing}
               >
-                优化提示词
+                <Wand2 className="w-3 h-3" />
+                {isOptimizing ? '优化中...' : '智能优化'}
               </Button>
             </div>
             <Textarea
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
               id="prompt"
-              placeholder="描述你希望生成的绘画内容..."
+              placeholder="描述你希望生成的绘画内容，或点击上方按钮获取大师级提示词..."
               className="form-textarea bg-[#14202c] border border-[#2e4258] text-white rounded-lg px-3 py-2"
               rows={4}
               style={{ fontSize: "1rem" }}

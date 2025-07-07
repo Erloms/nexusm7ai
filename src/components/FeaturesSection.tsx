@@ -4,10 +4,10 @@ import { MessageSquare, Palette, Mic, Bot, Zap, Shield } from 'lucide-react';
 
 const FeaturesSection = () => {
   return (
-    <section className="py-16 bg-gradient-to-b from-nexus-dark to-nexus-darker relative overflow-hidden">
+    <section className="py-8 bg-gradient-to-b from-nexus-dark to-nexus-darker relative overflow-hidden">
       <div className="absolute inset-0 bg-[url('/lovable-uploads/grid-pattern.svg')] opacity-5"></div>
       <div className="container mx-auto px-6 relative z-10">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h2 className="text-4xl font-bold text-white mb-4">
             强大的AI能力集合
           </h2>
@@ -16,7 +16,7 @@ const FeaturesSection = () => {
           </p>
         </div>
         
-        <div className="grid md:grid-cols-3 gap-8 mb-8">
+        <div className="grid md:grid-cols-3 gap-8 mb-6">
           <div className="bg-gradient-to-br from-nexus-card to-nexus-card-dark p-8 rounded-2xl border border-nexus-accent/20 hover:border-nexus-accent/40 transition-all duration-300 group">
             <div className="w-12 h-12 bg-gradient-to-r from-nexus-accent to-nexus-secondary rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
               <MessageSquare className="w-6 h-6 text-white" />
