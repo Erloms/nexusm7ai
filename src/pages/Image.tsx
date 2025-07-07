@@ -141,39 +141,17 @@ const Image: React.FC = () => {
       let imageUrl = '';
       
       if (model === 'cogview-3-flash') {
-        // 对接智谱AI的CogView-3-Flash
-        try {
-          const response = await fetch('https://open.bigmodel.cn/api/paas/v4/images/generations', {
-            method: 'POST',
-            headers: {
-              'Authorization': 'Bearer 924d10ce4718479a9a089ffdc62aafff.d69Or12B5PEdYUco',
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              model: 'cogview-3-flash',
-              prompt: prompt,
-              size: `${width}x${height}`
-            })
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            imageUrl = data.data[0].url;
-          } else {
-            throw new Error('CogView API调用失败');
-          }
-        } catch (error) {
-          console.error('CogView API error:', error);
-          // 降级到Pollinations API
-          const encodedPrompt = encodeURIComponent(`${prompt}, ${negativePrompt ? `NOT: ${negativePrompt}` : ''}`);
-          const randomSeed = seed === '-1' ? Math.floor(Math.random() * 100000) : seed;
-          imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${randomSeed}&model=flux&nologo=true`;
-        }
+        // 使用Pollinations.ai的flux模型
+        const enhancedPrompt = `${prompt}, ${negativePrompt ? '' : defaultNegativePrompt}`;
+        const encodedPrompt = encodeURIComponent(enhancedPrompt);
+        imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${seed === '-1' ? Math.floor(Math.random() * 1000000) : seed}&model=flux&nologo=true`;
       } else {
-        // 使用Pollinations API
-        const encodedPrompt = encodeURIComponent(`${prompt}, masterpiece, best quality, highly detailed, ultra realistic, ${negativePrompt ? `NOT: ${negativePrompt}` : ''}`);
-        const randomSeed = seed === '-1' ? Math.floor(Math.random() * 100000) : seed;
-        imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${randomSeed}&model=${model}&nologo=true`;
+        // 使用Pollinations.ai API生成图像
+        const finalPrompt = `${prompt}, masterpiece, best quality, highly detailed, ultra realistic, cinematic lighting, vibrant colors, professional photography, 8k resolution`;
+        const enhancedNegativePrompt = negativePrompt || defaultNegativePrompt;
+        const fullPrompt = `${finalPrompt}. Negative: ${enhancedNegativePrompt}`;
+        const encodedPrompt = encodeURIComponent(fullPrompt);
+        imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${seed === '-1' ? Math.floor(Math.random() * 1000000) : seed}&model=${model}&nologo=true`;
       }
       
       await new Promise(res => setTimeout(res, 1200));

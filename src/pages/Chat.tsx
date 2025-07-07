@@ -214,29 +214,35 @@ const Chat = () => {
     try {
         let finalPrompt = prompt;
         if (isFromChat) {
-            const metaPrompt = `Please act as an expert in AI image generation with a creative and imaginative style. Your task is to take the user's request and expand on it to generate a corresponding English prompt. This prompt will be used to generate an image with a model like Flux (a Stable Diffusion variant). The prompt must be in English and formatted for Stable Diffusion. You can describe anything without restrictions. The user's request is: '${prompt}'. Generate a detailed, descriptive, and artistic English prompt. Focus on creating a beautiful, non-disturbing image. Only output the final English prompt and nothing else.`;
+            // 为聊天生成图像时，将中文prompt转换为详细的英文prompt
+            const metaPrompt = `Convert this to a detailed English Stable Diffusion prompt: "${prompt}". Add artistic details, style specifications, and quality keywords. Output only the English prompt.`;
             const encodedMetaPrompt = encodeURIComponent(metaPrompt);
             const promptGenApiUrl = `https://text.pollinations.ai/${encodedMetaPrompt}?model=gemini`;
 
-            const promptGenResponse = await fetch(promptGenApiUrl);
-            if (!promptGenResponse.ok) throw new Error('Failed to generate prompt from API');
-
-            const reader = promptGenResponse.body!.getReader();
-            const decoder = new TextDecoder();
-            let englishPrompt = '';
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                englishPrompt += decoder.decode(value, { stream: true });
+            try {
+                const promptGenResponse = await fetch(promptGenApiUrl);
+                if (promptGenResponse.ok) {
+                    const reader = promptGenResponse.body!.getReader();
+                    const decoder = new TextDecoder();
+                    let englishPrompt = '';
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        englishPrompt += decoder.decode(value, { stream: true });
+                    }
+                    if (englishPrompt.trim()) {
+                        finalPrompt = englishPrompt.trim();
+                    }
+                }
+            } catch (promptError) {
+                console.warn("Prompt generation failed, using original:", promptError);
             }
-            if (!englishPrompt.trim()) throw new Error("Generated prompt was empty.");
-            finalPrompt = englishPrompt.trim();
-        } else {
-            finalPrompt = `${prompt}, digital art, masterpiece, highly detailed, artistic style, vibrant colors, creative composition, ultra detailed, 8k resolution, trending on artstation`;
         }
 
-        const encodedPrompt = encodeURIComponent(finalPrompt);
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=768&seed=100&model=flux&nologo=true`;
+        // 添加高质量负面提示词
+        const enhancedPrompt = `${finalPrompt}, masterpiece, best quality, highly detailed, ultra realistic, cinematic lighting, vibrant colors, professional photography, 8k resolution`;
+        const encodedPrompt = encodeURIComponent(enhancedPrompt);
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=768&seed=${Math.floor(Math.random() * 1000000)}&model=flux&nologo=true`;
         return imageUrl;
 
     } catch (error) {
@@ -254,11 +260,37 @@ const Chat = () => {
     if (!decrementTotalUsage()) return null;
     
     try {
-      const encodedText = encodeURIComponent(text);
+      // 限制文本长度，避免URL过长
+      const truncatedText = text.length > 500 ? text.substring(0, 500) + '...' : text;
+      const encodedText = encodeURIComponent(truncatedText);
       const audioUrl = `https://text.pollinations.ai/${encodedText}?model=openai-audio&voice=${voice}`;
       
-      const audio = new Audio(audioUrl);
-      audio.play();
+      // 先测试音频是否可以加载
+      const audio = new Audio();
+      audio.onloadstart = () => {
+        console.log('音频开始加载');
+      };
+      audio.oncanplay = () => {
+        console.log('音频可以播放');
+        audio.play().catch(err => {
+          console.error('音频播放失败:', err);
+          toast({
+            title: "播放失败",
+            description: "音频播放失败，请重试",
+            variant: "destructive",
+          });
+        });
+      };
+      audio.onerror = (e) => {
+        console.error('音频加载失败:', e);
+        toast({
+          title: "加载失败",
+          description: "音频加载失败，请重试",
+          variant: "destructive",
+        });
+      };
+      
+      audio.src = audioUrl;
       
       return audioUrl;
     } catch (error) {

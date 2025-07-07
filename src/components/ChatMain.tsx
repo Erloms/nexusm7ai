@@ -108,7 +108,7 @@ const ChatMain: React.FC<ChatMainProps> = ({
       </div>
       {/* 输入区（操作条悬浮底部） */}
       <div className="fixed inset-x-0 bottom-0 z-30 flex justify-center items-end w-full pointer-events-none">
-        <div className="pointer-events-auto w-full max-w-3xl mb-8 px-4 ml-80">
+        <div className="pointer-events-auto w-full max-w-3xl mb-8 px-4 ml-96">
           <div className="px-3 py-3 bg-gradient-to-b from-[#151b2a] to-[#213548] rounded-2xl flex gap-3 shadow-2xl border border-[#243655]/60">
             <Textarea
               value={input}
