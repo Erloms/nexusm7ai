@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import ChatSidebar from "@/components/ChatSidebar";
 import ChatMain from "@/components/ChatMain";
@@ -159,6 +160,33 @@ const Chat = () => {
     recognition.start();
   };
 
+  // 生成英文提示词
+  const generateEnglishPrompt = async (chinesePrompt: string): Promise<string> => {
+    try {
+      const promptEnhancer = `Convert this Chinese description to a detailed English stable diffusion prompt with artistic style, composition, lighting, and quality keywords: "${chinesePrompt}". Output only the English prompt without any explanations.`;
+      const encodedPrompt = encodeURIComponent(promptEnhancer);
+      const response = await fetch(`https://text.pollinations.ai/${encodedPrompt}?model=openai`);
+      
+      if (response.ok) {
+        const reader = response.body!.getReader();
+        const decoder = new TextDecoder();
+        let englishPrompt = '';
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          englishPrompt += decoder.decode(value, { stream: true });
+        }
+        
+        return englishPrompt.trim() || chinesePrompt;
+      }
+      return chinesePrompt;
+    } catch (error) {
+      console.error('提示词转换失败:', error);
+      return chinesePrompt;
+    }
+  };
+
   const callTextAPI = async (prompt: string, modelId: string) => {
     if (!decrementTotalUsage()) return "额度不足";
     
@@ -213,36 +241,25 @@ const Chat = () => {
 
     try {
         let finalPrompt = prompt;
+        
         if (isFromChat) {
-            // 为聊天生成图像时，将中文prompt转换为详细的英文prompt
-            const metaPrompt = `Convert this to a detailed English Stable Diffusion prompt: "${prompt}". Add artistic details, style specifications, and quality keywords. Output only the English prompt.`;
-            const encodedMetaPrompt = encodeURIComponent(metaPrompt);
-            const promptGenApiUrl = `https://text.pollinations.ai/${encodedMetaPrompt}?model=gemini`;
-
-            try {
-                const promptGenResponse = await fetch(promptGenApiUrl);
-                if (promptGenResponse.ok) {
-                    const reader = promptGenResponse.body!.getReader();
-                    const decoder = new TextDecoder();
-                    let englishPrompt = '';
-                    while (true) {
-                        const { done, value } = await reader.read();
-                        if (done) break;
-                        englishPrompt += decoder.decode(value, { stream: true });
-                    }
-                    if (englishPrompt.trim()) {
-                        finalPrompt = englishPrompt.trim();
-                    }
-                }
-            } catch (promptError) {
-                console.warn("Prompt generation failed, using original:", promptError);
-            }
+            // 生成英文提示词
+            finalPrompt = await generateEnglishPrompt(prompt);
         }
 
-        // 添加高质量负面提示词
-        const enhancedPrompt = `${finalPrompt}, masterpiece, best quality, highly detailed, ultra realistic, cinematic lighting, vibrant colors, professional photography, 8k resolution`;
+        // 添加高质量关键词
+        const enhancedPrompt = `${finalPrompt}, masterpiece, best quality, highly detailed, ultra realistic, cinematic lighting, vibrant colors, professional photography, 8k resolution, award winning, trending on artstation`;
+        
+        // URL编码
         const encodedPrompt = encodeURIComponent(enhancedPrompt);
+        
+        // 使用Pollinations.ai API生成图像
         const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=768&seed=${Math.floor(Math.random() * 1000000)}&model=flux&nologo=true`;
+        
+        console.log('生成图像URL:', imageUrl);
+        console.log('原始提示词:', prompt);
+        console.log('增强提示词:', enhancedPrompt);
+        
         return imageUrl;
 
     } catch (error) {
@@ -305,7 +322,7 @@ const Chat = () => {
   };
 
   const detectImagePrompt = (text: string): boolean => {
-    const imageKeywords = ['画', '绘制', '生成图片', '创建图像', '画一个', '画出', '生成一张', 'draw', 'create', 'generate image', 'make a picture'];
+    const imageKeywords = ['画', '绘制', '生成图片', '创建图像', '画一个', '画出', '生成一张', 'draw', 'create', 'generate image', 'make a picture', '绘画', '创作', '插画', '图像'];
     return imageKeywords.some(keyword => text.toLowerCase().includes(keyword.toLowerCase()));
   };
 
