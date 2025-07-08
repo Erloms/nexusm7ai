@@ -1,442 +1,259 @@
-import React, { useState, useRef, useEffect } from 'react';
-import ChatSidebar from "@/components/ChatSidebar";
-import ChatMain from "@/components/ChatMain";
-import Navigation from "@/components/Navigation";
-import { useToast } from "@/hooks/use-toast";
+
+import React, { useState, useEffect } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
+import { Send, User, Bot, Crown } from 'lucide-react';
+import Navigation from '@/components/Navigation';
+import ChatSidebar from '@/components/ChatSidebar';
 import { useAuth } from '@/contexts/AuthContext';
-import PaymentCheck from '@/components/PaymentCheck';
+import { Link } from 'react-router-dom';
 
-const AI_MODELS = [
-  { id: "gemini", name: "Gemini 2.0 Flash", group: "Google" },
-  { id: "gemini-thinking", name: "Gemini 2.0 Flash Thinking", group: "Google" },
-  { id: "openai", name: "OpenAI GPT-4o-mini", group: "OpenAI" },
-  { id: "openai-large", name: "OpenAI GPT-4o", group: "OpenAI" },
-  { id: "openai-reasoning", name: "OpenAI o1-mini", group: "OpenAI" },
-  { id: "claude", name: "Claude 3.5 Haiku", group: "Anthropic" },
-  { id: "claude-sonnet", name: "Claude 3.5 Sonnet", group: "Anthropic" },
-  { id: "llama", name: "Llama 3.3 70B", group: "Meta" },
-  { id: "llamalight", name: "Llama 3.1 8B Instruct", group: "Meta" },
-  { id: "llama-vision", name: "Llama 3.2 Vision", group: "Meta" },
-  { id: "deepseek", name: "DeepSeek-V3", group: "DeepSeek" },
-  { id: "deepseek-r1", name: "DeepSeek-R1 Distill Qwen 32B", group: "DeepSeek" },
-  { id: "deepseek-reasoner", name: "DeepSeek R1 - Full", group: "DeepSeek" },
-  { id: "deepseek-r1-llama", name: "DeepSeek R1 - Llama 70B", group: "DeepSeek" },
-  { id: "mistral", name: "Mistral Nemo", group: "Mistral" },
-  { id: "mistral-large", name: "Mistral Large", group: "Mistral" },
-  { id: "phi", name: "Phi-4 Multimodal Instruct", group: "Microsoft" },
-  { id: "qwen-coder", name: "Qwen 2.5 Coder 32B", group: "Qwen" },
-  { id: "qwen-math", name: "Qwen 2.5 Math", group: "Qwen" },
-  { id: "yi-large", name: "Yi Large", group: "01.AI" },
-  { id: "searchgpt", name: "SearchGPT", group: "Search" },
-  { id: "perplexity", name: "Perplexity", group: "Search" }
-];
-
-// 聊天消息类型
-type Message = {
-  text: string;
-  sender: "user" | "ai";
-  type?: "text" | "image" | "audio";
-  imageUrl?: string;
-  audioUrl?: string;
-};
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
 
 const Chat = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [selectedModel, setSelectedModel] = useState(AI_MODELS[0].id);
-  const [isTyping, setIsTyping] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const { user } = useAuth();
   const { toast } = useToast();
-  const { user, checkPaymentStatus } = useAuth();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedModel, setSelectedModel] = useState('gpt-4');
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
 
-  const getTotalUsage = () => {
-    if (!user?.id) return 0;
-    const usage = JSON.parse(localStorage.getItem(`nexusAi_usage_${user.id}`) || '{"used": 0}');
-    return usage.used;
+  const aiModels = [
+    { id: 'gpt-4', name: 'GPT-4', group: 'OpenAI' },
+    { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', group: 'OpenAI' },
+    { id: 'claude-3', name: 'Claude-3', group: 'Anthropic' },
+    { id: 'gemini-pro', name: 'Gemini Pro', group: 'Google' },
+    { id: 'llama-2', name: 'Llama 2', group: 'Meta' }
+  ];
+
+  // Check if user has active membership
+  const isVipUser = () => {
+    // In a real app, this would check against the database
+    const users = JSON.parse(localStorage.getItem('nexusAi_users') || '[]');
+    const currentUser = users.find((u: any) => u.email === user?.email);
+    return currentUser?.membershipType === 'annual' || currentUser?.membershipType === 'lifetime';
   };
 
-  const remainingUsage = 10 - getTotalUsage();
+  const handleSendMessage = async () => {
+    if (!input.trim()) return;
 
-  const decrementTotalUsage = () => {
-    if (!user?.id || checkPaymentStatus()) return true;
-    
-    if (remainingUsage <= 0) {
+    // Check membership before allowing chat
+    if (!isVipUser()) {
       toast({
-        title: "额度用完",
-        description: "您的总额度已用完，请升级VIP",
-        variant: "destructive",
+        title: "需要会员权限",
+        description: "请先开通会员以使用AI对话功能",
+        variant: "destructive"
       });
-      return false;
+      return;
     }
 
-    const currentUsed = getTotalUsage();
-    localStorage.setItem(`nexusAi_usage_${user.id}`, JSON.stringify({ used: currentUsed + 1 }));
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: input,
+      timestamp: new Date()
+    };
 
-    return true;
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      // Simulate AI response
+      setTimeout(() => {
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: `这是来自 ${selectedModel} 的回复：${input}。这是一个模拟回复，在实际应用中会连接到真实的AI模型。`,
+          timestamp: new Date()
+        };
+        
+        setMessages(prev => [...prev, aiMessage]);
+        setIsLoading(false);
+
+        // Save chat history
+        saveChatHistory([...messages, userMessage, aiMessage]);
+      }, 1500);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "发送失败",
+        description: "消息发送失败，请重试",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+    }
   };
 
-  // 保存聊天记录
   const saveChatHistory = (chatMessages: Message[]) => {
     if (!user?.id || chatMessages.length === 0) return;
 
     const chatHistory = {
       id: currentChatId || Date.now().toString(),
-      title: chatMessages[0]?.text?.slice(0, 30) + '...' || '新对话',
+      title: chatMessages[0]?.content.slice(0, 30) + '...' || '新对话',
       timestamp: new Date().toISOString(),
-      preview: chatMessages[0]?.text?.slice(0, 100) + '...' || '',
+      preview: chatMessages[0]?.content.slice(0, 100) || '',
       messages: chatMessages
     };
 
     const existingHistory = JSON.parse(localStorage.getItem(`chat_history_${user.id}`) || '[]');
-    const updatedHistory = [chatHistory, ...existingHistory.filter((h: any) => h.id !== chatHistory.id)];
-    localStorage.setItem(`chat_history_${user.id}`, JSON.stringify(updatedHistory.slice(0, 50))); // 最多保存50条记录
-  };
+    const updatedHistory = currentChatId 
+      ? existingHistory.map((h: any) => h.id === currentChatId ? chatHistory : h)
+      : [...existingHistory, chatHistory];
 
-  // 加载聊天记录
-  const loadChatHistory = (historyId: string) => {
-    if (!user?.id) return;
-
-    const existingHistory = JSON.parse(localStorage.getItem(`chat_history_${user.id}`) || '[]');
-    const history = existingHistory.find((h: any) => h.id === historyId);
+    localStorage.setItem(`chat_history_${user.id}`, JSON.stringify(updatedHistory));
     
-    if (history) {
-      setMessages(history.messages);
-      setCurrentChatId(historyId);
+    if (!currentChatId) {
+      setCurrentChatId(chatHistory.id);
     }
   };
 
-  // 新建对话
+  const handleLoadHistory = (historyId: string) => {
+    if (!user?.id) return;
+    
+    const savedHistory = localStorage.getItem(`chat_history_${user.id}`);
+    if (savedHistory) {
+      const history = JSON.parse(savedHistory);
+      const chat = history.find((h: any) => h.id === historyId);
+      if (chat) {
+        setMessages(chat.messages || []);
+        setCurrentChatId(historyId);
+      }
+    }
+  };
+
   const handleNewChat = () => {
     setMessages([]);
     setCurrentChatId(null);
-    setInput('');
-  };
-
-  const handleSend = async () => {
-    if (!input.trim()) return;
-
-    const userMessage: Message = { text: input, sender: 'user' };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
-    
-    const currentInput = input;
-    setInput('');
-
-    try {
-      // 检测是否为图像生成请求
-      if (detectImagePrompt(currentInput)) {
-        const imageUrl = await generateImage(currentInput, true);
-        if (imageUrl) {
-          const aiImageMessage: Message = { 
-            text: `为您生成了图像：${currentInput}`, 
-            sender: 'ai', 
-            type: 'image',
-            imageUrl: imageUrl 
-          };
-          const finalMessages = [...newMessages, aiImageMessage];
-          setMessages(finalMessages);
-          saveChatHistory(finalMessages);
-        }
-      } 
-      // 检测是否为语音合成请求
-      else if (/语音|朗读|播放|说出来/.test(currentInput)) {
-        const response = await callTextAPI(currentInput, selectedModel);
-        const aiMessage: Message = { text: response, sender: 'ai' };
-        const messagesWithAI = [...newMessages, aiMessage];
-        setMessages(messagesWithAI);
-        
-        // 自动合成语音
-        await synthesizeVoice(response);
-        saveChatHistory(messagesWithAI);
-      }
-      else {
-        const response = await callTextAPI(currentInput, selectedModel);
-        const aiMessage: Message = { text: response, sender: 'ai' };
-        const finalMessages = [...newMessages, aiMessage];
-        setMessages(finalMessages);
-        saveChatHistory(finalMessages);
-      }
-    } catch (error) {
-      console.error('发送失败:', error);
-      toast({
-        title: "发送失败",
-        description: "发送失败，请重试",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // 搜索功能
-  const searchWeb = async (query: string): Promise<string> => {
-    try {
-      const encodedQuery = encodeURIComponent(query);
-      const searchUrl = `https://api.duckduckgo.com/?q=${encodedQuery}&format=json&no_html=1&skip_disambig=1`;
-      
-      const response = await fetch(searchUrl);
-      if (!response.ok) {
-        throw new Error(`搜索失败: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      // 提取搜索结果
-      const results = data.RelatedTopics?.slice(0, 5)?.map((item: any) => item.Text)?.join('\n') || 
-                    data.AbstractText || 
-                    '未找到相关信息';
-      
-      return results;
-    } catch (error) {
-      console.error('搜索错误:', error);
-      return '搜索服务暂时不可用，请稍后再试。';
-    }
-  };
-
-  // 语音识别
-  const startListening = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      toast({
-        title: "不支持",
-        description: "您的浏览器不支持语音识别",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'zh-CN';
-    recognition.interimResults = false;
-
-    recognition.onstart = () => {
-      setIsListening(true);
-    };
-
-    recognition.onresult = (event: any) => {
-      const result = event.results[0][0].transcript;
-      setInput(result);
-      setIsListening(false);
-    };
-
-    recognition.onerror = (event: any) => {
-      toast({
-        title: "识别失败",
-        description: '语音识别失败: ' + event.error,
-        variant: "destructive",
-      });
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognition.start();
-  };
-
-  // 生成英文提示词
-  const generateEnglishPrompt = async (chinesePrompt: string): Promise<string> => {
-    try {
-      const promptEnhancer = `Convert this Chinese description to a detailed English stable diffusion prompt with artistic style, composition, lighting, and quality keywords: "${chinesePrompt}". Output only the English prompt without any explanations.`;
-      const encodedPrompt = encodeURIComponent(promptEnhancer);
-      const response = await fetch(`https://text.pollinations.ai/${encodedPrompt}?model=openai`);
-      
-      if (response.ok) {
-        const reader = response.body!.getReader();
-        const decoder = new TextDecoder();
-        let englishPrompt = '';
-        
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          englishPrompt += decoder.decode(value, { stream: true });
-        }
-        
-        return englishPrompt.trim() || chinesePrompt;
-      }
-      return chinesePrompt;
-    } catch (error) {
-      console.error('提示词转换失败:', error);
-      return chinesePrompt;
-    }
-  };
-
-  const callTextAPI = async (prompt: string, modelId: string) => {
-    if (!decrementTotalUsage()) return "额度不足";
-    
-    try {
-      setIsTyping(true);
-      
-      // 检查是否需要搜索
-      const shouldSearch = /搜索|查找|最新|新闻|当前|现在|今天|查询/.test(prompt) || selectedModel === 'searchgpt';
-      
-      let finalPrompt = prompt;
-      
-      if (shouldSearch) {
-        const searchResults = await searchWeb(prompt);
-        finalPrompt = `根据以下搜索结果回答问题：\n\n搜索结果：\n${searchResults}\n\n用户问题：${prompt}\n\n请基于搜索结果提供准确回答：`;
-      }
-      
-      const encodedPrompt = encodeURIComponent(finalPrompt);
-      const apiUrl = `https://text.pollinations.ai/${encodedPrompt}${modelId ? '?model=' + modelId : ''}`;
-      
-      const response = await fetch(apiUrl);
-      if (!response.ok) {
-        throw new Error(`API响应错误: ${response.status}`);
-      }
-      
-      const reader = response.body!.getReader();
-      const decoder = new TextDecoder();
-      let aiResponse = '';
-      
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        aiResponse += chunk;
-      }
-      
-      return aiResponse;
-    } catch (error) {
-      console.error("API调用错误:", error);
-      toast({
-        title: "调用失败",
-        description: "模型调用失败，请重试",
-        variant: "destructive",
-      });
-      return "抱歉，我在处理您的请求时遇到了问题。请稍后再试。";
-    } finally {
-      setIsTyping(false);
-    }
-  };
-
-  const generateImage = async (prompt: string, isFromChat: boolean) => {
-    if (!decrementTotalUsage()) return null;
-
-    try {
-        let finalPrompt = prompt;
-        
-        if (isFromChat) {
-            // 生成英文提示词
-            finalPrompt = await generateEnglishPrompt(prompt);
-        }
-
-        // 添加高质量关键词
-        const enhancedPrompt = `${finalPrompt}, masterpiece, best quality, highly detailed, ultra realistic, cinematic lighting, vibrant colors, professional photography, 8k resolution, award winning, trending on artstation`;
-        
-        // URL编码
-        const encodedPrompt = encodeURIComponent(enhancedPrompt);
-        
-        // 使用Pollinations.ai API生成图像
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=768&seed=${Math.floor(Math.random() * 1000000)}&model=flux&nologo=true`;
-        
-        console.log('生成图像URL:', imageUrl);
-        console.log('原始提示词:', prompt);
-        console.log('增强提示词:', enhancedPrompt);
-        
-        return imageUrl;
-
-    } catch (error) {
-        console.error("图像生成错误:", error);
-        toast({
-            title: "生成失败",
-            description: "图像生成失败，请重试",
-            variant: "destructive",
-        });
-        return null;
-    }
-  };
-
-  const synthesizeVoice = async (text: string, voice: string = 'alloy') => {
-    if (!decrementTotalUsage()) return null;
-    
-    try {
-      // 限制文本长度，避免URL过长
-      const truncatedText = text.length > 500 ? text.substring(0, 500) + '...' : text;
-      const encodedText = encodeURIComponent(truncatedText);
-      const audioUrl = `https://text.pollinations.ai/${encodedText}?model=openai-audio&voice=${voice}`;
-      
-      // 先测试音频是否可以加载
-      const audio = new Audio();
-      audio.onloadstart = () => {
-        console.log('音频开始加载');
-      };
-      audio.oncanplay = () => {
-        console.log('音频可以播放');
-        audio.play().catch(err => {
-          console.error('音频播放失败:', err);
-          toast({
-            title: "播放失败",
-            description: "音频播放失败，请重试",
-            variant: "destructive",
-          });
-        });
-      };
-      audio.onerror = (e) => {
-        console.error('音频加载失败:', e);
-        toast({
-          title: "加载失败",
-          description: "音频加载失败，请重试",
-          variant: "destructive",
-        });
-      };
-      
-      audio.src = audioUrl;
-      
-      return audioUrl;
-    } catch (error) {
-      console.error("语音合成错误:", error);
-      toast({
-        title: "合成失败",
-        description: "语音合成失败，请重试",
-        variant: "destructive",
-      });
-      return null;
-    }
-  };
-
-  const detectImagePrompt = (text: string): boolean => {
-    const imageKeywords = ['画', '绘制', '生成图片', '创建图像', '画一个', '画出', '生成一张', 'draw', 'create', 'generate image', 'make a picture', '绘画', '创作', '插画', '图像'];
-    return imageKeywords.some(keyword => text.toLowerCase().includes(keyword.toLowerCase()));
-  };
-
-  // 模型更改
-  const handleModelChange = (val: string) => setSelectedModel(val);
-
-  // 语音输入
-  const handleStartListening = () => {
-    startListening();
   };
 
   return (
-    <PaymentCheck featureType="chat">
-    <div className="min-h-screen flex flex-col w-full bg-gradient-to-br from-[#151A25] via-[#181f33] to-[#10141e] overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-[#151A25] via-[#181f33] to-[#10141e]">
       <Navigation />
-      <div className="flex flex-1 overflow-hidden pt-16">
-        <div className="flex gap-4 p-4">
-          <ChatSidebar
-            aiModels={AI_MODELS}
-            selectedModel={selectedModel}
-            onModelChange={handleModelChange}
-            onLoadHistory={loadChatHistory}
-            onNewChat={handleNewChat}
-          />
-        </div>
-        <div className="flex-1 flex flex-col min-h-0 ml-8">
-          <ChatMain
-            messages={messages}
-            input={input}
-            setInput={setInput}
-            isTyping={isTyping}
-            isListening={isListening}
-            onSend={handleSend}
-            onStartListening={handleStartListening}
-            onSynthesizeVoice={synthesizeVoice}
-          />
+      <div className="flex h-[calc(100vh-80px)]">
+        <ChatSidebar
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
+          onLoadHistory={handleLoadHistory}
+          onNewChat={handleNewChat}
+          aiModels={aiModels}
+        />
+        
+        <div className="flex-1 flex flex-col">
+          {/* Chat messages area */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            {!isVipUser() && (
+              <Card className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-amber-500/30 mb-4">
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-3">
+                    <Crown className="h-6 w-6 text-amber-400" />
+                    <div className="flex-1">
+                      <h3 className="text-white font-semibold">升级会员解锁AI对话</h3>
+                      <p className="text-gray-300 text-sm">开通会员即可享受20+顶尖AI模型无限对话</p>
+                    </div>
+                    <Button asChild className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
+                      <Link to="/payment">立即升级</Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {messages.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center max-w-md">
+                  <Bot className="h-16 w-16 text-cyan-400 mx-auto mb-4" />
+                  <h2 className="text-2xl font-bold text-white mb-2">开始对话</h2>
+                  <p className="text-gray-400 mb-6">
+                    选择一个AI模型，开始您的智能对话之旅
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex items-start space-x-3 ${
+                      message.role === 'user' ? 'justify-end' : 'justify-start'
+                    }`}
+                  >
+                    {message.role === 'assistant' && (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                        <Bot className="h-4 w-4 text-white" />
+                      </div>
+                    )}
+                    
+                    <div
+                      className={`max-w-[70%] rounded-2xl px-4 py-3 ${
+                        message.role === 'user'
+                          ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white'
+                          : 'bg-[#1a2436] text-gray-200 border border-[#2a3441]'
+                      }`}
+                    >
+                      <p className="text-sm leading-relaxed">{message.content}</p>
+                      <p className="text-xs opacity-70 mt-2">
+                        {message.timestamp.toLocaleTimeString()}
+                      </p>
+                    </div>
+                    
+                    {message.role === 'user' && (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                        <User className="h-4 w-4 text-white" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+                
+                {isLoading && (
+                  <div className="flex items-start space-x-3">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center">
+                      <Bot className="h-4 w-4 text-white" />
+                    </div>
+                    <div className="bg-[#1a2436] rounded-2xl px-4 py-3 border border-[#2a3441]">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          
+          {/* Input area */}
+          <div className="p-6 border-t border-[#232b3a]">
+            <div className="flex space-x-4">
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={isVipUser() ? "输入您的问题..." : "请先升级会员使用AI对话功能"}
+                className="flex-1 bg-[#1a2436] border-[#2a3441] text-white placeholder-gray-400"
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                disabled={!isVipUser() || isLoading}
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={!input.trim() || !isVipUser() || isLoading}
+                className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white px-6"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    </PaymentCheck>
   );
 };
 

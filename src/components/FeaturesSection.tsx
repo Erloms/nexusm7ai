@@ -33,12 +33,12 @@ const FeaturesSection = () => {
   ];
 
   return (
-    <section className="py-16 px-4 relative">
+    <section className="py-8 px-4 relative">
       {/* Background glow effect */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-nexus-blue/5 rounded-full blur-[100px] z-0"></div>
       
       <div className="max-w-6xl mx-auto relative z-10">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             <span className="text-gradient">强大的AI能力</span>
             <span className="text-white">，一站式体验</span>
