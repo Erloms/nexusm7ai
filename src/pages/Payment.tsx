@@ -38,7 +38,7 @@ const Payment = () => {
         '永久免费使用所有AI功能',
         '专属VIP身份标识',
         '无限制访问新功能',
-        '永久免费更新升级'
+        '永久免费功能更新'
       ]
     },
     agent: { 
@@ -52,7 +52,7 @@ const Payment = () => {
         '30%推广收益分成',
         '专属代理商后台',
         '营销素材支持',
-        '一对一运营指导'
+        '专业培训指导'
       ]
     }
   };
@@ -64,10 +64,10 @@ const Payment = () => {
       {/* Hero Section */}
       <div className="pt-24 pb-12 px-4 text-center">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent mb-6">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent mb-6">
             选择会员套餐
           </h1>
-          <p className="text-xl text-gray-300 mb-8">
+          <p className="text-lg text-gray-300 mb-8">
             解锁全部AI超能力，开启无限创作之旅
           </p>
           <div className="flex items-center justify-center gap-2 mb-8">
@@ -95,43 +95,43 @@ const Payment = () => {
               selectedPlan === 'annual' ? 'opacity-100' : 'opacity-0'
             }`}></div>
             
-            <div className={`relative bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border-2 rounded-3xl p-8 transition-all duration-300 ${
+            <div className={`relative bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border-2 rounded-3xl p-6 transition-all duration-300 ${
               selectedPlan === 'annual' 
                 ? 'border-cyan-400 shadow-2xl shadow-cyan-500/25' 
                 : 'border-gray-700 hover:border-gray-600'
             }`}>
-              <div className="text-center mb-8">
+              <div className="text-center mb-6">
                 <div className="flex items-center justify-center mb-4">
-                  <Crown className="w-8 h-8 text-cyan-400 mr-2" />
-                  <h3 className="text-2xl font-bold text-white">{planDetails.annual.description}</h3>
+                  <Crown className="w-6 h-6 text-cyan-400 mr-2" />
+                  <h3 className="text-lg font-bold text-white">{planDetails.annual.description}</h3>
                 </div>
-                <p className="text-gray-400 mb-6">{planDetails.annual.subtitle}</p>
+                <p className="text-gray-400 mb-4 text-sm">{planDetails.annual.subtitle}</p>
                 
-                <div className="mb-6">
-                  <span className="text-6xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                <div className="mb-4">
+                  <span className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
                     ¥{planDetails.annual.price}
                   </span>
-                  <span className="text-gray-400 text-xl ml-2">/年</span>
+                  <span className="text-gray-400 text-base ml-2">/年</span>
                 </div>
                 
-                <div className="text-sm text-gray-500 mb-6">
+                <div className="text-xs text-gray-500 mb-4">
                   平均每月仅需 ¥8.25
                 </div>
               </div>
               
-              <div className="space-y-4 mb-8">
+              <div className="space-y-3 mb-6">
                 {planDetails.annual.features.map((feature, index) => (
                   <div key={index} className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-cyan-400 mr-3 flex-shrink-0" />
-                    <span className="text-gray-300">{feature}</span>
+                    <CheckCircle className="w-4 h-4 text-cyan-400 mr-2 flex-shrink-0" />
+                    <span className="text-gray-300 text-sm">{feature}</span>
                   </div>
                 ))}
               </div>
               
               {selectedPlan === 'annual' && (
                 <div className="text-center">
-                  <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold py-4 rounded-xl text-lg transition-all duration-300">
-                    <Zap className="w-5 h-5 mr-2" />
+                  <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold py-3 rounded-xl text-sm transition-all duration-300">
+                    <Zap className="w-4 h-4 mr-2" />
                     立即选择
                   </Button>
                 </div>
@@ -148,8 +148,8 @@ const Payment = () => {
           >
             {/* Recommended Badge */}
             <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
-              <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2 rounded-full text-sm font-bold flex items-center shadow-lg">
-                <Sparkles className="w-4 h-4 mr-1" />
+              <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-1 rounded-full text-xs font-bold flex items-center shadow-lg">
+                <Sparkles className="w-3 h-3 mr-1" />
                 推荐
               </div>
             </div>
@@ -158,43 +158,43 @@ const Payment = () => {
               selectedPlan === 'lifetime' ? 'opacity-100' : 'opacity-0'
             }`}></div>
             
-            <div className={`relative bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border-2 rounded-3xl p-8 transition-all duration-300 ${
+            <div className={`relative bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border-2 rounded-3xl p-6 transition-all duration-300 ${
               selectedPlan === 'lifetime' 
                 ? 'border-purple-400 shadow-2xl shadow-purple-500/25' 
                 : 'border-gray-700 hover:border-gray-600'
             }`}>
-              <div className="text-center mb-8">
+              <div className="text-center mb-6">
                 <div className="flex items-center justify-center mb-4">
-                  <Crown className="w-8 h-8 text-purple-400 mr-2" />
-                  <h3 className="text-2xl font-bold text-white">{planDetails.lifetime.description}</h3>
+                  <Crown className="w-6 h-6 text-purple-400 mr-2" />
+                  <h3 className="text-lg font-bold text-white">{planDetails.lifetime.description}</h3>
                 </div>
-                <p className="text-gray-400 mb-6">{planDetails.lifetime.subtitle}</p>
+                <p className="text-gray-400 mb-4 text-sm">{planDetails.lifetime.subtitle}</p>
                 
-                <div className="mb-6">
-                  <span className="text-6xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+                <div className="mb-4">
+                  <span className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
                     ¥{planDetails.lifetime.price}
                   </span>
-                  <span className="text-gray-400 text-xl ml-2">/永久</span>
+                  <span className="text-gray-400 text-base ml-2">/永久</span>
                 </div>
                 
-                <div className="text-sm text-gray-500 mb-6">
+                <div className="text-xs text-gray-500 mb-4">
                   相当于4年年费，超值划算
                 </div>
               </div>
               
-              <div className="space-y-4 mb-8">
+              <div className="space-y-3 mb-6">
                 {planDetails.lifetime.features.map((feature, index) => (
                   <div key={index} className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-purple-400 mr-3 flex-shrink-0" />
-                    <span className="text-gray-300">{feature}</span>
+                    <CheckCircle className="w-4 h-4 text-purple-400 mr-2 flex-shrink-0" />
+                    <span className="text-gray-300 text-sm">{feature}</span>
                   </div>
                 ))}
               </div>
               
               {selectedPlan === 'lifetime' && (
                 <div className="text-center">
-                  <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-4 rounded-xl text-lg transition-all duration-300">
-                    <Zap className="w-5 h-5 mr-2" />
+                  <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-3 rounded-xl text-sm transition-all duration-300">
+                    <Zap className="w-4 h-4 mr-2" />
                     立即选择
                   </Button>
                 </div>
@@ -213,43 +213,43 @@ const Payment = () => {
               selectedPlan === 'agent' ? 'opacity-100' : 'opacity-0'
             }`}></div>
             
-            <div className={`relative bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border-2 rounded-3xl p-8 transition-all duration-300 ${
+            <div className={`relative bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border-2 rounded-3xl p-6 transition-all duration-300 ${
               selectedPlan === 'agent' 
                 ? 'border-orange-400 shadow-2xl shadow-orange-500/25' 
                 : 'border-gray-700 hover:border-gray-600'
             }`}>
-              <div className="text-center mb-8">
+              <div className="text-center mb-6">
                 <div className="flex items-center justify-center mb-4">
-                  <Users className="w-8 h-8 text-orange-400 mr-2" />
-                  <h3 className="text-2xl font-bold text-white">{planDetails.agent.description}</h3>
+                  <Users className="w-6 h-6 text-orange-400 mr-2" />
+                  <h3 className="text-lg font-bold text-white">{planDetails.agent.description}</h3>
                 </div>
-                <p className="text-gray-400 mb-6">{planDetails.agent.subtitle}</p>
+                <p className="text-gray-400 mb-4 text-sm">{planDetails.agent.subtitle}</p>
                 
-                <div className="mb-6">
-                  <span className="text-6xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+                <div className="mb-4">
+                  <span className="text-4xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
                     ¥{planDetails.agent.price}
                   </span>
-                  <span className="text-gray-400 text-xl ml-2">/代理</span>
+                  <span className="text-gray-400 text-base ml-2">/代理</span>
                 </div>
                 
-                <div className="text-sm text-gray-500 mb-6">
-                  包含永久会员 + 收益分成
+                <div className="text-xs text-gray-500 mb-4">
+                  写3-4单就赚回来了
                 </div>
               </div>
               
-              <div className="space-y-4 mb-8">
+              <div className="space-y-3 mb-6">
                 {planDetails.agent.features.map((feature, index) => (
                   <div key={index} className="flex items-center">
-                    <CheckCircle className="w-5 h-5 text-orange-400 mr-3 flex-shrink-0" />
-                    <span className="text-gray-300">{feature}</span>
+                    <CheckCircle className="w-4 h-4 text-orange-400 mr-2 flex-shrink-0" />
+                    <span className="text-gray-300 text-sm">{feature}</span>
                   </div>
                 ))}
               </div>
               
               {selectedPlan === 'agent' && (
                 <div className="text-center">
-                  <Button className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold py-4 rounded-xl text-lg transition-all duration-300">
-                    <Zap className="w-5 h-5 mr-2" />
+                  <Button className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold py-3 rounded-xl text-sm transition-all duration-300">
+                    <Zap className="w-4 h-4 mr-2" />
                     立即选择
                   </Button>
                 </div>
@@ -260,33 +260,33 @@ const Payment = () => {
 
         {/* Payment Section */}
         <div className="max-w-sm mx-auto mt-16">
-          <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border border-gray-700 rounded-3xl p-8">
-            <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold text-white mb-6">立即开通</h3>
+          <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border border-gray-700 rounded-3xl p-6">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-bold text-white mb-4">立即开通</h3>
               
               {/* Payment QR Code */}
-              <div className="bg-white rounded-2xl p-4 mb-6 flex justify-center">
+              <div className="bg-white rounded-xl p-3 mb-4 flex justify-center w-40 h-40 mx-auto">
                 <img 
                   src="/lovable-uploads/a0ec2427-9113-4553-9e8e-17170fae056b.png" 
                   alt="支付宝支付二维码" 
-                  className="w-48 h-48 object-contain"
+                  className="w-full h-full object-contain"
                 />
               </div>
 
-              <div className="mb-6">
-                <div className="text-2xl font-bold text-white mb-1">
+              <div className="mb-4">
+                <div className="text-lg font-bold text-white mb-1">
                   ¥{planDetails[selectedPlan].total}
                 </div>
-                <div className="text-gray-400 text-sm">{planDetails[selectedPlan].description}</div>
+                <div className="text-gray-400 text-xs">{planDetails[selectedPlan].description}</div>
               </div>
             </div>
 
             <div className="text-center">
-              <p className="text-gray-400 text-sm mb-6">
+              <p className="text-gray-400 text-xs mb-4">
                 支付宝扫码支付，会员权限自动开通
               </p>
               <Button 
-                className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 rounded-xl text-lg transition-all duration-300"
+                className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 rounded-xl text-sm transition-all duration-300"
               >
                 确认支付
               </Button>
