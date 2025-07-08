@@ -14,6 +14,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Payment from "./pages/Payment";
 import Admin from "./pages/Admin";
+import AdminMembership from "./pages/AdminMembership";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/membership" element={<AdminMembership />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

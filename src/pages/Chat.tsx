@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ChatSidebar from "@/components/ChatSidebar";
 import ChatMain from "@/components/ChatMain";
-import ChatHistory from "@/components/ChatHistory";
 import Navigation from "@/components/Navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,14 +31,6 @@ const AI_MODELS = [
   { id: "perplexity", name: "Perplexity", group: "Search" }
 ];
 
-const SUGGESTED_QUESTIONS = [
-  "创建一幅未来主义城市的艺术作品",
-  "帮我搜索最新的AI技术发展", 
-  "生成一个温馨的家庭场景插画",
-  "解释人工智能的工作原理",
-  "创作一首关于科技的诗"
-];
-
 // 聊天消息类型
 type Message = {
   text: string;
@@ -55,7 +46,7 @@ const Chat = () => {
   const [selectedModel, setSelectedModel] = useState(AI_MODELS[0].id);
   const [isTyping, setIsTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [currentSession, setCurrentSession] = useState<any>(null);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const { toast } = useToast();
   const { user, checkPaymentStatus } = useAuth();
 
@@ -85,14 +76,96 @@ const Chat = () => {
     return true;
   };
 
-  useEffect(() => {
-    if (user?.id) {
-        const usage = localStorage.getItem(`nexusAi_usage_${user.id}`);
-        if (!usage) {
-            localStorage.setItem(`nexusAi_usage_${user.id}`, JSON.stringify({ used: 0 }));
-        }
+  // 保存聊天记录
+  const saveChatHistory = (chatMessages: Message[]) => {
+    if (!user?.id || chatMessages.length === 0) return;
+
+    const chatHistory = {
+      id: currentChatId || Date.now().toString(),
+      title: chatMessages[0]?.text?.slice(0, 30) + '...' || '新对话',
+      timestamp: new Date().toISOString(),
+      preview: chatMessages[0]?.text?.slice(0, 100) + '...' || '',
+      messages: chatMessages
+    };
+
+    const existingHistory = JSON.parse(localStorage.getItem(`chat_history_${user.id}`) || '[]');
+    const updatedHistory = [chatHistory, ...existingHistory.filter((h: any) => h.id !== chatHistory.id)];
+    localStorage.setItem(`chat_history_${user.id}`, JSON.stringify(updatedHistory.slice(0, 50))); // 最多保存50条记录
+  };
+
+  // 加载聊天记录
+  const loadChatHistory = (historyId: string) => {
+    if (!user?.id) return;
+
+    const existingHistory = JSON.parse(localStorage.getItem(`chat_history_${user.id}`) || '[]');
+    const history = existingHistory.find((h: any) => h.id === historyId);
+    
+    if (history) {
+      setMessages(history.messages);
+      setCurrentChatId(historyId);
     }
-  }, [user?.id]);
+  };
+
+  // 新建对话
+  const handleNewChat = () => {
+    setMessages([]);
+    setCurrentChatId(null);
+    setInput('');
+  };
+
+  const handleSend = async () => {
+    if (!input.trim()) return;
+
+    const userMessage: Message = { text: input, sender: 'user' };
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
+    
+    const currentInput = input;
+    setInput('');
+
+    try {
+      // 检测是否为图像生成请求
+      if (detectImagePrompt(currentInput)) {
+        const imageUrl = await generateImage(currentInput, true);
+        if (imageUrl) {
+          const aiImageMessage: Message = { 
+            text: `为您生成了图像：${currentInput}`, 
+            sender: 'ai', 
+            type: 'image',
+            imageUrl: imageUrl 
+          };
+          const finalMessages = [...newMessages, aiImageMessage];
+          setMessages(finalMessages);
+          saveChatHistory(finalMessages);
+        }
+      } 
+      // 检测是否为语音合成请求
+      else if (/语音|朗读|播放|说出来/.test(currentInput)) {
+        const response = await callTextAPI(currentInput, selectedModel);
+        const aiMessage: Message = { text: response, sender: 'ai' };
+        const messagesWithAI = [...newMessages, aiMessage];
+        setMessages(messagesWithAI);
+        
+        // 自动合成语音
+        await synthesizeVoice(response);
+        saveChatHistory(messagesWithAI);
+      }
+      else {
+        const response = await callTextAPI(currentInput, selectedModel);
+        const aiMessage: Message = { text: response, sender: 'ai' };
+        const finalMessages = [...newMessages, aiMessage];
+        setMessages(finalMessages);
+        saveChatHistory(finalMessages);
+      }
+    } catch (error) {
+      console.error('发送失败:', error);
+      toast({
+        title: "发送失败",
+        description: "发送失败，请重试",
+        variant: "destructive",
+      });
+    }
+  };
 
   // 搜索功能
   const searchWeb = async (query: string): Promise<string> => {
@@ -327,98 +400,12 @@ const Chat = () => {
     return imageKeywords.some(keyword => text.toLowerCase().includes(keyword.toLowerCase()));
   };
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
-
-    const userMessage: Message = { text: input, sender: 'user' };
-    setMessages(prev => [...prev, userMessage]);
-    
-    const currentInput = input;
-    setInput('');
-
-    try {
-      // 检测是否为图像生成请求
-      if (detectImagePrompt(currentInput)) {
-        const imageUrl = await generateImage(currentInput, true);
-        if (imageUrl) {
-          const aiImageMessage: Message = { 
-            text: `为您生成了图像：${currentInput}`, 
-            sender: 'ai', 
-            type: 'image',
-            imageUrl: imageUrl 
-          };
-          setMessages(prev => [...prev, aiImageMessage]);
-        }
-      } 
-      // 检测是否为语音合成请求
-      else if (/语音|朗读|播放|说出来/.test(currentInput)) {
-        const response = await callTextAPI(currentInput, selectedModel);
-        const aiMessage: Message = { text: response, sender: 'ai' };
-        setMessages(prev => [...prev, aiMessage]);
-        
-        // 自动合成语音
-        await synthesizeVoice(response);
-      }
-      else {
-        const response = await callTextAPI(currentInput, selectedModel);
-        const aiMessage: Message = { text: response, sender: 'ai' };
-        setMessages(prev => [...prev, aiMessage]);
-      }
-    } catch (error) {
-      console.error('发送失败:', error);
-      toast({
-        title: "发送失败",
-        description: "发送失败，请重试",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // 推荐提问点击
-  const handleSuggestClick = (q: string) => setInput(q);
-
   // 模型更改
   const handleModelChange = (val: string) => setSelectedModel(val);
 
   // 语音输入
   const handleStartListening = () => {
     startListening();
-  };
-
-  // 创建新的对话会话
-  useEffect(() => {
-    if (messages.length > 0 && !currentSession) {
-      const newSession = {
-        id: Date.now().toString(),
-        title: messages[0]?.text?.slice(0, 30) + '...' || '新对话',
-        timestamp: new Date(),
-        messages: messages.map((msg, index) => ({
-          id: index,
-          text: msg.text,
-          isUser: msg.sender === 'user',
-          timestamp: new Date()
-        })),
-        model: selectedModel
-      };
-      setCurrentSession(newSession);
-    }
-  }, [messages, currentSession, selectedModel]);
-
-  // 加载历史对话
-  const handleLoadSession = (session: any) => {
-    const loadedMessages = session.messages.map((msg: any) => ({
-      text: msg.text,
-      sender: msg.isUser ? 'user' : 'ai',
-      type: 'text'
-    }));
-    setMessages(loadedMessages);
-    setCurrentSession(session);
-    setSelectedModel(session.model || AI_MODELS[0].id);
-  };
-
-  // 保存当前对话
-  const handleSaveCurrentSession = (title: string) => {
-    // 这个功能由ChatHistory组件内部处理
   };
 
   return (
@@ -431,13 +418,8 @@ const Chat = () => {
             aiModels={AI_MODELS}
             selectedModel={selectedModel}
             onModelChange={handleModelChange}
-            suggestedQuestions={SUGGESTED_QUESTIONS}
-            onSuggestClick={handleSuggestClick}
-          />
-          <ChatHistory
-            onLoadSession={handleLoadSession}
-            currentSession={currentSession}
-            onSaveCurrentSession={handleSaveCurrentSession}
+            onLoadHistory={loadChatHistory}
+            onNewChat={handleNewChat}
           />
         </div>
         <div className="flex-1 flex flex-col min-h-0 ml-8">
