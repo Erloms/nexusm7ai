@@ -1,10 +1,10 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from '@/contexts/AuthContext';
 import Navigation from "@/components/Navigation";
 import { Download, ArrowLeft, Trash, RotateCcw, Video, Wand2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -68,44 +68,42 @@ const modelOptions = [
   { id: 'turbo', name: 'Turbo (极速生成)', },
 ];
 
+const aspectRatios = [
+  { id: '1:1', name: '1:1 (正方形)', width: 1024, height: 1024 },
+  { id: '4:3', name: '4:3 (横屏)', width: 1024, height: 768 },
+  { id: '3:4', name: '3:4 (竖屏)', width: 768, height: 1024 },
+  { id: '16:9', name: '16:9 (宽屏)', width: 1024, height: 576 },
+  { id: '9:16', name: '9:16 (手机屏)', width: 576, height: 1024 },
+  { id: 'custom', name: '自定义尺寸', width: 1024, height: 768 }
+];
+
 // 大师级提示词库
 const MASTER_PROMPTS = [
-  // 场景与环境
   "A bustling futuristic cityscape at night, neon lights reflecting on wet streets, flying cars in the sky, cinematic lighting, ultra detailed, by Syd Mead, trending on ArtStation, 8k resolution",
   "A mystical forest with ancient tall trees, glowing magical orbs floating in the air, soft morning mist, ethereal atmosphere, intricate details, by Greg Rutkowski, fantasy art, beautiful light rays",
   "A grand medieval castle atop a hill, dramatic sunrise in the background, lush green landscape, highly detailed architecture, epic atmosphere, by Raphael Lacoste, masterpiece, 4k",
   "An underwater coral kingdom, vibrant marine life, sunlight beams piercing the blue water, dreamy and magical, highly realistic, by Pascal Blanche, trending on ArtStation",
   "A serene Japanese garden in spring, cherry blossoms falling, stone lanterns and koi pond, peaceful atmosphere, traditional art style, by Makoto Shinkai, ultra detailed",
-  
-  // 角色与人物
   "A regal elven queen sitting on a crystal throne, long flowing silver hair, intricate crown, delicate facial features, magical aura, surrounded by glowing butterflies, highly detailed, Artgerm style, fantasy illustration, beautiful lighting",
   "A cyberpunk samurai warrior, neon-lit armor, katana glowing with blue energy, standing in a rainy alley, dynamic pose, cinematic composition, by WLOP, ultra realistic",
   "A Victorian gentleman detective, sharp suit and top hat, holding a cane, standing under a gas street lamp in the foggy night, Sherlock Holmes vibes, highly detailed, by Loish, moody atmosphere",
   "A futuristic female mech pilot in exosuit, holographic interface displays, inside a high-tech cockpit, intense expression, glowing blue and purple lighting, by H.R. Giger, 8k resolution, sci-fi concept art",
   "A fantasy dragon coiled around a mountain peak, golden scales shimmering in sunlight, clouds swirling below, majestic and powerful, highly detailed, by Ruan Jia, epic mood",
-  
-  // 艺术风格
   "Impressionist city street at dusk, lively crowd, blurred brushstrokes, warm glowing lights, inspired by Claude Monet, beautiful color blending, painterly texture, masterpiece",
   "Surreal dreamscape, floating islands in a pink sky, melting clocks, by Salvador Dali, highly detailed, surrealism, trippy atmosphere, vivid colors",
   "Baroque palace interior, ornate golden details, dramatic shadows, grand staircase, rich textures, inspired by Gian Lorenzo Bernini, ultra realistic, masterpiece",
   "Abstract geometric pattern, vibrant primary colors, bold lines and shapes, inspired by Piet Mondrian, minimal background, modern art, clean composition",
   "Watercolor portrait of a young woman, soft pastel colors, gentle expression, flowing hair, inspired by Yumeji Takehisa, delicate brushwork, poetic mood",
-  
-  // 构图与光影
   "Close-up portrait of a mysterious woman, dramatic rim lighting, deep shadows, high detail, glossy lips, cinematic composition, by Ilya Kuvshinov, 8k resolution",
   "Wide-angle view of a mountain valley at golden hour, long shadows, warm sunlight, atmospheric perspective, rich color palette, by Albert Bierstadt, landscape painting",
   "Top-down view of an ancient map, intricate details, parchment texture, compass rose and decorative borders, fantasy world, by John Blanche, highly detailed illustration",
   "Backlit silhouette of a lone traveler on a cliff, sun setting behind, glowing orange and pink sky, strong contrast, moody atmosphere, by Ivan Shishkin",
   "Dynamic action shot, character leaping through rain, motion blur, intense energy, cinematic style, trending on ArtStation, high detail",
-  
-  // 细节与质感
   "Ultra detailed mechanical watch, exposed gears and cogs, polished metal, glass reflections, macro perspective, hyper realistic, 8k, by Peter Mohrbacher",
   "Close-up of dewdrops on a spiderweb, bokeh background, sunlight refraction, natural beauty, highly detailed, by Steve McCurry, macro photography style",
   "Silky flowing fabric, soft folds and highlights, pastel color palette, gentle lighting, detailed texture, by Lois van Baarle, fashion illustration",
   "Rain-soaked city street, puddles reflecting neon signs, people with umbrellas, vibrant colors, cinematic mood, by Beeple, hyper realistic",
   "Intricate stained glass window, sunlight streaming through, colorful patterns projected on the floor, highly detailed, gothic cathedral, by Gustav Klimt",
-  
-  // 情绪氛围
   "A cozy cottage interior, warm fireplace glow, rustic furniture, soft blankets, inviting atmosphere, by Norman Rockwell, highly detailed, storybook style",
   "A mysterious forest at midnight, thick fog, twisted trees, glowing eyes in the darkness, eerie and suspenseful, by H.P. Lovecraft, high detail",
   "A joyful festival scene, lanterns hanging overhead, people dancing, confetti in the air, vibrant colors, lively and celebratory, by Hayao Miyazaki, animated style",
@@ -117,29 +115,36 @@ const defaultNegativePrompt = "worst quality, low quality, blurry, out of focus,
 
 const Image: React.FC = () => {
   const { toast } = useToast();
+  const { hasPermission } = useAuth();
   const [prompt, setPrompt] = useState('');
   const [negativePrompt, setNegativePrompt] = useState(defaultNegativePrompt);
   const [model, setModel] = useState('flux');
-  const [width, setWidth] = useState('1024');
-  const [height, setHeight] = useState('768');
+  const [aspectRatio, setAspectRatio] = useState('1:1');
+  const [customWidth, setCustomWidth] = useState('1024');
+  const [customHeight, setCustomHeight] = useState('768');
   const [seed, setSeed] = useState('-1');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [generatedImage, setGeneratedImage] = useState('');
   const [history, setHistory] = useState<Array<{image: string; title: string; model: string; prompt: string}>>([]);
 
-  // 星空
   const starsRef = useRef<HTMLCanvasElement>(null);
   useStars(starsRef, "#1cdfff");
 
-  // 智能提示词优化
+  const getCurrentDimensions = () => {
+    const selectedRatio = aspectRatios.find(ratio => ratio.id === aspectRatio);
+    if (selectedRatio && selectedRatio.id !== 'custom') {
+      return { width: selectedRatio.width, height: selectedRatio.height };
+    }
+    return { width: parseInt(customWidth), height: parseInt(customHeight) };
+  };
+
   const optimizePrompt = async (originalPrompt: string): Promise<string> => {
     if (!originalPrompt.trim()) return originalPrompt;
     
     try {
       setIsOptimizing(true);
       
-      // 构建优化提示
       const optimizerPrompt = `Enhance this image generation prompt by adding artistic details, composition elements, lighting descriptions, and quality keywords. Keep the original concept but make it more detailed and artistic. Original prompt: "${originalPrompt}". Output only the enhanced English prompt without explanations.`;
       
       const encodedPrompt = encodeURIComponent(optimizerPrompt);
@@ -156,7 +161,6 @@ const Image: React.FC = () => {
           optimizedPrompt += decoder.decode(value, { stream: true });
         }
         
-        // 添加高质量后缀
         const enhancedPrompt = `${optimizedPrompt.trim()}, masterpiece, best quality, highly detailed, ultra realistic, cinematic lighting, vibrant colors, professional photography, 8k resolution, award winning, trending on artstation`;
         
         return enhancedPrompt;
@@ -172,6 +176,15 @@ const Image: React.FC = () => {
   };
 
   const handleGenerate = async () => {
+    if (!hasPermission('image')) {
+      toast({ 
+        title: "需要会员权限", 
+        description: "请升级会员以使用AI图像生成功能", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
     if (!prompt.trim()) {
       toast({ title: "请输入详细的提示词", description: "提示词不能为空", variant: "destructive", });
       return;
@@ -179,26 +192,20 @@ const Image: React.FC = () => {
     
     setIsGenerating(true);
     try {
-      // 智能优化提示词
       const optimizedPrompt = await optimizePrompt(prompt);
-      
-      // URL编码
       const encodedPrompt = encodeURIComponent(optimizedPrompt);
-      
-      // 生成图像URL
       const finalSeed = seed === '-1' ? Math.floor(Math.random() * 1000000) : parseInt(seed);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${finalSeed}&model=${model}&nologo=true`;
+      const dimensions = getCurrentDimensions();
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${dimensions.width}&height=${dimensions.height}&seed=${finalSeed}&model=${model}&nologo=true`;
       
       console.log('生成图像URL:', imageUrl);
       console.log('原始提示词:', prompt);
       console.log('优化后提示词:', optimizedPrompt);
       
-      // 模拟生成时间
       await new Promise(res => setTimeout(res, 2000));
       
       setGeneratedImage(imageUrl);
       
-      // 添加到历史记录
       const historyItem = { 
         image: imageUrl, 
         title: prompt, 
@@ -217,6 +224,15 @@ const Image: React.FC = () => {
   };
 
   const handleRedraw = async (originalPrompt: string, originalTitle: string) => {
+    if (!hasPermission('image')) {
+      toast({ 
+        title: "需要会员权限", 
+        description: "请升级会员以使用AI图像生成功能", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
     if (!originalPrompt && !originalTitle) return;
     
     const promptToUse = originalPrompt || originalTitle;
@@ -227,7 +243,8 @@ const Image: React.FC = () => {
       const optimizedPrompt = await optimizePrompt(promptToUse);
       const encodedPrompt = encodeURIComponent(optimizedPrompt);
       const newSeed = Math.floor(Math.random() * 1000000);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${newSeed}&model=${model}&nologo=true`;
+      const dimensions = getCurrentDimensions();
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${dimensions.width}&height=${dimensions.height}&seed=${newSeed}&model=${model}&nologo=true`;
       
       await new Promise(res => setTimeout(res, 2000));
       
@@ -340,30 +357,47 @@ const Image: React.FC = () => {
               </SelectContent>
             </Select>
           </div>
-          <div className="row flex gap-3 mb-4">
-            <div className="form-half flex-1">
-              <label className="form-label block mb-2 text-[#96b7d4]" htmlFor="width">宽度</label>
-              <input
-                type="number"
-                className="form-input bg-[#14202c] border border-[#2e4258] text-white rounded-lg px-3 py-2"
-                value={width}
-                min={256} max={2048}
-                onChange={e => setWidth(e.target.value)}
-                id="width"
-              />
-            </div>
-            <div className="form-half flex-1">
-              <label className="form-label block mb-2 text-[#96b7d4]" htmlFor="height">高度</label>
-              <input
-                type="number"
-                className="form-input bg-[#14202c] border border-[#2e4258] text-white rounded-lg px-3 py-2"
-                value={height}
-                min={256} max={2048}
-                onChange={e => setHeight(e.target.value)}
-                id="height"
-              />
-            </div>
+          <div className="form-group mb-4">
+            <label className="form-label block mb-2 text-[#96b7d4]" htmlFor="aspectRatio">图像比例</label>
+            <Select value={aspectRatio} onValueChange={setAspectRatio}>
+              <SelectTrigger className="form-select bg-[#14202c] border border-[#2e4258] text-white rounded-lg h-11 px-2">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#14202c] border-[#2e4258] text-white">
+                {aspectRatios.map(ratio =>
+                  <SelectItem value={ratio.id} key={ratio.id}>
+                    {ratio.name}
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
           </div>
+          {aspectRatio === 'custom' && (
+            <div className="row flex gap-3 mb-4">
+              <div className="form-half flex-1">
+                <label className="form-label block mb-2 text-[#96b7d4]" htmlFor="width">宽度</label>
+                <input
+                  type="number"
+                  className="form-input bg-[#14202c] border border-[#2e4258] text-white rounded-lg px-3 py-2"
+                  value={customWidth}
+                  min={256} max={2048}
+                  onChange={e => setCustomWidth(e.target.value)}
+                  id="width"
+                />
+              </div>
+              <div className="form-half flex-1">
+                <label className="form-label block mb-2 text-[#96b7d4]" htmlFor="height">高度</label>
+                <input
+                  type="number"
+                  className="form-input bg-[#14202c] border border-[#2e4258] text-white rounded-lg px-3 py-2"
+                  value={customHeight}
+                  min={256} max={2048}
+                  onChange={e => setCustomHeight(e.target.value)}
+                  id="height"
+                />
+              </div>
+            </div>
+          )}
           <div className="form-group row flex gap-3 mb-4">
             <div className="form-half flex-1">
               <label className="form-label block mb-2 text-[#96b7d4]" htmlFor="seed">种子值 (Seed)</label>

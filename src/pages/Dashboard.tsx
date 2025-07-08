@@ -1,249 +1,179 @@
 
 import React from 'react';
-import Navigation from '@/components/Navigation';
-import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { 
-  MessageSquare, 
-  Image as ImageIcon, 
-  Volume2, 
-  User, 
-  Settings, 
-  LogOut,
-  BarChart3,
-  Users,
-  UserCheck,
-  CreditCard
-} from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Navigation from '@/components/Navigation';
+import { MessageSquare, Palette, Volume2, Crown, Settings, LogOut, User } from 'lucide-react';
 
 const Dashboard = () => {
-  const { user, logout, checkPaymentStatus } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
-  
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   if (!user) {
     navigate('/login');
     return null;
   }
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+  const getMembershipStatus = () => {
+    if (user.role === 'admin') return '管理员';
+    if (user.membershipType === 'lifetime') return '永久会员';
+    if (user.membershipType === 'annual') return '年会员';
+    return '普通用户';
   };
 
-  const isAdmin = user.email === 'admin@nexusai.com' || user.name === '管理员';
-
-  // 获取用户的使用额度信息
-  const getUsageData = () => {
-    if (checkPaymentStatus() || isAdmin) {
-      return {
-        chat: { used: 0, total: '无限制' },
-        image: { used: 0, total: '无限制' },
-        voice: { used: 0, total: '无限制' },
-      };
+  const getMembershipExpiry = () => {
+    if (user.membershipType === 'annual' && user.membershipExpiresAt) {
+      return new Date(user.membershipExpiresAt).toLocaleDateString();
     }
-    
-    const getServiceUsage = (serviceType: string) => {
-      const usageData = localStorage.getItem(`nexusAi_${serviceType}_usage_${user.id}`);
-      if (usageData) {
-        const { remaining } = JSON.parse(usageData);
-        return { used: 10 - remaining, total: 10 };
-      }
-      return { used: 0, total: 10 };
-    };
-    
-    return {
-      chat: getServiceUsage('chat'),
-      image: getServiceUsage('image'),
-      voice: getServiceUsage('voice'),
-    };
+    return null;
   };
 
-  const usageData = getUsageData();
+  const services = [
+    {
+      icon: MessageSquare,
+      title: "AI对话",
+      description: "使用先进的AI模型进行自然语言对话",
+      link: "/chat",
+      gradient: "from-blue-500 to-cyan-500"
+    },
+    {
+      icon: Palette,
+      title: "AI图像生成",
+      description: "使用AI技术创建惊艳的图像作品",
+      link: "/image",
+      gradient: "from-purple-500 to-pink-500"
+    },
+    {
+      icon: Volume2,
+      title: "AI语音合成",
+      description: "将文本转换为自然流畅的语音",
+      link: "/voice",
+      gradient: "from-green-500 to-blue-500"
+    }
+  ];
 
   return (
-    <div className="min-h-screen bg-nexus-dark flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0f1c] via-[#1a1f2e] to-[#0f1419]">
       <Navigation />
       
-      <div className="flex-grow container mx-auto my-20 px-4">
-        <div className="flex flex-col md:flex-row gap-6 min-h-[70vh]">
-          {/* 侧边栏 */}
-          <div className="w-full md:w-64 bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-5">
-            <div className="text-center mb-8">
-              <div className="h-20 w-20 rounded-full bg-gradient-to-br from-nexus-blue to-nexus-cyan mx-auto flex items-center justify-center">
-                <User className="h-10 w-10 text-white" />
-              </div>
-              <h3 className="mt-4 text-xl font-bold text-white">{user.name}</h3>
-              <div className="mt-2 text-sm text-white/70">{user.email || '未设置邮箱'}</div>
-              {checkPaymentStatus() && (
-                <div className="mt-2 bg-nexus-blue/20 text-nexus-cyan px-3 py-1 rounded-full text-xs inline-flex items-center">
-                  VIP会员
-                </div>
-              )}
-              {isAdmin && (
-                <div className="mt-2 bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-xs inline-flex items-center">
-                  管理员
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-white/80 mb-3">AI服务</h4>
-              
-              <Link to="/chat" className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-nexus-blue/20 text-white transition-colors">
-                <MessageSquare className="h-5 w-5 text-nexus-cyan" />
-                <span>AI对话</span>
-              </Link>
-              
-              <Link to="/image" className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-nexus-blue/20 text-white transition-colors">
-                <ImageIcon className="h-5 w-5 text-nexus-cyan" />
-                <span>AI图像生成</span>
-              </Link>
-              
-              <Link to="/voice" className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-nexus-blue/20 text-white transition-colors">
-                <Volume2 className="h-5 w-5 text-nexus-cyan" />
-                <span>AI语音合成</span>
-              </Link>
-              
-              {isAdmin && (
-                <>
-                  <h4 className="text-sm font-medium text-white/80 mb-2 mt-4 pt-4 border-t border-nexus-blue/20">管理员功能</h4>
-                  <Link to="/admin" className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-nexus-blue/20 text-white transition-colors">
-                    <BarChart3 className="h-5 w-5 text-red-400" />
-                    <span>控制台</span>
-                  </Link>
-                  <Link to="/admin/users" className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-nexus-blue/20 text-white transition-colors">
-                    <Users className="h-5 w-5 text-red-400" />
-                    <span>用户管理</span>
-                  </Link>
-                </>
-              )}
-            </div>
-            
-            <div className="mt-8 pt-4 border-t border-nexus-blue/20">
-              <div className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-nexus-blue/20 text-white transition-colors cursor-pointer" onClick={() => navigate('/settings')}>
-                <Settings className="h-5 w-5 text-nexus-cyan" />
-                <span>账号设置</span>
-              </div>
-              
-              <div className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-nexus-blue/20 text-white transition-colors cursor-pointer" onClick={handleLogout}>
-                <LogOut className="h-5 w-5 text-nexus-cyan" />
-                <span>退出登录</span>
-              </div>
-            </div>
-            
-            {/* 免费用户额度限制显示 */}
-            {!checkPaymentStatus() && !isAdmin && (
-              <div className="mt-8 pt-4 border-t border-nexus-blue/20 text-xs text-white/60 space-y-2">
-                <div className="flex justify-between">
-                  <span>AI对话额度:</span>
-                  <span>{usageData.chat.used} / {usageData.chat.total}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>AI图像额度:</span>
-                  <span>{usageData.image.used} / {usageData.image.total}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>AI语音额度:</span>
-                  <span>{usageData.voice.used} / {usageData.voice.total}</span>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* 主内容区域 */}
-          <div className="flex-grow">
-            <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-6">
-              <h2 className="text-2xl font-bold mb-6 text-gradient">{isAdmin ? '管理员控制台' : '个人中心'}</h2>
-              
-              <div className="space-y-8">
-                <div>
-                  <h3 className="text-xl font-bold mb-4 text-white">欢迎{isAdmin ? '管理员' : ''}, {user.name}</h3>
-                  <p className="text-white/80">{isAdmin ? '管理系统与用户' : '选择以下AI服务开始使用：'}</p>
-                  
-                  {/* AI服务卡片 */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                    <Link to="/chat" className="block p-6 rounded-lg bg-nexus-dark/60 border border-nexus-blue/30 hover:border-nexus-blue/60 transition-all">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="h-12 w-12 rounded-lg bg-nexus-blue/20 flex items-center justify-center">
-                          <MessageSquare className="h-6 w-6 text-nexus-cyan" />
-                        </div>
-                        <h4 className="font-bold text-lg text-gradient">AI对话</h4>
-                      </div>
-                      <p className="text-sm text-white/70">使用先进的AI模型进行自然语言对话</p>
-                    </Link>
-                    
-                    <Link to="/image" className="block p-6 rounded-lg bg-nexus-dark/60 border border-nexus-blue/30 hover:border-nexus-blue/60 transition-all">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="h-12 w-12 rounded-lg bg-nexus-blue/20 flex items-center justify-center">
-                          <ImageIcon className="h-6 w-6 text-nexus-cyan" />
-                        </div>
-                        <h4 className="font-bold text-lg text-gradient">AI图像生成</h4>
-                      </div>
-                      <p className="text-sm text-white/70">使用AI技术创建惊人的图像和艺术作品</p>
-                    </Link>
-                    
-                    <Link to="/voice" className="block p-6 rounded-lg bg-nexus-dark/60 border border-nexus-blue/30 hover:border-nexus-blue/60 transition-all">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="h-12 w-12 rounded-lg bg-nexus-blue/20 flex items-center justify-center">
-                          <Volume2 className="h-6 w-6 text-nexus-cyan" />
-                        </div>
-                        <h4 className="font-bold text-lg text-gradient">AI语音合成</h4>
-                      </div>
-                      <p className="text-sm text-white/70">将文本转换为自然流畅的语音</p>
-                    </Link>
-                  </div>
-                </div>
-                
-                {/* 管理员特殊功能 */}
-                {isAdmin && (
-                  <div className="p-6 rounded-lg bg-nexus-dark/60 border border-red-500/30">
-                    <h3 className="text-xl font-bold mb-4 text-red-400">管理员功能</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Link to="/admin" className="flex items-center gap-3 p-4 rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-colors">
-                        <BarChart3 className="h-6 w-6 text-red-400" />
-                        <div>
-                          <h4 className="font-medium text-white">系统控制台</h4>
-                          <p className="text-sm text-white/60">查看系统统计和管理</p>
-                        </div>
-                      </Link>
-                      <Link to="/admin/users" className="flex items-center gap-3 p-4 rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-colors">
-                        <Users className="h-6 w-6 text-red-400" />
-                        <div>
-                          <h4 className="font-medium text-white">用户管理</h4>
-                          <p className="text-sm text-white/60">管理用户和VIP权限</p>
-                        </div>
-                      </Link>
+      <div className="container mx-auto px-6 py-24">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* 左侧用户信息 */}
+            <div className="lg:col-span-1">
+              <Card className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border-gray-700 text-white">
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-20 h-20 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full flex items-center justify-center mb-4">
+                      <User className="w-10 h-10 text-white" />
                     </div>
-                  </div>
-                )}
-                
-                {/* 非会员升级提示 */}
-                {!checkPaymentStatus() && !isAdmin && (
-                  <div className="p-6 rounded-lg bg-nexus-dark/60 border border-nexus-blue/30">
-                    <h3 className="text-xl font-bold mb-4 text-white">升级到VIP会员</h3>
-                    <p className="text-white/80 mb-4">升级到VIP会员，享受无限次使用所有AI服务的特权</p>
-                    <div className="flex gap-4">
+                    <h2 className="text-xl font-bold mb-2">{user.name}</h2>
+                    <p className="text-gray-400 text-sm mb-4">{user.email}</p>
+                    
+                    <div className="flex items-center justify-center mb-4">
+                      {user.isVip && <Crown className="w-5 h-5 text-yellow-400 mr-2" />}
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        user.role === 'admin' ? 'bg-red-500/20 text-red-400' :
+                        user.isVip ? 'bg-yellow-500/20 text-yellow-400' : 
+                        'bg-gray-500/20 text-gray-400'
+                      }`}>
+                        {getMembershipStatus()}
+                      </span>
+                    </div>
+                    
+                    {getMembershipExpiry() && (
+                      <p className="text-xs text-gray-500 mb-4">
+                        到期时间: {getMembershipExpiry()}
+                      </p>
+                    )}
+
+                    <div className="flex flex-col gap-2 w-full">
                       <Button 
-                        asChild
-                        className="bg-gradient-to-r from-nexus-blue to-nexus-cyan hover:opacity-90 text-white"
+                        variant="outline" 
+                        className="w-full border-gray-600 text-gray-300 hover:bg-gray-700"
+                        onClick={() => navigate('/settings')}
                       >
-                        <Link to="/payment">
-                          <CreditCard className="mr-2 h-4 w-4" />
-                          立即升级
-                        </Link>
+                        <Settings className="w-4 h-4 mr-2" />
+                        账号设置
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="w-full border-gray-600 text-gray-300 hover:bg-gray-700"
+                        onClick={handleLogout}
+                      >
+                        <LogOut className="w-4 h-4 mr-2" />
+                        退出登录
                       </Button>
                     </div>
                   </div>
-                )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* 右侧内容 */}
+            <div className="lg:col-span-3">
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold text-white mb-2">
+                  个人中心
+                </h1>
+                <p className="text-gray-400">
+                  欢迎, {user.name}
+                </p>
               </div>
+
+              {/* AI服务卡片 */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {services.map((service, index) => {
+                  const IconComponent = service.icon;
+                  return (
+                    <Card key={index} className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border-gray-700 hover:border-gray-600 transition-all duration-300 group cursor-pointer">
+                      <CardContent className="p-6">
+                        <Link to={service.link} className="block">
+                          <div className="flex flex-col items-center text-center">
+                            <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${service.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                              <IconComponent className="w-6 h-6 text-white" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2">{service.title}</h3>
+                            <p className="text-gray-400 text-sm">{service.description}</p>
+                          </div>
+                        </Link>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* 升级会员 */}
+              {!user.isVip && (
+                <Card className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/30">
+                  <CardContent className="p-6">
+                    <div className="text-center">
+                      <Crown className="w-12 h-12 text-yellow-400 mx-auto mb-4" />
+                      <h3 className="text-2xl font-bold text-white mb-2">升级到VIP会员</h3>
+                      <p className="text-gray-300 mb-6">
+                        升级到VIP会员，享受无限次使用所有AI服务的特权
+                      </p>
+                      <Button 
+                        asChild
+                        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8 py-3 rounded-full font-medium text-lg"
+                      >
+                        <Link to="/payment">立即升级</Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         </div>
       </div>
-      
-      <Footer />
     </div>
   );
 };

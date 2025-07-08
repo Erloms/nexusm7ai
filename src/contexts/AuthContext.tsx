@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { toast } from "@/components/ui/use-toast";
 
@@ -6,6 +7,9 @@ interface User {
   email: string;
   name: string;
   isVip: boolean;
+  membershipType: 'free' | 'annual' | 'lifetime';
+  membershipExpiresAt?: string;
+  role: 'user' | 'admin';
 }
 
 interface AuthContextType {
@@ -16,10 +20,10 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
   checkPaymentStatus: () => boolean;
-  setUserAsPaid: () => void;
+  setUserAsPaid: (membershipType: 'annual' | 'lifetime') => void;
+  hasPermission: (feature: string) => boolean;
 }
 
-// Create the context with a default undefined value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -27,12 +31,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored user data on component mount
     const storedUser = localStorage.getItem('nexusAiUser');
     
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        // Check if annual membership has expired
+        if (parsedUser.membershipType === 'annual' && parsedUser.membershipExpiresAt) {
+          const expirationDate = new Date(parsedUser.membershipExpiresAt);
+          const now = new Date();
+          if (now > expirationDate) {
+            parsedUser.membershipType = 'free';
+            parsedUser.isVip = false;
+            parsedUser.membershipExpiresAt = null;
+            localStorage.setItem('nexusAiUser', JSON.stringify(parsedUser));
+          }
+        }
+        setUser(parsedUser);
       } catch (e) {
         console.error("Failed to parse stored user data", e);
         localStorage.removeItem('nexusAiUser');
@@ -42,55 +57,62 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(false);
   }, []);
 
-  // Function to check if user has paid
   const checkPaymentStatus = (): boolean => {
     if (!user) return false;
     return user.isVip === true;
   };
 
-  // Function to set user as paid after payment
-  const setUserAsPaid = () => {
+  const setUserAsPaid = (membershipType: 'annual' | 'lifetime') => {
     if (user) {
-      const updatedUser = { ...user, isVip: true };
+      const updatedUser = { 
+        ...user, 
+        isVip: true, 
+        membershipType,
+        membershipExpiresAt: membershipType === 'annual' 
+          ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+          : null
+      };
       setUser(updatedUser);
       localStorage.setItem('nexusAiUser', JSON.stringify(updatedUser));
       
       toast({
         title: "支付成功",
-        description: "感谢您的支付！您已成为VIP会员。",
+        description: `感谢您的支付！您已成为${membershipType === 'annual' ? '年' : '永久'}会员。`,
         duration: 5000,
       });
     }
   };
 
-  // Login function - accepts either email or username
+  const hasPermission = (feature: string): boolean => {
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    return user.isVip;
+  };
+
   const login = async (emailOrUsername: string, password: string): Promise<boolean> => {
     setLoading(true);
     
     try {
-      // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Simple validation for demo purposes
       if (emailOrUsername && password.length >= 6) {
-        const mockUser = {
+        const isAdmin = emailOrUsername === 'admin' || emailOrUsername === 'admin@nexus.ai';
+        
+        const mockUser: User = {
           id: '123456',
           email: emailOrUsername.includes('@') ? emailOrUsername : `${emailOrUsername}@example.com`,
-          name: emailOrUsername.includes('@') ? emailOrUsername.split('@')[0] : emailOrUsername,
-          isVip: false
+          name: isAdmin ? 'Admin' : (emailOrUsername.includes('@') ? emailOrUsername.split('@')[0] : emailOrUsername),
+          isVip: isAdmin,
+          membershipType: isAdmin ? 'lifetime' : 'free',
+          role: isAdmin ? 'admin' : 'user'
         };
         
         setUser(mockUser);
         localStorage.setItem('nexusAiUser', JSON.stringify(mockUser));
         
-        // Initialize usage counts for new user
-        localStorage.setItem(`nexusAi_chat_usage_${mockUser.id}`, JSON.stringify({ remaining: 5 }));
-        localStorage.setItem(`nexusAi_image_usage_${mockUser.id}`, JSON.stringify({ remaining: 10 }));
-        localStorage.setItem(`nexusAi_voice_usage_${mockUser.id}`, JSON.stringify({ remaining: 10 }));
-        
         toast({
           title: "登录成功",
-          description: "欢迎回来！",
+          description: `欢迎${isAdmin ? '管理员' : ''}回来！`,
           duration: 3000,
         });
         
@@ -118,34 +140,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Register function
   const register = async (name: string, email: string, password: string): Promise<boolean> => {
     setLoading(true);
     
     try {
-      // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Simple validation for demo
       if (name && email && password.length >= 6) {
-        const mockUser = {
-          id: '123456',
+        const mockUser: User = {
+          id: Date.now().toString(),
           email: email,
           name: name,
-          isVip: false
+          isVip: false,
+          membershipType: 'free',
+          role: 'user'
         };
         
         setUser(mockUser);
         localStorage.setItem('nexusAiUser', JSON.stringify(mockUser));
         
-        // Initialize usage counts for new user
-        localStorage.setItem(`nexusAi_chat_usage_${mockUser.id}`, JSON.stringify({ remaining: 5 }));
-        localStorage.setItem(`nexusAi_image_usage_${mockUser.id}`, JSON.stringify({ remaining: 10 }));
-        localStorage.setItem(`nexusAi_voice_usage_${mockUser.id}`, JSON.stringify({ remaining: 10 }));
-        
         toast({
           title: "注册成功",
-          description: "欢迎加入 Nexus AI！您有5次AI对话、10次图像生成、10次语音合成的免费体验额度。",
+          description: "欢迎加入 Nexus AI！",
           duration: 5000,
         });
         
@@ -191,7 +207,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     register,
     logout,
     checkPaymentStatus,
-    setUserAsPaid
+    setUserAsPaid,
+    hasPermission
   };
 
   return (
@@ -201,7 +218,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Updated useAuth hook with better error handling
 export const useAuth = () => {
   const context = useContext(AuthContext);
   

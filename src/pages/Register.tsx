@@ -11,7 +11,8 @@ const Register = () => {
   const { register, loading } = useAuth();
   const navigate = useNavigate();
   
-  const [account, setAccount] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -19,7 +20,6 @@ const Register = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate passwords match
     if (password !== confirmPassword) {
       setPasswordError('两次输入的密码不匹配');
       return;
@@ -27,8 +27,7 @@ const Register = () => {
     
     setPasswordError('');
     
-    // Use account as both name and email
-    if (await register(account, account, password)) {
+    if (await register(name, email, password)) {
       navigate('/');
     }
   };
@@ -44,18 +43,36 @@ const Register = () => {
             
             <form onSubmit={handleRegister} className="space-y-6">
               <div>
-                <label htmlFor="account" className="block text-sm font-medium text-white mb-2">
-                  账号
+                <label htmlFor="name" className="block text-sm font-medium text-white mb-2">
+                  用户名
                 </label>
                 <Input
-                  id="account"
+                  id="name"
                   type="text"
-                  value={account}
-                  onChange={(e) => setAccount(e.target.value)}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className="bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
-                  placeholder="手机号/邮箱"
+                  placeholder="设置您的用户名"
                   required
                 />
+              </div>
+
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
+                  邮箱/手机号
+                </label>
+                <Input
+                  id="email"
+                  type="text"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
+                  placeholder="邮箱或手机号"
+                  required
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  支持邮箱或手机号注册
+                </p>
               </div>
               
               <div>

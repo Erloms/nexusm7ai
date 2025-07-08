@@ -40,9 +40,12 @@ const Login = () => {
                   value={account}
                   onChange={(e) => setAccount(e.target.value)}
                   className="bg-nexus-dark/50 border-nexus-blue/30 text-white placeholder-white/50 focus:border-nexus-blue"
-                  placeholder="手机号/邮箱"
+                  placeholder="手机号/邮箱/用户名"
                   required
                 />
+                <p className="text-xs text-gray-400 mt-1">
+                  支持手机号、邮箱或自定义用户名登录
+                </p>
               </div>
               
               <div>
