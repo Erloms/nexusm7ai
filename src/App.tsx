@@ -6,16 +6,17 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
-import Chat from "./pages/Chat";
-import Image from "./pages/Image";
-import Voice from "./pages/Voice";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Chat from "./pages/Chat";
+import Image from "./pages/Image";
+import VideoGeneration from "./pages/VideoGeneration";
+import Voice from "./pages/Voice";
+import Settings from "./pages/Settings";
 import Dashboard from "./pages/Dashboard";
-import Payment from "./pages/Payment";
 import Admin from "./pages/Admin";
 import AdminMembership from "./pages/AdminMembership";
-import Settings from "./pages/Settings";
+import Payment from "./pages/Payment";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,26 +24,27 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <AuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/image" element={<Image />} />
-            <Route path="/voice" element={<Voice />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/chat" element={<Chat />} />
+            <Route path="/image" element={<Image />} />
+            <Route path="/video" element={<VideoGeneration />} />
+            <Route path="/voice" element={<Voice />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/payment" element={<Payment />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/membership" element={<AdminMembership />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route path="/payment" element={<Payment />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
-      </AuthProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );

@@ -1,167 +1,221 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, LogIn, UserPlus } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from '@/contexts/AuthContext';
-import GradientLogo from './GradientLogo';
+import { Menu, X, MessageSquare, Image, Mic, Settings, LogOut, User, Crown, Video } from 'lucide-react';
 
 const Navigation = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const { user, signOut } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const toggleMenu = () => setIsOpen(!isOpen);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
-    { name: '首页', path: '/' },
-    { name: 'AI对话', path: '/chat' },
-    { name: '图像生成', path: '/image' },
-    { name: '语音合成', path: '/voice' },
+    { path: '/chat', label: 'AI对话', icon: MessageSquare },
+    { path: '/image', label: 'AI绘画', icon: Image },
+    { path: '/video', label: 'AI视频', icon: Video },
+    { path: '/voice', label: 'AI语音', icon: Mic }
   ];
 
+  useEffect(() => {
+    const handleRouteChange = () => {
+      setIsOpen(false);
+    };
+
+    window.addEventListener('popstate', handleRouteChange);
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+    };
+  }, []);
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-nexus-dark/80 backdrop-blur-md border-b border-nexus-blue/20">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-[#0a0f1c]/95 via-[#1a1f2e]/95 to-[#0f1419]/95 backdrop-blur-xl border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex-shrink-0">
-            <GradientLogo size="md" />
+          <Link to="/" className="flex items-center space-x-3">
+            <img 
+              src="/lovable-uploads/2c3575b0-1f59-46af-9184-01a225a8f360.png" 
+              alt="NENUX.AI" 
+              className="h-8 w-8"
+            />
+            <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-600 bg-clip-text text-transparent">
+              NENUX.AI
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
-              {navItems.map((item) => (
+          <div className="hidden md:flex items-center space-x-8">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              return (
                 <Link
-                  key={item.name}
+                  key={item.path}
                   to={item.path}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    location.pathname === item.path
-                      ? 'text-nexus-cyan bg-nexus-blue/20'
-                      : 'text-white/80 hover:text-nexus-cyan hover:bg-nexus-blue/10'
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-300 ${
+                    isActive(item.path)
+                      ? 'bg-gradient-to-r from-cyan-500/20 to-purple-600/20 text-cyan-400 border border-cyan-400/30'
+                      : 'text-gray-300 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  {item.name}
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
                 </Link>
-              ))}
-            </div>
+              );
+            })}
           </div>
 
-          {/* Desktop Auth Buttons */}
-          <div className="hidden md:block">
-            <div className="ml-4 flex items-center space-x-4">
-              {user ? (
-                <>
-                  <Link to="/dashboard">
-                    <Button variant="ghost" className="text-white hover:text-nexus-cyan">
-                      控制台
-                    </Button>
-                  </Link>
-                  <Button 
-                    onClick={logout}
-                    variant="outline" 
-                    className="border-nexus-blue text-white hover:bg-nexus-blue"
-                  >
-                    退出
+          {/* User Menu */}
+          <div className="hidden md:flex items-center space-x-4">
+            {user ? (
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Avatar className="h-8 w-8 border-2 border-cyan-400/30">
+                    <AvatarImage src={user.user_metadata?.avatar_url} />
+                    <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-purple-600 text-white text-sm">
+                      {user.email?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <span className="text-sm text-white font-medium">
+                      {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                    </span>
+                    <span className="text-xs text-cyan-400 flex items-center">
+                      <Crown className="h-3 w-3 mr-1" />
+                      会员
+                    </span>
+                  </div>
+                </div>
+                
+                <Link to="/settings">
+                  <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white">
+                    <Settings className="h-4 w-4" />
                   </Button>
-                </>
-              ) : (
-                <>
-                  <Link to="/login">
-                    <Button variant="ghost" className="text-white hover:text-nexus-cyan">
-                      <LogIn className="h-4 w-4 mr-2" />
-                      登录
-                    </Button>
-                  </Link>
-                  <Link to="/register">
-                    <Button className="bg-nexus-blue hover:bg-nexus-blue/80 text-white">
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      注册
-                    </Button>
-                  </Link>
-                </>
-              )}
-            </div>
+                </Link>
+                
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleSignOut}
+                  className="text-gray-300 hover:text-white"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-3">
+                <Link to="/login">
+                  <Button variant="ghost" className="text-gray-300 hover:text-white">
+                    登录
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white">
+                    注册
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Mobile menu button */}
           <div className="md:hidden">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleMenu}
-              className="text-white"
-            >
-              {isMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
+            <Button variant="ghost" size="sm" onClick={toggleMenu}>
+              {isOpen ? <X className="h-6 w-6 text-white" /> : <Menu className="h-6 w-6 text-white" />}
             </Button>
           </div>
         </div>
       </div>
 
       {/* Mobile Navigation */}
-      {isMenuOpen && (
-        <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-nexus-dark/95 backdrop-blur-md border-b border-nexus-blue/20">
-            {navItems.map((item) => (
-              <Link
-                key={item.name}
-                to={item.path}
-                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                  location.pathname === item.path
-                    ? 'text-nexus-cyan bg-nexus-blue/20'
-                    : 'text-white/80 hover:text-nexus-cyan hover:bg-nexus-blue/10'
-                }`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {item.name}
-              </Link>
-            ))}
+      {isOpen && (
+        <div className="md:hidden bg-[#0a0f1c]/98 backdrop-blur-xl border-t border-white/10">
+          <div className="px-4 pt-2 pb-4 space-y-2">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-300 ${
+                    isActive(item.path)
+                      ? 'bg-gradient-to-r from-cyan-500/20 to-purple-600/20 text-cyan-400 border border-cyan-400/30'
+                      : 'text-gray-300 hover:text-white hover:bg-white/5'
+                  }`}
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span className="font-medium">{item.label}</span>
+                </Link>
+              );
+            })}
             
-            {/* Mobile Auth Section */}
-            <div className="pt-4 border-t border-nexus-blue/20">
-              {user ? (
-                <>
-                  <Link
-                    to="/dashboard"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-white/80 hover:text-nexus-cyan"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    控制台
-                  </Link>
-                  <button
-                    onClick={() => {
-                      logout();
-                      setIsMenuOpen(false);
-                    }}
-                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-white/80 hover:text-nexus-cyan"
-                  >
-                    退出
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-white/80 hover:text-nexus-cyan"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    登录
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-white/80 hover:text-nexus-cyan"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    注册
-                  </Link>
-                </>
-              )}
-            </div>
+            {user ? (
+              <div className="pt-4 border-t border-white/10 space-y-2">
+                <div className="flex items-center space-x-3 px-4 py-2">
+                  <Avatar className="h-10 w-10 border-2 border-cyan-400/30">
+                    <AvatarImage src={user.user_metadata?.avatar_url} />
+                    <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-purple-600 text-white">
+                      {user.email?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="text-white font-medium">
+                      {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                    </div>
+                    <div className="text-cyan-400 text-sm flex items-center">
+                      <Crown className="h-3 w-3 mr-1" />
+                      会员
+                    </div>
+                  </div>
+                </div>
+                
+                <Link
+                  to="/settings"
+                  className="flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-300"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Settings className="h-5 w-5" />
+                  <span>设置</span>
+                </Link>
+                
+                <button
+                  onClick={handleSignOut}
+                  className="w-full flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-300"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span>退出登录</span>
+                </button>
+              </div>
+            ) : (
+              <div className="pt-4 border-t border-white/10 space-y-2">
+                <Link
+                  to="/login"
+                  className="flex items-center justify-center px-4 py-3 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-300"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <User className="h-5 w-5 mr-2" />
+                  登录
+                </Link>
+                <Link
+                  to="/register"
+                  className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white rounded-lg transition-all duration-300"
+                  onClick={() => setIsOpen(false)}
+                >
+                  注册账号
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}
