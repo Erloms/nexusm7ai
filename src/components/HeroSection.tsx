@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -102,7 +101,7 @@ const HeroSection = () => {
   const time = useClock();
 
   return (
-    <section className="relative flex flex-col items-center bg-[#0e1020] overflow-x-hidden pt-3 pb-6">
+    <section className="relative flex flex-col items-center bg-[#0e1020] overflow-x-hidden pt-3 pb-16">
       {/* 星空背景层 */}
       <canvas ref={starsCanvas} className="pointer-events-none fixed inset-0 w-full h-full z-0" />
 
@@ -155,8 +154,8 @@ const HeroSection = () => {
         </div>
       </header>
 
-      {/* 内容卡片区 - 大幅缩小下方空白 */}
-      <div className="flex flex-row flex-wrap gap-6 md:gap-8 justify-center items-center max-w-[1100px] w-full px-4 mx-auto mt-2 md:mt-2 mb-8 z-10 relative">
+      {/* 内容卡片区 - 适当增加下方空白 */}
+      <div className="flex flex-row flex-wrap gap-6 md:gap-8 justify-center items-center max-w-[1100px] w-full px-4 mx-auto mt-2 md:mt-2 mb-16 z-10 relative">
         {cards.map((card, i) => (
           <div
             key={card.title}
