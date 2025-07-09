@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
-import { Loader2, Download, RefreshCw, Sparkles, Wand2, Image as ImageIcon, History, Trash2 } from 'lucide-react';
+import { Loader2, Download, RefreshCw, Sparkles, Wand2, Image as ImageIcon, History, Trash2, Video } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -17,13 +17,23 @@ const Image = () => {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [seed, setSeed] = useState('');
-  const [selectedModel, setSelectedModel] = useState('flux-pro');
+  const [selectedModel, setSelectedModel] = useState('flux');
   const [aspectRatio, setAspectRatio] = useState('1:1');
-  const [customWidth, setCustomWidth] = useState('1024');
-  const [customHeight, setCustomHeight] = useState('1024');
+  const [availableModels, setAvailableModels] = useState<Array<{id: string, name: string, description: string}>>([]);
   const [history, setHistory] = useState<Array<{id: string, prompt: string, image: string, timestamp: number}>>([]);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // 图像生成模型列表
+  const imageModels = [
+    { id: 'flux', name: '通用创意', description: 'Flux - 通用创意模型' },
+    { id: 'flux-pro', name: '专业版', description: 'Flux Pro - 专业级生成' },
+    { id: 'flux-realism', name: '超真实效果', description: 'Flux Realism - 照片级真实' },
+    { id: 'flux-anime', name: '动漫风格', description: 'Flux Anime - 动漫二次元' },
+    { id: 'flux-3d', name: '三维效果', description: 'Flux 3D - 立体三维' },
+    { id: 'flux-cablyai', name: '创意艺术', description: 'Flux CablyAI - 创意艺术' },
+    { id: 'turbo', name: '极速生成', description: 'Turbo - 快速生成' }
+  ];
 
   // Master prompts for different styles
   const masterPrompts = [
@@ -47,6 +57,7 @@ const Image = () => {
   // Initialize with random seed on component mount
   useEffect(() => {
     generateRandomSeed();
+    setAvailableModels(imageModels);
     // Load history from localStorage
     const savedHistory = localStorage.getItem('ai_image_history');
     if (savedHistory) {
@@ -86,6 +97,20 @@ const Image = () => {
     localStorage.setItem(`nexusAi_image_usage_${user.id}`, JSON.stringify(usage));
   };
 
+  // Get dimensions based on aspect ratio
+  const getDimensions = () => {
+    const ratios: { [key: string]: { width: number, height: number } } = {
+      '1:1': { width: 1024, height: 1024 },
+      '16:9': { width: 1024, height: 576 },
+      '9:16': { width: 576, height: 1024 },
+      '4:3': { width: 1024, height: 768 },
+      '3:4': { width: 768, height: 1024 },
+      '21:9': { width: 1024, height: 439 },
+    };
+    
+    return ratios[aspectRatio] || { width: 1024, height: 1024 };
+  };
+
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       toast({
@@ -103,27 +128,23 @@ const Image = () => {
     try {
       // If seed is empty, generate a random one for this generation
       const currentSeed = seed || generateRandomSeed();
+      const dimensions = getDimensions();
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // 构建 Pollinations.ai URL
+      const encodedPrompt = encodeURIComponent(prompt);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${dimensions.width}&height=${dimensions.height}&seed=${currentSeed}&model=${selectedModel}&nologo=true`;
       
-      // Mock response - in real implementation, this would be the actual generated image
-      const mockImages = [
-        "/lovable-uploads/422c49d8-b952-4d1b-a8a8-42a64c3fe9cf.png",
-        "/lovable-uploads/49b1d8d8-c189-444b-b2de-80c73d893b6a.png",
-        "/lovable-uploads/49ddf65d-4ef4-46a1-94b7-2936d866be27.png"
-      ];
+      // 模拟加载延迟，让用户看到生成过程
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      const randomImage = mockImages[Math.floor(Math.random() * mockImages.length)];
-      
-      setGeneratedImage(randomImage);
+      setGeneratedImage(imageUrl);
       updateUsage();
 
       // Add to history
       const newHistoryItem = {
         id: Date.now().toString(),
         prompt: prompt,
-        image: randomImage,
+        image: imageUrl,
         timestamp: Date.now()
       };
       const updatedHistory = [newHistoryItem, ...history.slice(0, 9)]; // Keep only last 10
@@ -132,7 +153,7 @@ const Image = () => {
       
       toast({
         title: "图像生成成功",
-        description: `使用种子值: ${currentSeed}`,
+        description: `使用种子值: ${currentSeed}，模型: ${imageModels.find(m => m.id === selectedModel)?.name}`,
       });
       
     } catch (error) {
@@ -156,6 +177,23 @@ const Image = () => {
       link.click();
       document.body.removeChild(link);
     }
+  };
+
+  const handleVideoConversion = () => {
+    if (!generatedImage) {
+      toast({
+        title: "请先生成图像",
+        description: "需要先生成图像才能转换为视频",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // 模拟视频转换功能
+    toast({
+      title: "视频转换功能开发中",
+      description: "图像转视频功能即将上线，敬请期待！",
+    });
   };
 
   const applyMasterPrompt = (masterPrompt: string) => {
@@ -198,20 +236,8 @@ const Image = () => {
   };
 
   const getCurrentDimensions = () => {
-    if (aspectRatio === 'custom') {
-      return `${customWidth} × ${customHeight}`;
-    }
-    
-    const ratios: { [key: string]: string } = {
-      '1:1': '1024 × 1024',
-      '16:9': '1024 × 576',
-      '9:16': '576 × 1024',
-      '4:3': '1024 × 768',
-      '3:4': '768 × 1024',
-      '21:9': '1024 × 439',
-    };
-    
-    return ratios[aspectRatio] || '1024 × 1024';
+    const dimensions = getDimensions();
+    return `${dimensions.width} × ${dimensions.height}`;
   };
 
   return (
@@ -225,7 +251,7 @@ const Image = () => {
               AI 绘画生成器
             </h1>
             <p className="text-gray-400 text-lg">
-              智能AI驱动的视觉增强创作平台
+              智能AI驱动的视觉增强创作平台 - 由 Pollinations.ai 提供支持
             </p>
             {user && (
               <p className="text-sm text-gray-500 mt-2">
@@ -318,66 +344,37 @@ const Image = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1a2740] border-[#203042]/60">
-                      <SelectItem value="flux-pro" className="text-white">Flux Pro (专业版)</SelectItem>
-                      <SelectItem value="flux-dev" className="text-white">Flux Dev (开发版)</SelectItem>
-                      <SelectItem value="stable-diffusion" className="text-white">Stable Diffusion</SelectItem>
-                      <SelectItem value="midjourney" className="text-white">Midjourney Style</SelectItem>
+                      {imageModels.map((model) => (
+                        <SelectItem key={model.id} value={model.id} className="text-white">
+                          {model.name} - {model.description}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </CardContent>
               </Card>
 
-              {/* Dimensions */}
+              {/* Aspect Ratio */}
               <Card className="bg-[#1a2740] border-[#203042]/60">
                 <CardHeader>
-                  <CardTitle className="text-white text-sm">尺寸设置</CardTitle>
+                  <CardTitle className="text-white text-sm">长宽比设置</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-white text-sm mb-2">宽度</label>
-                      <Input
-                        type="number"
-                        value={customWidth}
-                        onChange={(e) => setCustomWidth(e.target.value)}
-                        className="bg-[#0f1419] border-[#203042]/60 text-white"
-                        min="256"
-                        max="2048"
-                        step="64"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-white text-sm mb-2">高度</label>
-                      <Input
-                        type="number"
-                        value={customHeight}
-                        onChange={(e) => setCustomHeight(e.target.value)}
-                        className="bg-[#0f1419] border-[#203042]/60 text-white"
-                        min="256"
-                        max="2048"
-                        step="64"
-                      />
-                    </div>
-                  </div>
-                  
                   <div>
-                    <label className="block text-white text-sm mb-2">长宽比预设</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {['1:1', '16:9', '9:16', '4:3', '3:4', '21:9'].map((ratio) => (
-                        <Button
-                          key={ratio}
-                          onClick={() => setAspectRatio(ratio)}
-                          variant={aspectRatio === ratio ? "default" : "outline"}
-                          size="sm"
-                          className={aspectRatio === ratio 
-                            ? "bg-cyan-500 text-white" 
-                            : "border-[#203042]/60 text-gray-300 hover:bg-[#203042]/80"
-                          }
-                        >
-                          {ratio}
-                        </Button>
-                      ))}
-                    </div>
+                    <label className="block text-white text-sm mb-2">选择长宽比</label>
+                    <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                      <SelectTrigger className="bg-[#0f1419] border-[#203042]/60 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#1a2740] border-[#203042]/60">
+                        <SelectItem value="1:1" className="text-white">1:1 (正方形)</SelectItem>
+                        <SelectItem value="16:9" className="text-white">16:9 (横屏)</SelectItem>
+                        <SelectItem value="9:16" className="text-white">9:16 (竖屏)</SelectItem>
+                        <SelectItem value="4:3" className="text-white">4:3 (传统)</SelectItem>
+                        <SelectItem value="3:4" className="text-white">3:4 (肖像)</SelectItem>
+                        <SelectItem value="21:9" className="text-white">21:9 (超宽)</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <p className="text-xs text-gray-500 mt-2">
                       当前尺寸: {getCurrentDimensions()}
                     </p>
@@ -463,6 +460,14 @@ const Image = () => {
                               src={generatedImage}
                               alt="Generated"
                               className="max-w-full max-h-[500px] rounded-lg shadow-lg mx-auto mb-4 object-contain"
+                              onError={(e) => {
+                                console.error('Image failed to load:', e);
+                                toast({
+                                  title: "图像加载失败",
+                                  description: "请稍后重试或检查网络连接",
+                                  variant: "destructive"
+                                });
+                              }}
                             />
                             <div className="flex gap-2 justify-center">
                               <Button 
@@ -473,9 +478,11 @@ const Image = () => {
                                 下载
                               </Button>
                               <Button 
+                                onClick={handleVideoConversion}
                                 variant="outline"
                                 className="border-orange-400 text-orange-400 hover:bg-orange-400 hover:text-white"
                               >
+                                <Video className="mr-2 h-4 w-4" />
                                 转视频
                               </Button>
                             </div>
@@ -523,6 +530,10 @@ const Image = () => {
                                 src={item.image}
                                 alt="History"
                                 className="w-full aspect-square object-cover rounded mb-2"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = '/placeholder.svg';
+                                }}
                               />
                               <p className="text-xs text-gray-400 truncate" title={item.prompt}>
                                 {item.prompt}
