@@ -102,7 +102,7 @@ const HeroSection = () => {
   const time = useClock();
 
   return (
-    <section className="relative min-h-screen flex flex-col items-center bg-[#0e1020] overflow-x-hidden pt-3">
+    <section className="relative flex flex-col items-center bg-[#0e1020] overflow-x-hidden pt-3 pb-6">
       {/* 星空背景层 */}
       <canvas ref={starsCanvas} className="pointer-events-none fixed inset-0 w-full h-full z-0" />
 
@@ -155,8 +155,8 @@ const HeroSection = () => {
         </div>
       </header>
 
-      {/* 内容卡片区 */}
-      <div className="flex flex-row flex-wrap gap-6 md:gap-8 justify-center items-center max-w-[1100px] w-full px-4 mx-auto mt-2 md:mt-2 mb-14 z-10 relative">
+      {/* 内容卡片区 - 大幅缩小下方空白 */}
+      <div className="flex flex-row flex-wrap gap-6 md:gap-8 justify-center items-center max-w-[1100px] w-full px-4 mx-auto mt-2 md:mt-2 mb-8 z-10 relative">
         {cards.map((card, i) => (
           <div
             key={card.title}
@@ -202,8 +202,7 @@ const HeroSection = () => {
         ))}
       </div>
 
-
-      {/* 浮动语言球，不变 */}
+      {/* 浮动语言球 */}
       <div
         className="fixed right-6 top-[48%] -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white border-2 border-cyan-300 text-cyan-400 flex items-center justify-center text-base shadow cursor-pointer select-none"
         title="语言"

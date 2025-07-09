@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
-import { CheckCircle, Crown, Sparkles, Star, Zap, Users } from 'lucide-react';
+import { CheckCircle, Crown, Sparkles, Star, Zap, Users, X } from 'lucide-react';
 
 const Payment = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<'annual' | 'lifetime' | 'agent'>('annual');
+  const [showPayment, setShowPayment] = useState(false);
 
   const planDetails = {
     annual: { 
@@ -24,7 +25,7 @@ const Payment = () => {
         'Flux全家桶，无限次图像生成',
         '无限次语音合成',
         '所有功能一年内免费使用',
-        '会员专属身份标识'
+        '专属会员身份标识'
       ]
     },
     lifetime: { 
@@ -52,9 +53,18 @@ const Payment = () => {
         '30%推广收益分成',
         '专属代理商后台',
         '营销素材支持',
-        '专业培训指导'
+        '自动分成系统'
       ]
     }
+  };
+
+  const handlePurchase = (plan: 'annual' | 'lifetime' | 'agent') => {
+    setSelectedPlan(plan);
+    setShowPayment(true);
+  };
+
+  const handleClosePayment = () => {
+    setShowPayment(false);
   };
 
   return (
@@ -85,33 +95,20 @@ const Payment = () => {
       <div className="max-w-7xl mx-auto px-4 pb-16">
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {/* Annual Plan */}
-          <div 
-            className={`relative group cursor-pointer transition-all duration-300 ${
-              selectedPlan === 'annual' ? 'transform scale-105' : 'hover:scale-102'
-            }`}
-            onClick={() => setSelectedPlan('annual')}
-          >
-            <div className={`absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-3xl blur-xl transition-opacity duration-300 ${
-              selectedPlan === 'annual' ? 'opacity-100' : 'opacity-0'
-            }`}></div>
-            
-            <div className={`relative bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border-2 rounded-3xl p-6 transition-all duration-300 ${
-              selectedPlan === 'annual' 
-                ? 'border-cyan-400 shadow-2xl shadow-cyan-500/25' 
-                : 'border-gray-700 hover:border-gray-600'
-            }`}>
+          <div className="relative group cursor-pointer transition-all duration-300 hover:scale-102">
+            <div className="relative bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border-2 border-gray-700 hover:border-cyan-400/50 rounded-3xl p-6 transition-all duration-300">
               <div className="text-center mb-6">
                 <div className="flex items-center justify-center mb-4">
-                  <Crown className="w-6 h-6 text-cyan-400 mr-2" />
+                  <Crown className="w-5 h-5 text-cyan-400 mr-2" />
                   <h3 className="text-lg font-bold text-white">{planDetails.annual.description}</h3>
                 </div>
                 <p className="text-gray-400 mb-4 text-sm">{planDetails.annual.subtitle}</p>
                 
                 <div className="mb-4">
-                  <span className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                  <span className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
                     ¥{planDetails.annual.price}
                   </span>
-                  <span className="text-gray-400 text-base ml-2">/年</span>
+                  <span className="text-gray-400 text-sm ml-2">/年</span>
                 </div>
                 
                 <div className="text-xs text-gray-500 mb-4">
@@ -128,24 +125,20 @@ const Payment = () => {
                 ))}
               </div>
               
-              {selectedPlan === 'annual' && (
-                <div className="text-center">
-                  <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold py-3 rounded-xl text-sm transition-all duration-300">
-                    <Zap className="w-4 h-4 mr-2" />
-                    立即选择
-                  </Button>
-                </div>
-              )}
+              <div className="text-center">
+                <Button 
+                  onClick={() => handlePurchase('annual')}
+                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold py-3 rounded-xl text-sm transition-all duration-300"
+                >
+                  <Zap className="w-4 h-4 mr-2" />
+                  立即购买
+                </Button>
+              </div>
             </div>
           </div>
 
           {/* Lifetime Plan */}
-          <div 
-            className={`relative group cursor-pointer transition-all duration-300 ${
-              selectedPlan === 'lifetime' ? 'transform scale-105' : 'hover:scale-102'
-            }`}
-            onClick={() => setSelectedPlan('lifetime')}
-          >
+          <div className="relative group cursor-pointer transition-all duration-300 hover:scale-102">
             {/* Recommended Badge */}
             <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
               <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-1 rounded-full text-xs font-bold flex items-center shadow-lg">
@@ -154,27 +147,19 @@ const Payment = () => {
               </div>
             </div>
             
-            <div className={`absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-3xl blur-xl transition-opacity duration-300 ${
-              selectedPlan === 'lifetime' ? 'opacity-100' : 'opacity-0'
-            }`}></div>
-            
-            <div className={`relative bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border-2 rounded-3xl p-6 transition-all duration-300 ${
-              selectedPlan === 'lifetime' 
-                ? 'border-purple-400 shadow-2xl shadow-purple-500/25' 
-                : 'border-gray-700 hover:border-gray-600'
-            }`}>
+            <div className="relative bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border-2 border-purple-400 rounded-3xl p-6 transition-all duration-300 shadow-2xl shadow-purple-500/25">
               <div className="text-center mb-6">
                 <div className="flex items-center justify-center mb-4">
-                  <Crown className="w-6 h-6 text-purple-400 mr-2" />
+                  <Crown className="w-5 h-5 text-purple-400 mr-2" />
                   <h3 className="text-lg font-bold text-white">{planDetails.lifetime.description}</h3>
                 </div>
                 <p className="text-gray-400 mb-4 text-sm">{planDetails.lifetime.subtitle}</p>
                 
                 <div className="mb-4">
-                  <span className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+                  <span className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
                     ¥{planDetails.lifetime.price}
                   </span>
-                  <span className="text-gray-400 text-base ml-2">/永久</span>
+                  <span className="text-gray-400 text-sm ml-2">/永久</span>
                 </div>
                 
                 <div className="text-xs text-gray-500 mb-4">
@@ -191,49 +176,37 @@ const Payment = () => {
                 ))}
               </div>
               
-              {selectedPlan === 'lifetime' && (
-                <div className="text-center">
-                  <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-3 rounded-xl text-sm transition-all duration-300">
-                    <Zap className="w-4 h-4 mr-2" />
-                    立即选择
-                  </Button>
-                </div>
-              )}
+              <div className="text-center">
+                <Button 
+                  onClick={() => handlePurchase('lifetime')}
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-3 rounded-xl text-sm transition-all duration-300"
+                >
+                  <Zap className="w-4 h-4 mr-2" />
+                  立即购买
+                </Button>
+              </div>
             </div>
           </div>
 
           {/* Agent Plan */}
-          <div 
-            className={`relative group cursor-pointer transition-all duration-300 ${
-              selectedPlan === 'agent' ? 'transform scale-105' : 'hover:scale-102'
-            }`}
-            onClick={() => setSelectedPlan('agent')}
-          >
-            <div className={`absolute inset-0 bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-3xl blur-xl transition-opacity duration-300 ${
-              selectedPlan === 'agent' ? 'opacity-100' : 'opacity-0'
-            }`}></div>
-            
-            <div className={`relative bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border-2 rounded-3xl p-6 transition-all duration-300 ${
-              selectedPlan === 'agent' 
-                ? 'border-orange-400 shadow-2xl shadow-orange-500/25' 
-                : 'border-gray-700 hover:border-gray-600'
-            }`}>
+          <div className="relative group cursor-pointer transition-all duration-300 hover:scale-102">
+            <div className="relative bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border-2 border-gray-700 hover:border-orange-400/50 rounded-3xl p-6 transition-all duration-300">
               <div className="text-center mb-6">
                 <div className="flex items-center justify-center mb-4">
-                  <Users className="w-6 h-6 text-orange-400 mr-2" />
+                  <Users className="w-5 h-5 text-orange-400 mr-2" />
                   <h3 className="text-lg font-bold text-white">{planDetails.agent.description}</h3>
                 </div>
                 <p className="text-gray-400 mb-4 text-sm">{planDetails.agent.subtitle}</p>
                 
                 <div className="mb-4">
-                  <span className="text-4xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+                  <span className="text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
                     ¥{planDetails.agent.price}
                   </span>
-                  <span className="text-gray-400 text-base ml-2">/代理</span>
+                  <span className="text-gray-400 text-sm ml-2">/代理</span>
                 </div>
                 
                 <div className="text-xs text-gray-500 mb-4">
-                  写3-4单就赚回来了
+                  推广3-4单即可回本
                 </div>
               </div>
               
@@ -246,26 +219,36 @@ const Payment = () => {
                 ))}
               </div>
               
-              {selectedPlan === 'agent' && (
-                <div className="text-center">
-                  <Button className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold py-3 rounded-xl text-sm transition-all duration-300">
-                    <Zap className="w-4 h-4 mr-2" />
-                    立即选择
-                  </Button>
-                </div>
-              )}
+              <div className="text-center">
+                <Button 
+                  onClick={() => handlePurchase('agent')}
+                  className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold py-3 rounded-xl text-sm transition-all duration-300"
+                >
+                  <Zap className="w-4 h-4 mr-2" />
+                  立即购买
+                </Button>
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Payment Section */}
-        <div className="max-w-sm mx-auto mt-16">
-          <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border border-gray-700 rounded-3xl p-6">
+      {/* Payment Modal */}
+      {showPayment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-xl border border-gray-700 rounded-3xl p-6 max-w-sm w-full relative">
+            <button 
+              onClick={handleClosePayment}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
             <div className="text-center mb-6">
-              <h3 className="text-xl font-bold text-white mb-4">立即开通</h3>
+              <h3 className="text-xl font-bold text-white mb-4">扫码支付</h3>
               
               {/* Payment QR Code */}
-              <div className="bg-white rounded-xl p-3 mb-4 flex justify-center w-40 h-40 mx-auto">
+              <div className="bg-white rounded-xl p-3 mb-4 flex justify-center w-32 h-32 mx-auto">
                 <img 
                   src="/lovable-uploads/a0ec2427-9113-4553-9e8e-17170fae056b.png" 
                   alt="支付宝支付二维码" 
@@ -274,7 +257,7 @@ const Payment = () => {
               </div>
 
               <div className="mb-4">
-                <div className="text-lg font-bold text-white mb-1">
+                <div className="text-sm font-bold text-white mb-1">
                   ¥{planDetails[selectedPlan].total}
                 </div>
                 <div className="text-gray-400 text-xs">{planDetails[selectedPlan].description}</div>
@@ -293,7 +276,7 @@ const Payment = () => {
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
