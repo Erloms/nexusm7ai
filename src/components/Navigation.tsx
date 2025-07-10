@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -7,14 +8,14 @@ import { Menu, X, MessageSquare, Image, Mic, Settings, LogOut, User, Crown, Vide
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
   const handleSignOut = async () => {
-    await signOut();
+    logout();
     navigate('/');
   };
 
@@ -81,18 +82,17 @@ const Navigation = () => {
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <Avatar className="h-8 w-8 border-2 border-cyan-400/30">
-                    <AvatarImage src={user.user_metadata?.avatar_url} />
                     <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-purple-600 text-white text-sm">
                       {user.email?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">
                     <span className="text-sm text-white font-medium">
-                      {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                      {user.name || user.email?.split('@')[0]}
                     </span>
                     <span className="text-xs text-cyan-400 flex items-center">
                       <Crown className="h-3 w-3 mr-1" />
-                      会员
+                      {user.isVip ? '会员' : '免费用户'}
                     </span>
                   </div>
                 </div>
@@ -164,18 +164,17 @@ const Navigation = () => {
               <div className="pt-4 border-t border-white/10 space-y-2">
                 <div className="flex items-center space-x-3 px-4 py-2">
                   <Avatar className="h-10 w-10 border-2 border-cyan-400/30">
-                    <AvatarImage src={user.user_metadata?.avatar_url} />
                     <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-purple-600 text-white">
                       {user.email?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <div className="text-white font-medium">
-                      {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                      {user.name || user.email?.split('@')[0]}
                     </div>
                     <div className="text-cyan-400 text-sm flex items-center">
                       <Crown className="h-3 w-3 mr-1" />
-                      会员
+                      {user.isVip ? '会员' : '免费用户'}
                     </div>
                   </div>
                 </div>
