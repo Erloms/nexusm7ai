@@ -1,187 +1,77 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useToast } from '@/components/ui/use-toast';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  isVip: boolean;
-  isAdmin: boolean;
-}
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { User } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string) => Promise<boolean>;
-  logout: () => void;
-  hasPermission: (feature: string) => boolean;
-  isAdmin: boolean;
+  loading: boolean;
+  isAuthenticated: boolean;
+  checkPaymentStatus: () => boolean;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('nexusAi_user');
-    if (savedUser) {
-      try {
-        const parsedUser = JSON.parse(savedUser);
-        setUser(parsedUser);
-      } catch (error) {
-        console.error('Failed to parse saved user:', error);
-        localStorage.removeItem('nexusAi_user');
-      }
-    }
+    // 获取初始会话
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // 监听认证状态变化
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    try {
-      // 管理员账号检查
-      if (email === 'Master' && password === 'Mengzhen888') {
-        const adminUser: User = {
-          id: 'admin_master',
-          name: 'Master',
-          email: 'master@admin.com',
-          isVip: true,
-          isAdmin: true
-        };
-        setUser(adminUser);
-        localStorage.setItem('nexusAi_user', JSON.stringify(adminUser));
-        toast({
-          title: "管理员登录成功",
-          description: "欢迎回来，Master！",
-        });
-        return true;
-      }
-
-      // 普通用户登录逻辑
-      const users = JSON.parse(localStorage.getItem('nexusAi_users') || '[]');
-      const foundUser = users.find((u: any) => u.email === email && u.password === password);
-      
-      if (foundUser) {
-        delete foundUser.password;
-        setUser(foundUser);
-        localStorage.setItem('nexusAi_user', JSON.stringify(foundUser));
-        toast({
-          title: "登录成功",
-          description: `欢迎回来，${foundUser.name}！`,
-        });
-        return true;
-      } else {
-        toast({
-          title: "登录失败",
-          description: "用户名或密码错误",
-          variant: "destructive"
-        });
-        return false;
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      toast({
-        title: "登录失败",
-        description: "系统错误，请稍后重试",
-        variant: "destructive"
-      });
-      return false;
-    }
-  };
-
-  const register = async (name: string, email: string, password: string): Promise<boolean> => {
-    try {
-      const users = JSON.parse(localStorage.getItem('nexusAi_users') || '[]');
-      
-      // Check if user already exists
-      if (users.some((u: any) => u.email === email)) {
-        toast({
-          title: "注册失败",
-          description: "该邮箱已被注册",
-          variant: "destructive"
-        });
-        return false;
-      }
-
-      const newUser = {
-        id: Date.now().toString(),
-        name,
-        email,
-        password,
-        isVip: false,
-        isAdmin: false
-      };
-
-      users.push(newUser);
-      localStorage.setItem('nexusAi_users', JSON.stringify(users));
-      
-      // Auto login after registration
-      const userForLogin = { ...newUser };
-      delete userForLogin.password;
-      setUser(userForLogin);
-      localStorage.setItem('nexusAi_user', JSON.stringify(userForLogin));
-      
-      toast({
-        title: "注册成功",
-        description: "欢迎加入NexusAI！",
-      });
-      return true;
-    } catch (error) {
-      console.error('Registration error:', error);
-      toast({
-        title: "注册失败",
-        description: "系统错误，请稍后重试",
-        variant: "destructive"
-      });
-      return false;
-    }
-  };
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('nexusAi_user');
-    toast({
-      title: "已退出登录",
-      description: "期待您的再次光临！",
-    });
-  };
-
-  const hasPermission = (feature: string): boolean => {
+  const checkPaymentStatus = () => {
     if (!user) return false;
     
-    // 管理员拥有所有权限
-    if (user.isAdmin) return true;
-    
-    // VIP用户权限
-    if (user.isVip) {
-      return ['chat', 'image', 'voice', 'video'].includes(feature);
+    // 检查管理员权限
+    if (user.email === 'master@admin.com' || user.email === 'morphy.realm@gmail.com') {
+      return true;
     }
     
-    // 免费用户限制
+    // 检查VIP用户
+    const vipUsers = JSON.parse(localStorage.getItem('vipUsers') || '[]');
+    if (vipUsers.includes(user.id)) {
+      return true;
+    }
+    
     return false;
   };
 
-  const isAdmin = user?.isAdmin || false;
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
-  return (
-    <AuthContext.Provider value={{ 
-      user, 
-      login, 
-      register, 
-      logout, 
-      hasPermission, 
-      isAdmin 
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = {
+    user,
+    loading,
+    isAuthenticated: !!user,
+    checkPaymentStatus,
+    signOut,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
