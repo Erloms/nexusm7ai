@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from '@/contexts/AuthContext';
-import { Menu, X, MessageSquare, Image, Mic, Settings, LogOut, User, Crown, Video } from 'lucide-react';
+import { Menu, X, MessageSquare, Image, Mic, Settings, LogOut, User, Crown } from 'lucide-react';
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,7 +23,6 @@ const Navigation = () => {
   const navItems = [
     { path: '/chat', label: 'AI对话', icon: MessageSquare },
     { path: '/image', label: 'AI绘画', icon: Image },
-    { path: '/video', label: 'AI视频', icon: Video },
     { path: '/voice', label: 'AI语音', icon: Mic }
   ];
 
@@ -45,11 +43,9 @@ const Navigation = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
-            <img 
-              src="/lovable-uploads/2c3575b0-1f59-46af-9184-01a225a8f360.png" 
-              alt="NENUX.AI" 
-              className="h-8 w-8"
-            />
+            <div className="h-8 w-8 bg-gradient-to-r from-cyan-400 to-purple-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">N</span>
+            </div>
             <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-600 bg-clip-text text-transparent">
               NENUX.AI
             </span>

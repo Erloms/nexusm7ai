@@ -10,7 +10,6 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Chat from "./pages/Chat";
 import Image from "./pages/Image";
-import VideoGeneration from "./pages/VideoGeneration";
 import Voice from "./pages/Voice";
 import Settings from "./pages/Settings";
 import Dashboard from "./pages/Dashboard";
@@ -34,7 +33,6 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/image" element={<Image />} />
-            <Route path="/video" element={<VideoGeneration />} />
             <Route path="/voice" element={<Voice />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/dashboard" element={<Dashboard />} />
