@@ -1,229 +1,187 @@
 
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { toast } from "@/components/ui/use-toast";
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useToast } from '@/components/ui/use-toast';
 
 interface User {
   id: string;
-  email: string;
   name: string;
+  email: string;
   isVip: boolean;
-  membershipType: 'free' | 'annual' | 'lifetime';
-  membershipExpiresAt?: string;
-  role: 'user' | 'admin';
+  isAdmin: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
-  isAuthenticated: boolean;
-  loading: boolean;
-  login: (emailOrUsername: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  checkPaymentStatus: () => boolean;
-  setUserAsPaid: (membershipType: 'annual' | 'lifetime') => void;
   hasPermission: (feature: string) => boolean;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('nexusAiUser');
-    
-    if (storedUser) {
+    const savedUser = localStorage.getItem('nexusAi_user');
+    if (savedUser) {
       try {
-        const parsedUser = JSON.parse(storedUser);
-        // Check if annual membership has expired
-        if (parsedUser.membershipType === 'annual' && parsedUser.membershipExpiresAt) {
-          const expirationDate = new Date(parsedUser.membershipExpiresAt);
-          const now = new Date();
-          if (now > expirationDate) {
-            parsedUser.membershipType = 'free';
-            parsedUser.isVip = false;
-            parsedUser.membershipExpiresAt = null;
-            localStorage.setItem('nexusAiUser', JSON.stringify(parsedUser));
-          }
-        }
+        const parsedUser = JSON.parse(savedUser);
         setUser(parsedUser);
-      } catch (e) {
-        console.error("Failed to parse stored user data", e);
-        localStorage.removeItem('nexusAiUser');
+      } catch (error) {
+        console.error('Failed to parse saved user:', error);
+        localStorage.removeItem('nexusAi_user');
       }
     }
-    
-    setLoading(false);
   }, []);
 
-  const checkPaymentStatus = (): boolean => {
-    if (!user) return false;
-    return user.isVip === true;
-  };
-
-  const setUserAsPaid = (membershipType: 'annual' | 'lifetime') => {
-    if (user) {
-      const updatedUser = { 
-        ...user, 
-        isVip: true, 
-        membershipType,
-        membershipExpiresAt: membershipType === 'annual' 
-          ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-          : null
-      };
-      setUser(updatedUser);
-      localStorage.setItem('nexusAiUser', JSON.stringify(updatedUser));
-      
-      toast({
-        title: "支付成功",
-        description: `感谢您的支付！您已成为${membershipType === 'annual' ? '年' : '永久'}会员。`,
-        duration: 5000,
-      });
-    }
-  };
-
-  const hasPermission = (feature: string): boolean => {
-    if (!user) return false;
-    if (user.role === 'admin') return true;
-    return user.isVip;
-  };
-
-  const login = async (emailOrUsername: string, password: string): Promise<boolean> => {
-    setLoading(true);
-    
+  const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (emailOrUsername && password.length >= 6) {
-        const isAdmin = emailOrUsername === 'admin' || emailOrUsername === 'admin@nexus.ai';
-        
-        const mockUser: User = {
-          id: '123456',
-          email: emailOrUsername.includes('@') ? emailOrUsername : `${emailOrUsername}@example.com`,
-          name: isAdmin ? 'Admin' : (emailOrUsername.includes('@') ? emailOrUsername.split('@')[0] : emailOrUsername),
-          isVip: isAdmin,
-          membershipType: isAdmin ? 'lifetime' : 'free',
-          role: isAdmin ? 'admin' : 'user'
+      // 管理员账号检查
+      if (email === 'Master' && password === 'Mengzhen888') {
+        const adminUser: User = {
+          id: 'admin_master',
+          name: 'Master',
+          email: 'master@admin.com',
+          isVip: true,
+          isAdmin: true
         };
-        
-        setUser(mockUser);
-        localStorage.setItem('nexusAiUser', JSON.stringify(mockUser));
-        
+        setUser(adminUser);
+        localStorage.setItem('nexusAi_user', JSON.stringify(adminUser));
+        toast({
+          title: "管理员登录成功",
+          description: "欢迎回来，Master！",
+        });
+        return true;
+      }
+
+      // 普通用户登录逻辑
+      const users = JSON.parse(localStorage.getItem('nexusAi_users') || '[]');
+      const foundUser = users.find((u: any) => u.email === email && u.password === password);
+      
+      if (foundUser) {
+        delete foundUser.password;
+        setUser(foundUser);
+        localStorage.setItem('nexusAi_user', JSON.stringify(foundUser));
         toast({
           title: "登录成功",
-          description: `欢迎${isAdmin ? '管理员' : ''}回来！`,
-          duration: 3000,
+          description: `欢迎回来，${foundUser.name}！`,
         });
-        
         return true;
       } else {
         toast({
           title: "登录失败",
-          description: "用户名或密码不正确",
-          variant: "destructive",
-          duration: 3000,
+          description: "用户名或密码错误",
+          variant: "destructive"
         });
         return false;
       }
     } catch (error) {
-      console.error("Login error:", error);
+      console.error('Login error:', error);
       toast({
         title: "登录失败",
-        description: "发生错误，请稍后再试",
-        variant: "destructive",
-        duration: 3000,
+        description: "系统错误，请稍后重试",
+        variant: "destructive"
       });
       return false;
-    } finally {
-      setLoading(false);
     }
   };
 
   const register = async (name: string, email: string, password: string): Promise<boolean> => {
-    setLoading(true);
-    
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const users = JSON.parse(localStorage.getItem('nexusAi_users') || '[]');
       
-      if (name && email && password.length >= 6) {
-        const mockUser: User = {
-          id: Date.now().toString(),
-          email: email,
-          name: name,
-          isVip: false,
-          membershipType: 'free',
-          role: 'user'
-        };
-        
-        setUser(mockUser);
-        localStorage.setItem('nexusAiUser', JSON.stringify(mockUser));
-        
-        toast({
-          title: "注册成功",
-          description: "欢迎加入 Nexus AI！",
-          duration: 5000,
-        });
-        
-        return true;
-      } else {
+      // Check if user already exists
+      if (users.some((u: any) => u.email === email)) {
         toast({
           title: "注册失败",
-          description: "请提供有效的信息",
-          variant: "destructive",
-          duration: 3000,
+          description: "该邮箱已被注册",
+          variant: "destructive"
         });
         return false;
       }
+
+      const newUser = {
+        id: Date.now().toString(),
+        name,
+        email,
+        password,
+        isVip: false,
+        isAdmin: false
+      };
+
+      users.push(newUser);
+      localStorage.setItem('nexusAi_users', JSON.stringify(users));
+      
+      // Auto login after registration
+      const userForLogin = { ...newUser };
+      delete userForLogin.password;
+      setUser(userForLogin);
+      localStorage.setItem('nexusAi_user', JSON.stringify(userForLogin));
+      
+      toast({
+        title: "注册成功",
+        description: "欢迎加入NexusAI！",
+      });
+      return true;
     } catch (error) {
-      console.error("Register error:", error);
+      console.error('Registration error:', error);
       toast({
         title: "注册失败",
-        description: "发生错误，请稍后再试",
-        variant: "destructive",
-        duration: 3000,
+        description: "系统错误，请稍后重试",
+        variant: "destructive"
       });
       return false;
-    } finally {
-      setLoading(false);
     }
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('nexusAiUser');
+    localStorage.removeItem('nexusAi_user');
     toast({
       title: "已退出登录",
-      description: "您已成功退出登录",
-      duration: 3000,
+      description: "期待您的再次光临！",
     });
   };
 
-  const contextValue: AuthContextType = {
-    user,
-    isAuthenticated: !!user,
-    loading,
-    login,
-    register,
-    logout,
-    checkPaymentStatus,
-    setUserAsPaid,
-    hasPermission
+  const hasPermission = (feature: string): boolean => {
+    if (!user) return false;
+    
+    // 管理员拥有所有权限
+    if (user.isAdmin) return true;
+    
+    // VIP用户权限
+    if (user.isVip) {
+      return ['chat', 'image', 'voice', 'video'].includes(feature);
+    }
+    
+    // 免费用户限制
+    return false;
   };
 
+  const isAdmin = user?.isAdmin || false;
+
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      register, 
+      logout, 
+      hasPermission, 
+      isAdmin 
+    }}>
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  
-  return context;
 };

@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
-import { Loader2, Download, RefreshCw, Sparkles, Wand2, Image as ImageIcon, History, Trash2, Video } from 'lucide-react';
+import { Loader2, Download, RefreshCw, Sparkles, Wand2, Image as ImageIcon, History, Trash2, Video, Shuffle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,7 @@ const Image = () => {
   const [seed, setSeed] = useState('');
   const [selectedModel, setSelectedModel] = useState('flux');
   const [aspectRatio, setAspectRatio] = useState('1:1');
+  const [selectedVideoEffect, setSelectedVideoEffect] = useState('sketch-to-color');
   const [availableModels, setAvailableModels] = useState<Array<{id: string, name: string, description: string}>>([]);
   const [history, setHistory] = useState<Array<{id: string, prompt: string, image: string, timestamp: number}>>([]);
   const { user } = useAuth();
@@ -37,6 +38,18 @@ const Image = () => {
     { id: 'flux-3d', name: '三维效果', description: 'Flux 3D - 立体三维' },
     { id: 'flux-cablyai', name: '创意艺术', description: 'Flux CablyAI - 创意艺术' },
     { id: 'turbo', name: '极速生成', description: 'Turbo - 快速生成' }
+  ];
+
+  // 视频魔法效果选项
+  const videoEffects = [
+    { id: 'sketch-to-color', name: '素描变彩色', description: '素描稿用刷子刷过变成彩色画' },
+    { id: 'static-to-dynamic', name: '静态转动态', description: '让静态画面充满生命力' },
+    { id: 'watercolor-flow', name: '水彩流动', description: '水彩颜料在纸上流淌的效果' },
+    { id: 'pencil-drawing', name: '铅笔素描', description: '铅笔在纸上绘制的过程' },
+    { id: 'oil-painting', name: '油画创作', description: '油画笔刷在画布上创作' },
+    { id: 'digital-glitch', name: '数字故障', description: '数字艺术故障美学效果' },
+    { id: 'neon-glow', name: '霓虹发光', description: '霓虹灯光效果逐渐点亮' },
+    { id: 'particle-explosion', name: '粒子爆炸', description: '画面分解成粒子再重组' }
   ];
 
   // Master prompts for different styles
@@ -56,6 +69,16 @@ const Image = () => {
     const randomSeed = Math.floor(Math.random() * 1000000);
     setSeed(randomSeed.toString());
     return randomSeed.toString();
+  };
+
+  // Generate random video effect
+  const generateRandomVideoEffect = () => {
+    const randomEffect = videoEffects[Math.floor(Math.random() * videoEffects.length)];
+    setSelectedVideoEffect(randomEffect.id);
+    toast({
+      title: "魔法效果已更换",
+      description: `已切换到：${randomEffect.name}`,
+    });
   };
 
   // Initialize with random seed on component mount
@@ -207,11 +230,26 @@ const Image = () => {
     setVideoUrl(null);
 
     try {
+      // 根据选择的魔法效果生成对应的提示词
+      const effectPrompts = {
+        'sketch-to-color': '素描稿用刷子刷过变成彩色画，绘画过程，艺术创作',
+        'static-to-dynamic': '让画面动起来，添加自然的动态效果，生动有趣',
+        'watercolor-flow': '水彩颜料在纸上流淌，色彩渐变，艺术流动感',
+        'pencil-drawing': '铅笔在纸上绘制的过程，素描艺术，线条流畅',
+        'oil-painting': '油画笔刷在画布上创作，厚重笔触，艺术质感',
+        'digital-glitch': '数字故障美学效果，像素闪烁，科技感',
+        'neon-glow': '霓虹灯光效果逐渐点亮，发光效果，夜晚氛围',
+        'particle-explosion': '画面分解成粒子再重组，特效转场，震撼视觉'
+      };
+
+      const selectedEffect = videoEffects.find(effect => effect.id === selectedVideoEffect);
+      const effectPrompt = effectPrompts[selectedVideoEffect as keyof typeof effectPrompts] || '让画面动起来，添加魔法效果';
+
       // Call the video generation function
       const { data, error } = await supabase.functions.invoke('generate-video', {
         body: {
           image_url: generatedImage,
-          prompt: "让画面动起来，添加自然的动态效果"
+          prompt: effectPrompt
         }
       });
 
@@ -221,8 +259,8 @@ const Image = () => {
       setVideoTaskId(taskId);
 
       toast({
-        title: "视频转换已开始",
-        description: "正在处理中，请稍等...",
+        title: "魔法视频转换已开始",
+        description: `正在施展「${selectedEffect?.name}」魔法，请稍等...`,
       });
 
       // Poll for video completion
@@ -239,8 +277,8 @@ const Image = () => {
             setVideoUrl(statusData.video_result[0].url);
             setIsVideoConverting(false);
             toast({
-              title: "视频转换完成",
-              description: "您的图像已成功转换为视频！",
+              title: "魔法视频转换完成",
+              description: `「${selectedEffect?.name}」魔法已成功施展！`,
             });
           } else if (statusData.task_status === 'FAIL') {
             clearInterval(pollInterval);
@@ -260,7 +298,7 @@ const Image = () => {
         if (isVideoConverting) {
           setIsVideoConverting(false);
           toast({
-            title: "视频转换超时",
+            title: "魔法视频转换超时",
             description: "请稍后重试",
             variant: "destructive"
           });
@@ -271,7 +309,7 @@ const Image = () => {
       console.error('视频转换失败:', error);
       setIsVideoConverting(false);
       toast({
-        title: "视频转换失败",
+        title: "魔法视频转换失败",
         description: "转换过程中出现错误，请稍后重试",
         variant: "destructive"
       });
@@ -436,6 +474,44 @@ const Image = () => {
                 </CardContent>
               </Card>
 
+              {/* Video Magic Effects */}
+              <Card className="bg-[#1a2740] border-[#203042]/60">
+                <CardHeader>
+                  <CardTitle className="text-white text-sm flex items-center gap-2">
+                    <Video className="h-4 w-4 text-purple-400" />
+                    视频魔法效果
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex gap-2">
+                    <Select value={selectedVideoEffect} onValueChange={setSelectedVideoEffect}>
+                      <SelectTrigger className="bg-[#0f1419] border-[#203042]/60 text-white flex-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#1a2740] border-[#203042]/60">
+                        {videoEffects.map((effect) => (
+                          <SelectItem key={effect.id} value={effect.id} className="text-white">
+                            {effect.name} - {effect.description}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      onClick={generateRandomVideoEffect}
+                      variant="outline"
+                      size="icon"
+                      className="border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white shrink-0"
+                      title="随机魔法效果"
+                    >
+                      <Shuffle className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    {videoEffects.find(effect => effect.id === selectedVideoEffect)?.description}
+                  </p>
+                </CardContent>
+              </Card>
+
               {/* Aspect Ratio */}
               <Card className="bg-[#1a2740] border-[#203042]/60">
                 <CardHeader>
@@ -562,25 +638,27 @@ const Image = () => {
                               <Button 
                                 onClick={handleVideoConversion}
                                 disabled={isVideoConverting}
-                                variant="outline"
-                                className="border-orange-400 text-orange-400 hover:bg-orange-400 hover:text-white"
+                                className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white"
                               >
                                 {isVideoConverting ? (
                                   <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    转换中...
+                                    施展魔法中...
                                   </>
                                 ) : (
                                   <>
                                     <Video className="mr-2 h-4 w-4" />
-                                    转为视频
+                                    魔法转视频
                                   </>
                                 )}
                               </Button>
                             </div>
                             {videoUrl && (
                               <div className="mt-4 p-4 bg-[#0f1419] rounded-lg">
-                                <h3 className="text-white font-medium mb-2">生成的视频:</h3>
+                                <h3 className="text-white font-medium mb-2 flex items-center gap-2">
+                                  <Sparkles className="h-4 w-4 text-purple-400" />
+                                  魔法视频已生成:
+                                </h3>
                                 <video 
                                   src={videoUrl} 
                                   controls 
@@ -594,16 +672,16 @@ const Image = () => {
                                     onClick={() => {
                                       const link = document.createElement('a');
                                       link.href = videoUrl;
-                                      link.download = `nexus-ai-video-${Date.now()}.mp4`;
+                                      link.download = `nexus-ai-magic-video-${Date.now()}.mp4`;
                                       document.body.appendChild(link);
                                       link.click();
                                       document.body.removeChild(link);
                                     }}
                                     size="sm"
-                                    className="bg-orange-500 hover:bg-orange-600 text-white"
+                                    className="bg-purple-500 hover:bg-purple-600 text-white"
                                   >
                                     <Download className="mr-2 h-4 w-4" />
-                                    下载视频
+                                    下载魔法视频
                                   </Button>
                                 </div>
                               </div>

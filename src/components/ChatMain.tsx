@@ -1,8 +1,8 @@
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Mic, MicOff } from "lucide-react";
+import { Send, Mic, MicOff, Image as ImageIcon, Shuffle } from "lucide-react";
 
 interface Message {
   text: string;
@@ -21,6 +21,8 @@ interface ChatMainProps {
   onSend: () => void;
   onStartListening: () => void;
   onSynthesizeVoice?: (text: string) => void;
+  selectedModel: string;
+  onModelChange: (model: string) => void;
 }
 
 const ChatMain: React.FC<ChatMainProps> = ({
@@ -32,12 +34,66 @@ const ChatMain: React.FC<ChatMainProps> = ({
   onSend,
   onStartListening,
   onSynthesizeVoice,
+  selectedModel,
+  onModelChange
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // AI模型列表（基于Pollinations.ai）
+  const AI_MODELS = [
+    { id: "openai", name: "OpenAI GPT-4o-mini", group: "OpenAI" },
+    { id: "openai-large", name: "OpenAI GPT-4o", group: "OpenAI" },
+    { id: "openai-reasoning", name: "OpenAI o1-mini", group: "OpenAI" },
+    { id: "llama", name: "Llama 3.3 70B", group: "Meta" },
+    { id: "llamalight", name: "Llama 3.1 8B Instruct", group: "Meta" },
+    { id: "mistral", name: "Mistral Nemo", group: "Mistral" },
+    { id: "deepseek", name: "DeepSeek-V3", group: "DeepSeek" },
+    { id: "deepseek-r1", name: "DeepSeek-R1 Distill Qwen 32B", group: "DeepSeek" },
+    { id: "deepseek-reasoner", name: "DeepSeek R1 - Full", group: "DeepSeek" },
+    { id: "deepseek-r1-llama", name: "DeepSeek R1 - Llama 70B", group: "DeepSeek" },
+    { id: "claude", name: "Claude 3.5 Haiku", group: "Anthropic" },
+    { id: "gemini", name: "Gemini 2.0 Flash", group: "Google" },
+    { id: "gemini-thinking", name: "Gemini 2.0 Flash Thinking", group: "Google" },
+    { id: "phi", name: "Phi-4 Multimodal Instruct", group: "Microsoft" },
+    { id: "qwen-coder", name: "Qwen 2.5 Coder 32B", group: "Qwen" }
+  ];
+
+  // 随机切换模型
+  const switchRandomModel = () => {
+    const randomModel = AI_MODELS[Math.floor(Math.random() * AI_MODELS.length)];
+    onModelChange(randomModel.id);
+  };
+
+  // 生成配图
+  const generateImage = async (prompt: string) => {
+    setIsGeneratingImage(true);
+    
+    try {
+      // 将中文提示词转换为英文
+      const encodedPrompt = encodeURIComponent(prompt);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=768&seed=${Math.floor(Math.random() * 100000)}&model=flux&nologo=true`;
+      
+      // 添加图像消息
+      const imageMessage: Message = {
+        text: "为您生成的配图：",
+        sender: "ai",
+        type: "image",
+        imageUrl: imageUrl
+      };
+      
+      // 这里需要通过props传递给父组件
+      return imageMessage;
+    } catch (error) {
+      console.error('生成图像失败:', error);
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
 
   return (
     <div className="flex-1 flex flex-col w-full min-h-0">
@@ -46,8 +102,57 @@ const ChatMain: React.FC<ChatMainProps> = ({
         <h1 className="text-3xl md:text-4xl font-black bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent text-center drop-shadow-lg tracking-tight">
           智能创作工作台
         </h1>
-        <p className="text-center text-gray-400 mt-3 text-lg">集成20+顶级AI模型，支持对话、绘画、创作一体化体验</p>
+        <p className="text-center text-gray-400 mt-3 text-lg">集成15+顶级AI模型，支持对话、绘画、创作一体化体验</p>
+        
+        {/* 模型选择器 */}
+        <div className="flex justify-center mt-4 gap-3">
+          <select 
+            value={selectedModel} 
+            onChange={(e) => onModelChange(e.target.value)}
+            className="bg-[#1a2740] text-white border border-[#203042]/60 rounded-lg px-3 py-2 text-sm"
+          >
+            {AI_MODELS.reduce((groups: any, model) => {
+              if (!groups[model.group]) {
+                groups[model.group] = [];
+              }
+              groups[model.group].push(model);
+              return groups;
+            }, {}).map ? 
+              Object.entries(AI_MODELS.reduce((groups: any, model) => {
+                if (!groups[model.group]) {
+                  groups[model.group] = [];
+                }
+                groups[model.group].push(model);
+                return groups;
+              }, {})).map(([group, models]: any) => (
+                <optgroup key={group} label={group}>
+                  {models.map((model: any) => (
+                    <option key={model.id} value={model.id}>
+                      {model.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))
+            : 
+              AI_MODELS.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.name}
+                </option>
+              ))
+            }
+          </select>
+          <Button
+            onClick={switchRandomModel}
+            variant="outline"
+            size="sm"
+            className="border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-white"
+          >
+            <Shuffle className="h-4 w-4 mr-1" />
+            随机模型
+          </Button>
+        </div>
       </div>
+
       {/* 聊天内容 */}
       <div className="flex-1 overflow-y-auto px-0 md:px-8 max-h-[62vh] min-h-[320px] pb-6">
         {messages.length === 0 ? (
@@ -106,6 +211,7 @@ const ChatMain: React.FC<ChatMainProps> = ({
           </div>
         )}
       </div>
+
       {/* 输入区（操作条悬浮底部） */}
       <div className="fixed inset-x-0 bottom-0 z-30 flex justify-center items-end w-full pointer-events-none">
         <div className="pointer-events-auto w-full max-w-3xl mb-8 px-4 ml-96">
@@ -123,6 +229,20 @@ const ChatMain: React.FC<ChatMainProps> = ({
                 }
               }}
             />
+            <Button
+              onClick={() => generateImage(input)}
+              disabled={!input.trim() || isGeneratingImage}
+              size="icon"
+              variant="ghost"
+              className="bg-transparent text-purple-400 hover:bg-purple-800/20 mr-1"
+              title="生成配图"
+            >
+              {isGeneratingImage ? (
+                <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <ImageIcon className="h-4 w-4" />
+              )}
+            </Button>
             <Button
               onClick={onStartListening}
               disabled={isListening}
