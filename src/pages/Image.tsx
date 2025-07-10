@@ -10,12 +10,16 @@ import Navigation from '@/components/Navigation';
 import { Loader2, Download, RefreshCw, Sparkles, Wand2, Image as ImageIcon, History, Trash2, Video } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
 
 const Image = () => {
   const [prompt, setPrompt] = useState('');
   const [negativePrompt, setNegativePrompt] = useState('pixelated, poor lighting, overexposed, underexposed, chinese text, asian text, chinese characters, cropped, duplicated, ugly, extra fingers, bad hands, missing fingers, mutated hands');
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isVideoConverting, setIsVideoConverting] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoTaskId, setVideoTaskId] = useState<string | null>(null);
   const [seed, setSeed] = useState('');
   const [selectedModel, setSelectedModel] = useState('flux');
   const [aspectRatio, setAspectRatio] = useState('1:1');
@@ -138,6 +142,7 @@ const Image = () => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       setGeneratedImage(imageUrl);
+      setVideoUrl(null); // Reset video when generating new image
       updateUsage();
 
       // Add to history
@@ -179,7 +184,7 @@ const Image = () => {
     }
   };
 
-  const handleVideoConversion = () => {
+  const handleVideoConversion = async () => {
     if (!generatedImage) {
       toast({
         title: "请先生成图像",
@@ -188,12 +193,89 @@ const Image = () => {
       });
       return;
     }
-    
-    // 模拟视频转换功能
-    toast({
-      title: "视频转换功能开发中",
-      description: "图像转视频功能即将上线，敬请期待！",
-    });
+
+    if (!user) {
+      toast({
+        title: "请先登录",
+        description: "需要登录账户才能使用视频转换功能",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsVideoConverting(true);
+    setVideoUrl(null);
+
+    try {
+      // Call the video generation function
+      const { data, error } = await supabase.functions.invoke('generate-video', {
+        body: {
+          image_url: generatedImage,
+          prompt: "让画面动起来，添加自然的动态效果"
+        }
+      });
+
+      if (error) throw error;
+
+      const taskId = data.id;
+      setVideoTaskId(taskId);
+
+      toast({
+        title: "视频转换已开始",
+        description: "正在处理中，请稍等...",
+      });
+
+      // Poll for video completion
+      const pollInterval = setInterval(async () => {
+        try {
+          const { data: statusData, error: statusError } = await supabase.functions.invoke('check-video-status', {
+            body: { taskId }
+          });
+
+          if (statusError) throw statusError;
+
+          if (statusData.task_status === 'SUCCESS') {
+            clearInterval(pollInterval);
+            setVideoUrl(statusData.video_result[0].url);
+            setIsVideoConverting(false);
+            toast({
+              title: "视频转换完成",
+              description: "您的图像已成功转换为视频！",
+            });
+          } else if (statusData.task_status === 'FAIL') {
+            clearInterval(pollInterval);
+            setIsVideoConverting(false);
+            throw new Error('视频生成失败');
+          }
+        } catch (error) {
+          clearInterval(pollInterval);
+          setIsVideoConverting(false);
+          throw error;
+        }
+      }, 3000);
+
+      // Set timeout to stop polling after 5 minutes
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        if (isVideoConverting) {
+          setIsVideoConverting(false);
+          toast({
+            title: "视频转换超时",
+            description: "请稍后重试",
+            variant: "destructive"
+          });
+        }
+      }, 300000);
+
+    } catch (error) {
+      console.error('视频转换失败:', error);
+      setIsVideoConverting(false);
+      toast({
+        title: "视频转换失败",
+        description: "转换过程中出现错误，请稍后重试",
+        variant: "destructive"
+      });
+    }
   };
 
   const applyMasterPrompt = (masterPrompt: string) => {
@@ -251,7 +333,7 @@ const Image = () => {
               AI 绘画生成器
             </h1>
             <p className="text-gray-400 text-lg">
-              智能AI驱动的视觉增强创作平台 - 由 Pollinations.ai 提供支持
+              智能AI驱动的视觉增强创作平台
             </p>
             {user && (
               <p className="text-sm text-gray-500 mt-2">
@@ -469,23 +551,63 @@ const Image = () => {
                                 });
                               }}
                             />
-                            <div className="flex gap-2 justify-center">
+                            <div className="flex gap-2 justify-center mb-4">
                               <Button 
                                 onClick={handleDownload}
                                 className="bg-cyan-500 hover:bg-cyan-600 text-white"
                               >
                                 <Download className="mr-2 h-4 w-4" />
-                                下载
+                                下载图像
                               </Button>
                               <Button 
                                 onClick={handleVideoConversion}
+                                disabled={isVideoConverting}
                                 variant="outline"
                                 className="border-orange-400 text-orange-400 hover:bg-orange-400 hover:text-white"
                               >
-                                <Video className="mr-2 h-4 w-4" />
-                                转视频
+                                {isVideoConverting ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    转换中...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Video className="mr-2 h-4 w-4" />
+                                    转为视频
+                                  </>
+                                )}
                               </Button>
                             </div>
+                            {videoUrl && (
+                              <div className="mt-4 p-4 bg-[#0f1419] rounded-lg">
+                                <h3 className="text-white font-medium mb-2">生成的视频:</h3>
+                                <video 
+                                  src={videoUrl} 
+                                  controls 
+                                  className="w-full max-w-md mx-auto rounded-lg"
+                                  poster={generatedImage}
+                                >
+                                  您的浏览器不支持视频播放
+                                </video>
+                                <div className="mt-2">
+                                  <Button
+                                    onClick={() => {
+                                      const link = document.createElement('a');
+                                      link.href = videoUrl;
+                                      link.download = `nexus-ai-video-${Date.now()}.mp4`;
+                                      document.body.appendChild(link);
+                                      link.click();
+                                      document.body.removeChild(link);
+                                    }}
+                                    size="sm"
+                                    className="bg-orange-500 hover:bg-orange-600 text-white"
+                                  >
+                                    <Download className="mr-2 h-4 w-4" />
+                                    下载视频
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div className="text-center text-gray-500">
