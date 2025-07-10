@@ -1,208 +1,152 @@
 
 import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import Navigation from '@/components/Navigation';
-import Footer from '@/components/Footer';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { Settings as SettingsIcon, User, Key, Bell, Shield } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { Settings as SettingsIcon, User, Bell, Shield, CreditCard } from 'lucide-react';
+import Navigation from '@/components/Navigation';
 
 const Settings = () => {
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('profile');
-  const [formData, setFormData] = useState({
-    username: user?.name || '',
+  const [settings, setSettings] = useState({
+    displayName: user?.email?.split('@')[0] || '',
     email: user?.email || '',
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
+    notifications: true,
+    darkMode: true,
   });
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
 
   const handleSave = () => {
     toast({
       title: "设置已保存",
-      description: "您的设置已成功更新",
+      description: "您的设置已成功保存",
     });
   };
 
-  const handlePasswordChange = () => {
-    if (formData.newPassword !== formData.confirmPassword) {
-      toast({
-        title: "密码不匹配",
-        description: "新密码和确认密码不一致",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    toast({
-      title: "密码已更新",
-      description: "您的密码已成功更改",
-    });
-    
-    setFormData({
-      ...formData,
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    });
+  const handleSignOut = async () => {
+    await signOut();
   };
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'profile':
-        return (
-          <div className="space-y-6">
-            <div>
-              <Label htmlFor="username" className="text-white">用户名</Label>
-              <Input
-                id="username"
-                value={formData.username}
-                onChange={(e) => setFormData({...formData, username: e.target.value})}
-                className="bg-nexus-dark/50 border-nexus-blue/30 text-white"
-              />
-            </div>
-            <div>
-              <Label htmlFor="email" className="text-white">邮箱</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className="bg-nexus-dark/50 border-nexus-blue/30 text-white"
-              />
-            </div>
-            <Button onClick={handleSave} className="bg-nexus-blue hover:bg-nexus-blue/80">
-              保存更改
-            </Button>
-          </div>
-        );
-      
-      case 'security':
-        return (
-          <div className="space-y-6">
-            <div>
-              <Label htmlFor="currentPassword" className="text-white">当前密码</Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                value={formData.currentPassword}
-                onChange={(e) => setFormData({...formData, currentPassword: e.target.value})}
-                className="bg-nexus-dark/50 border-nexus-blue/30 text-white"
-              />
-            </div>
-            <div>
-              <Label htmlFor="newPassword" className="text-white">新密码</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                value={formData.newPassword}
-                onChange={(e) => setFormData({...formData, newPassword: e.target.value})}
-                className="bg-nexus-dark/50 border-nexus-blue/30 text-white"
-              />
-            </div>
-            <div>
-              <Label htmlFor="confirmPassword" className="text-white">确认新密码</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
-                className="bg-nexus-dark/50 border-nexus-blue/30 text-white"
-              />
-            </div>
-            <Button onClick={handlePasswordChange} className="bg-nexus-blue hover:bg-nexus-blue/80">
-              更新密码
-            </Button>
-          </div>
-        );
-      
-      case 'notifications':
-        return (
-          <div className="space-y-6">
-            <div className="bg-nexus-dark/50 p-4 rounded-lg border border-nexus-blue/20">
-              <h3 className="text-white font-bold mb-2">通知设置</h3>
-              <p className="text-white/70">
-                通知功能开发中，敬请期待...
-              </p>
-            </div>
-          </div>
-        );
-      
-      default:
-        return null;
-    }
+  const getUserDisplayName = () => {
+    if (!user) return '';
+    return user.email?.split('@')[0] || '未知用户';
   };
 
   return (
-    <div className="min-h-screen bg-nexus-dark flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-nexus-dark via-nexus-purple/20 to-nexus-dark">
       <Navigation />
-      
-      <main className="flex-grow p-4 pt-16 md:p-8">
-        <div className="w-full max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-gradient mb-8 flex items-center">
-            <SettingsIcon className="mr-3 h-8 w-8" />
-            设置
-          </h1>
-          
-          <div className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm rounded-xl border border-nexus-blue/20 p-6">
-            {/* 标签导航 */}
-            <div className="flex flex-wrap gap-2 mb-8">
-              <Button
-                variant={activeTab === 'profile' ? 'default' : 'outline'}
-                onClick={() => setActiveTab('profile')}
-                className={`${
-                  activeTab === 'profile' 
-                    ? 'bg-nexus-blue text-white' 
-                    : 'bg-transparent border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20'
-                }`}
-              >
-                <User className="h-4 w-4 mr-2" />
-                个人资料
-              </Button>
-              
-              <Button
-                variant={activeTab === 'security' ? 'default' : 'outline'}
-                onClick={() => setActiveTab('security')}
-                className={`${
-                  activeTab === 'security' 
-                    ? 'bg-nexus-blue text-white' 
-                    : 'bg-transparent border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20'
-                }`}
-              >
-                <Shield className="h-4 w-4 mr-2" />
-                安全设置
-              </Button>
-              
-              <Button
-                variant={activeTab === 'notifications' ? 'default' : 'outline'}
-                onClick={() => setActiveTab('notifications')}
-                className={`${
-                  activeTab === 'notifications' 
-                    ? 'bg-nexus-blue text-white' 
-                    : 'bg-transparent border-nexus-blue/30 text-nexus-cyan hover:bg-nexus-blue/20'
-                }`}
-              >
-                <Bell className="h-4 w-4 mr-2" />
-                通知设置
-              </Button>
-            </div>
-            
-            {/* 标签内容 */}
-            {renderTabContent()}
+      <div className="container mx-auto px-6 py-20">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center mb-8">
+            <SettingsIcon className="mr-3 h-8 w-8 text-nexus-cyan" />
+            <h1 className="text-3xl font-bold text-gradient">设置</h1>
           </div>
+
+          <Tabs defaultValue="profile" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-4 bg-nexus-dark/50 border border-nexus-blue/20">
+              <TabsTrigger value="profile" className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                个人资料
+              </TabsTrigger>
+              <TabsTrigger value="notifications" className="flex items-center gap-2">
+                <Bell className="h-4 w-4" />
+                通知
+              </TabsTrigger>
+              <TabsTrigger value="security" className="flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                安全
+              </TabsTrigger>
+              <TabsTrigger value="billing" className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                计费
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="profile" className="space-y-6">
+              <Card className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm border-nexus-blue/20">
+                <CardHeader>
+                  <CardTitle className="text-white">个人信息</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="displayName" className="text-white">显示名称</Label>
+                      <Input
+                        id="displayName"
+                        value={getUserDisplayName()}
+                        onChange={(e) => setSettings({...settings, displayName: e.target.value})}
+                        className="bg-nexus-dark/50 border-nexus-blue/30 text-white"
+                        disabled
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="email" className="text-white">邮箱</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={settings.email}
+                        onChange={(e) => setSettings({...settings, email: e.target.value})}
+                        className="bg-nexus-dark/50 border-nexus-blue/30 text-white"
+                        disabled
+                      />
+                    </div>
+                  </div>
+                  <Button onClick={handleSave} className="bg-nexus-blue hover:bg-nexus-blue/80">
+                    保存更改
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="notifications" className="space-y-6">
+              <Card className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm border-nexus-blue/20">
+                <CardHeader>
+                  <CardTitle className="text-white">通知设置</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-white">邮件通知</Label>
+                      <p className="text-sm text-gray-400">接收重要更新和通知</p>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      {settings.notifications ? '已启用' : '已禁用'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="security" className="space-y-6">
+              <Card className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm border-nexus-blue/20">
+                <CardHeader>
+                  <CardTitle className="text-white">安全设置</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Button onClick={handleSignOut} variant="destructive" className="w-full">
+                    退出登录
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="billing" className="space-y-6">
+              <Card className="bg-gradient-to-br from-nexus-dark/80 to-nexus-purple/30 backdrop-blur-sm border-nexus-blue/20">
+                <CardHeader>
+                  <CardTitle className="text-white">计费信息</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-gray-400">暂无计费信息</p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
-      </main>
-      
-      <Footer />
+      </div>
     </div>
   );
 };

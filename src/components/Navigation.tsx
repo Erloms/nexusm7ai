@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -7,14 +8,14 @@ import { Menu, X, MessageSquare, Image, Mic, Settings, LogOut, User, Crown } fro
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
   const handleSignOut = async () => {
-    logout();
+    await signOut();
     navigate('/');
   };
 
@@ -25,6 +26,24 @@ const Navigation = () => {
     { path: '/image', label: 'AI绘画', icon: Image },
     { path: '/voice', label: 'AI语音', icon: Mic }
   ];
+
+  const getUserDisplayName = () => {
+    if (!user) return '';
+    return user.email?.split('@')[0] || '未知用户';
+  };
+
+  const isVipUser = () => {
+    if (!user) return false;
+    
+    // 检查管理员权限
+    if (user.email === 'master@admin.com' || user.email === 'morphy.realm@gmail.com') {
+      return true;
+    }
+    
+    // 检查VIP用户
+    const vipUsers = JSON.parse(localStorage.getItem('vipUsers') || '[]');
+    return vipUsers.includes(user.id);
+  };
 
   useEffect(() => {
     const handleRouteChange = () => {
@@ -84,11 +103,11 @@ const Navigation = () => {
                   </Avatar>
                   <div className="flex flex-col">
                     <span className="text-sm text-white font-medium">
-                      {user.name || user.email?.split('@')[0]}
+                      {getUserDisplayName()}
                     </span>
                     <span className="text-xs text-cyan-400 flex items-center">
                       <Crown className="h-3 w-3 mr-1" />
-                      {user.isVip ? '会员' : '免费用户'}
+                      {isVipUser() ? '会员' : '免费用户'}
                     </span>
                   </div>
                 </div>
@@ -166,11 +185,11 @@ const Navigation = () => {
                   </Avatar>
                   <div className="flex-1">
                     <div className="text-white font-medium">
-                      {user.name || user.email?.split('@')[0]}
+                      {getUserDisplayName()}
                     </div>
                     <div className="text-cyan-400 text-sm flex items-center">
                       <Crown className="h-3 w-3 mr-1" />
-                      {user.isVip ? '会员' : '免费用户'}
+                      {isVipUser() ? '会员' : '免费用户'}
                     </div>
                   </div>
                 </div>

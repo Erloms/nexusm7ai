@@ -19,6 +19,7 @@ const Dashboard = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -101,7 +102,7 @@ const Dashboard = () => {
         </div>
 
         {/* 根据用户角色显示不同内容 */}
-        {isAdmin ? <AdminUserManagement /> : <UserDashboard />}
+        {isAdmin ? <AdminUserManagement users={users} setUsers={setUsers} /> : <UserDashboard />}
       </div>
     </div>
   );
