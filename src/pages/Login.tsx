@@ -16,7 +16,8 @@ const Login = () => {
   
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (await login(account, password)) {
+    const success = await login(account, password);
+    if (success) {
       navigate('/');
     }
   };
