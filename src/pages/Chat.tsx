@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,6 +33,25 @@ const Chat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState('general');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // AI模型列表（基于Pollinations.ai可用模型）
+  const aiModels = [
+    { id: "openai", name: "OpenAI GPT-4o-mini", group: "OpenAI" },
+    { id: "openai-large", name: "OpenAI GPT-4o", group: "OpenAI" },
+    { id: "openai-reasoning", name: "OpenAI o1-mini", group: "OpenAI" },
+    { id: "llama", name: "Llama 3.3 70B", group: "Meta" },
+    { id: "llamalight", name: "Llama 3.1 8B Instruct", group: "Meta" },
+    { id: "mistral", name: "Mistral Nemo", group: "Mistral" },
+    { id: "deepseek", name: "DeepSeek-V3", group: "DeepSeek" },
+    { id: "deepseek-r1", name: "DeepSeek-R1 Distill Qwen 32B", group: "DeepSeek" },
+    { id: "deepseek-reasoner", name: "DeepSeek R1 - Full", group: "DeepSeek" },
+    { id: "deepseek-r1-llama", name: "DeepSeek R1 - Llama 70B", group: "DeepSeek" },
+    { id: "claude", name: "Claude 3.5 Haiku", group: "Anthropic" },
+    { id: "gemini", name: "Gemini 2.0 Flash", group: "Google" },
+    { id: "gemini-thinking", name: "Gemini 2.0 Flash Thinking", group: "Google" },
+    { id: "phi", name: "Phi-4 Multimodal Instruct", group: "Microsoft" },
+    { id: "qwen-coder", name: "Qwen 2.5 Coder 32B", group: "Qwen" }
+  ];
 
   // 热门智能体配置
   const agents: Agent[] = [
@@ -245,7 +263,7 @@ const Chat = () => {
             selectedModel=""
             onLoadHistory={handleLoadHistory}
             onNewChat={handleNewChat}
-            aiModels={[]}
+            aiModels={aiModels}
           />
         </div>
 

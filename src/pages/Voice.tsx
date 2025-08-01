@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import { Button } from "@/components/ui/button";
@@ -279,18 +278,20 @@ const Voice = () => {
         }
       }
       
-      const url = `https://text.pollinations.ai/${encodeURIComponent(processedText)}?model=openai-audio&voice=${selectedVoice}&nologo=true`;
+      // 使用Pollinations.ai的语音生成API
+      const voiceApiUrl = `https://text.pollinations.ai/${encodeURIComponent(processedText)}?model=openai-audio&voice=${selectedVoice}&nologo=true`;
       
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // 模拟生成过程
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      setAudioUrl(url);
+      setAudioUrl(voiceApiUrl);
       
       const newHistoryItem: HistoryItem = {
         id: Date.now(),
         timestamp: new Date(),
         voice: selectedVoice,
         text: text,
-        audioUrl: url,
+        audioUrl: voiceApiUrl,
         mode: voiceMode
       };
       
@@ -391,12 +392,12 @@ const Voice = () => {
                     <RadioGroup 
                       value={selectedVoice} 
                       onValueChange={setSelectedVoice}
-                      className="grid grid-cols-3 gap-4"
+                      className="grid grid-cols-6 gap-3"
                     >
                       {voiceOptions.map((voice) => (
                         <div
                           key={voice.id}
-                          className={`relative cursor-pointer p-4 rounded-lg border transition-all ${
+                          className={`relative cursor-pointer p-3 rounded-lg border transition-all ${
                             selectedVoice === voice.id
                               ? 'border-cyan-400 bg-cyan-400/10'
                               : 'border-gray-600 bg-gray-700/30 hover:bg-gray-700/50'
@@ -412,14 +413,13 @@ const Voice = () => {
                             className="flex flex-col items-center cursor-pointer"
                           >
                             {selectedVoice === voice.id && (
-                              <div className="absolute -top-2 -right-2 bg-cyan-400 rounded-full">
-                                <CheckCircle2 className="h-4 w-4 text-white" />
+                              <div className="absolute -top-1 -right-1 bg-cyan-400 rounded-full">
+                                <CheckCircle2 className="h-3 w-3 text-white" />
                               </div>
                             )}
-                            <div className="text-2xl mb-2">{voice.avatar}</div>
-                            <div className="text-white font-medium text-sm text-center">{voice.name}</div>
+                            <div className="text-xl mb-1">{voice.avatar}</div>
+                            <div className="text-white font-medium text-xs text-center">{voice.name}</div>
                             <div className="text-gray-400 text-xs text-center">{voice.description}</div>
-                            <div className="text-gray-500 text-xs text-center mt-1 line-clamp-2">{voice.personality}</div>
                           </label>
                         </div>
                       ))}
