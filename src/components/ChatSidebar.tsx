@@ -57,6 +57,10 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     }
   };
 
+  const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    onModelChange(e.target.value);
+  };
+
   return (
     <>
       <style>
@@ -96,15 +100,17 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         {/* AI模型选择 */}
         <div>
           <div className="text-xs text-cyan-400 font-semibold mb-3 tracking-wide">
-            AI助手模型
+            AI模型选择
           </div>
           <select
             value={selectedModel}
-            onChange={e => onModelChange(e.target.value)}
+            onChange={handleModelChange}
             className="w-full bg-[#151b2a] border border-[#23304d] text-gray-200 py-2.5 px-3 rounded-lg shadow mb-4 focus:outline-none focus:border-cyan-400 text-sm"
           >
-            {aiModels.map(m => (
-              <option key={m.id} value={m.id}>{m.name}</option>
+            {aiModels.map(model => (
+              <option key={model.id} value={model.id} className="bg-[#151b2a] text-gray-200">
+                {model.name}
+              </option>
             ))}
           </select>
         </div>

@@ -5,13 +5,17 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 import Navigation from '@/components/Navigation';
-import { CheckCircle, Crown, Sparkles, Star, Zap, Users, X } from 'lucide-react';
+import { CheckCircle, Crown, Sparkles, Star, Zap, Users, X, CreditCard, Smartphone } from 'lucide-react';
+import { createPaymentRequest, PaymentParams } from '@/utils/paymentService';
 
 const Payment = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState<'annual' | 'lifetime' | 'agent'>('annual');
   const [showPayment, setShowPayment] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'alipay' | 'manual'>('alipay');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const planDetails = {
     annual: { 
@@ -64,6 +68,83 @@ const Payment = () => {
   };
 
   const handleClosePayment = () => {
+    setShowPayment(false);
+    setIsProcessingPayment(false);
+  };
+
+  const handleAlipayPayment = async () => {
+    if (!user?.id) {
+      toast({
+        title: "请先登录",
+        description: "需要登录后才能购买会员",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsProcessingPayment(true);
+
+    try {
+      const paymentParams: PaymentParams = {
+        amount: planDetails[selectedPlan].total,
+        planName: planDetails[selectedPlan].description,
+        planType: selectedPlan,
+        userId: user.id
+      };
+
+      const paymentUrl = await createPaymentRequest(paymentParams);
+      
+      // 在新窗口中打开支付页面
+      window.open(paymentUrl, '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+      
+      toast({
+        title: "支付页面已打开",
+        description: "请在新窗口中完成支付，支付成功后会自动开通会员权限",
+      });
+
+      setShowPayment(false);
+    } catch (error) {
+      console.error('创建支付请求失败:', error);
+      toast({
+        title: "支付失败",
+        description: "创建支付请求失败，请重试",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const handleManualPayment = () => {
+    if (!user?.id) {
+      toast({
+        title: "请先登录",
+        description: "需要登录后才能购买会员",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // 保存支付请求到本地存储，供管理员处理
+    const existingRequests = JSON.parse(localStorage.getItem('paymentRequests') || '[]');
+    const newRequest = {
+      id: `${Date.now()}`,
+      userId: user.id,
+      amount: parseInt(planDetails[selectedPlan].total),
+      membershipType: selectedPlan,
+      paymentMethod: '支付宝转账',
+      timestamp: new Date().toLocaleString(),
+      status: 'pending'
+    };
+    
+    const updatedRequests = [newRequest, ...existingRequests];
+    localStorage.setItem('paymentRequests', JSON.stringify(updatedRequests));
+    
+    toast({
+      title: "支付申请已提交",
+      description: "管理员将在24小时内处理您的支付请求",
+    });
+    
     setShowPayment(false);
   };
 
@@ -206,7 +287,7 @@ const Payment = () => {
                 </div>
                 
                 <div className="text-xs text-gray-500 mb-4">
-                  推广3-4单即可回本
+                  推广1单即可回本
                 </div>
               </div>
               
@@ -236,43 +317,79 @@ const Payment = () => {
       {/* Payment Modal */}
       {showPayment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-xl border border-gray-700 rounded-3xl p-6 max-w-sm w-full relative">
+          <div className="bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-xl border border-gray-700 rounded-3xl p-6 max-w-md w-full relative">
             <button 
               onClick={handleClosePayment}
               className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+              disabled={isProcessingPayment}
             >
               <X className="w-5 h-5" />
             </button>
 
             <div className="text-center mb-6">
-              <h3 className="text-xl font-bold text-white mb-4">扫码支付</h3>
+              <h3 className="text-xl font-bold text-white mb-4">选择支付方式</h3>
               
-              {/* Payment QR Code */}
-              <div className="bg-white rounded-xl p-3 mb-4 flex justify-center w-32 h-32 mx-auto">
-                <img 
-                  src="/lovable-uploads/a0ec2427-9113-4553-9e8e-17170fae056b.png" 
-                  alt="支付宝支付二维码" 
-                  className="w-full h-full object-contain"
-                />
-              </div>
-
               <div className="mb-4">
-                <div className="text-sm font-bold text-white mb-1">
+                <div className="text-2xl font-bold text-white mb-1">
                   ¥{planDetails[selectedPlan].total}
                 </div>
-                <div className="text-gray-400 text-xs">{planDetails[selectedPlan].description}</div>
+                <div className="text-gray-400 text-sm">{planDetails[selectedPlan].description}</div>
+              </div>
+
+              {/* 支付方式选择 */}
+              <div className="space-y-3 mb-6">
+                <button
+                  onClick={() => setPaymentMethod('alipay')}
+                  className={`w-full p-4 rounded-xl border-2 transition-all ${
+                    paymentMethod === 'alipay' 
+                      ? 'border-blue-500 bg-blue-500/10' 
+                      : 'border-gray-600 bg-gray-800/50'
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-3">
+                    <Smartphone className="w-5 h-5 text-blue-400" />
+                    <span className="text-white font-medium">支付宝在线支付</span>
+                    <span className="text-xs text-green-400 bg-green-400/10 px-2 py-1 rounded">推荐</span>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={() => setPaymentMethod('manual')}
+                  className={`w-full p-4 rounded-xl border-2 transition-all ${
+                    paymentMethod === 'manual' 
+                      ? 'border-orange-500 bg-orange-500/10' 
+                      : 'border-gray-600 bg-gray-800/50'
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-3">
+                    <CreditCard className="w-5 h-5 text-orange-400" />
+                    <span className="text-white font-medium">人工审核支付</span>
+                  </div>
+                </button>
               </div>
             </div>
 
             <div className="text-center">
-              <p className="text-gray-400 text-xs mb-4">
-                支付宝扫码支付，会员权限自动开通
-              </p>
               <Button 
+                onClick={paymentMethod === 'alipay' ? handleAlipayPayment : handleManualPayment}
+                disabled={isProcessingPayment}
                 className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 rounded-xl text-sm transition-all duration-300"
               >
-                确认支付
+                {isProcessingPayment ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    处理中...
+                  </div>
+                ) : (
+                  paymentMethod === 'alipay' ? '立即支付' : '提交申请'
+                )}
               </Button>
+              
+              {paymentMethod === 'manual' && (
+                <p className="text-gray-400 text-xs mt-3">
+                  提交后管理员会在24小时内处理您的申请
+                </p>
+              )}
             </div>
           </div>
         </div>

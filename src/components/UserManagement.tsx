@@ -1,14 +1,16 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, Search, UserCheck, UserX } from 'lucide-react';
+import { Trash2, Search, UserCheck, UserX, Crown } from 'lucide-react';
 
 interface User {
   id: string;
   name: string;
   email: string;
   isPaid: boolean;
+  membershipType?: 'free' | 'annual' | 'lifetime' | 'agent';
 }
 
 interface PaymentRequest {
@@ -18,6 +20,7 @@ interface PaymentRequest {
   paymentMethod: string;
   timestamp: string;
   status: 'pending' | 'completed' | 'rejected';
+  membershipType?: 'annual' | 'lifetime' | 'agent';
 }
 
 interface Props {
@@ -86,13 +89,25 @@ const UserManagement = ({ users, setUsers }: Props) => {
     });
   };
 
-  const approveVIP = (userId: string) => {
+  const approveVIP = (userId: string, membershipType: string = 'lifetime') => {
     const users = JSON.parse(localStorage.getItem('nexusAi_users') || '[]');
     const updatedUsers = users.map((user: any) => 
-      user.id === userId ? { ...user, isPaid: true } : user
+      user.id === userId ? { 
+        ...user, 
+        isPaid: true, 
+        membershipType: membershipType,
+        membershipExpiry: membershipType === 'annual' ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() : null
+      } : user
     );
     
     localStorage.setItem('nexusAi_users', JSON.stringify(updatedUsers));
+    
+    // 更新VIP用户列表
+    const vipUsers = JSON.parse(localStorage.getItem('vipUsers') || '[]');
+    if (!vipUsers.includes(userId)) {
+      vipUsers.push(userId);
+      localStorage.setItem('vipUsers', JSON.stringify(vipUsers));
+    }
     
     const updatedRequests = paymentRequests.map(req => 
       req.userId === userId ? { ...req, status: 'completed' as const } : req
@@ -102,10 +117,36 @@ const UserManagement = ({ users, setUsers }: Props) => {
     
     setUsers(updatedUsers);
     
+    const membershipName = {
+      'annual': '年会员',
+      'lifetime': '永久会员',
+      'agent': '代理商'
+    }[membershipType as keyof typeof membershipName] || '会员';
+    
     toast({
-      title: "VIP开通成功",
-      description: `用户 ${userId} 已成功开通VIP会员`,
+      title: `${membershipName}开通成功`,
+      description: `用户 ${userId} 已成功开通${membershipName}`,
     });
+  };
+
+  const getMembershipTypeName = (type?: string) => {
+    const typeNames = {
+      'free': '免费用户',
+      'annual': '年会员',
+      'lifetime': '永久会员',
+      'agent': '代理商'
+    };
+    return typeNames[type as keyof typeof typeNames] || '免费用户';
+  };
+
+  const getMembershipColor = (type?: string) => {
+    const colors = {
+      'free': 'text-gray-400',
+      'annual': 'text-blue-400',
+      'lifetime': 'text-purple-400',
+      'agent': 'text-orange-400'
+    };
+    return colors[type as keyof typeof colors] || 'text-gray-400';
   };
 
   return (
@@ -127,7 +168,8 @@ const UserManagement = ({ users, setUsers }: Props) => {
             <tr className="text-left">
               <th className="px-4 py-2 text-white">用户名</th>
               <th className="px-4 py-2 text-white">邮箱</th>
-              <th className="px-4 py-2 text-white">VIP状态</th>
+              <th className="px-4 py-2 text-white">会员类型</th>
+              <th className="px-4 py-2 text-white">状态</th>
               <th className="px-4 py-2 text-white">操作</th>
             </tr>
           </thead>
@@ -136,6 +178,11 @@ const UserManagement = ({ users, setUsers }: Props) => {
               <tr key={user.id}>
                 <td className="px-4 py-2 text-white">{user.name}</td>
                 <td className="px-4 py-2 text-white">{user.email}</td>
+                <td className="px-4 py-2">
+                  <span className={getMembershipColor(user.membershipType)}>
+                    {getMembershipTypeName(user.membershipType)}
+                  </span>
+                </td>
                 <td className="px-4 py-2 text-white">
                   {user.isPaid ? (
                     <div className="flex items-center gap-2 text-green-500">
@@ -150,14 +197,42 @@ const UserManagement = ({ users, setUsers }: Props) => {
                   )}
                 </td>
                 <td className="px-4 py-2">
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => deleteUser(user.id)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    删除
-                  </Button>
+                  <div className="flex gap-2">
+                    {!user.isPaid && (
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() => approveVIP(user.id, 'annual')}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          年会员
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => approveVIP(user.id, 'lifetime')}
+                          className="bg-purple-600 hover:bg-purple-700"
+                        >
+                          永久会员
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => approveVIP(user.id, 'agent')}
+                          className="bg-orange-600 hover:bg-orange-700"
+                        >
+                          <Crown className="h-3 w-3 mr-1" />
+                          代理商
+                        </Button>
+                      </>
+                    )}
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deleteUser(user.id)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      删除
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -173,6 +248,7 @@ const UserManagement = ({ users, setUsers }: Props) => {
               <tr>
                 <th className="px-4 py-2 text-white">用户ID</th>
                 <th className="px-4 py-2 text-white">金额</th>
+                <th className="px-4 py-2 text-white">套餐类型</th>
                 <th className="px-4 py-2 text-white">支付方式</th>
                 <th className="px-4 py-2 text-white">时间</th>
                 <th className="px-4 py-2 text-white">状态</th>
@@ -183,7 +259,12 @@ const UserManagement = ({ users, setUsers }: Props) => {
               {paymentRequests.map(request => (
                 <tr key={request.id}>
                   <td className="px-4 py-2 text-white">{request.userId}</td>
-                  <td className="px-4 py-2 text-white">{request.amount}</td>
+                  <td className="px-4 py-2 text-white">¥{request.amount}</td>
+                  <td className="px-4 py-2">
+                    <span className={getMembershipColor(request.membershipType)}>
+                      {getMembershipTypeName(request.membershipType)}
+                    </span>
+                  </td>
                   <td className="px-4 py-2 text-white">{request.paymentMethod}</td>
                   <td className="px-4 py-2 text-white">{request.timestamp}</td>
                   <td className="px-4 py-2 text-white">{request.status}</td>
@@ -192,7 +273,8 @@ const UserManagement = ({ users, setUsers }: Props) => {
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          onClick={() => approveVIP(request.userId)}
+                          onClick={() => approveVIP(request.userId, request.membershipType || 'lifetime')}
+                          className="bg-green-600 hover:bg-green-700"
                         >
                           批准
                         </Button>
