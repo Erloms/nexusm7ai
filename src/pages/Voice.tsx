@@ -278,22 +278,35 @@ const Voice = () => {
         }
       }
       
-      // 使用Pollinations.ai的语音生成API
-      const voiceApiUrl = `https://text.pollinations.ai/${encodeURIComponent(processedText)}?model=openai-audio&voice=${selectedVoice}&nologo=true`;
+      // 使用OpenAI TTS API (通过Supabase Edge Function)
+      const supabase = (await import('@/integrations/supabase/client')).supabase;
       
-      // 检查API响应
-      const response = await fetch(voiceApiUrl);
-      if (!response.ok) {
-        throw new Error(`语音生成失败: ${response.status}`);
+      console.log('Calling TTS function with:', {
+        text: processedText,
+        voice: selectedVoice
+      });
+
+      const { data, error } = await supabase.functions.invoke('text-to-speech', {
+        body: {
+          text: processedText,
+          voice: selectedVoice
+        }
+      });
+
+      if (error) {
+        console.error('TTS function error:', error);
+        throw new Error(error.message || '语音生成失败');
       }
-      
-      // 检查响应是否为音频
-      const contentType = response.headers.get('content-type');
-      console.log('Response content-type:', contentType);
-      console.log('Response status:', response.status);
-      
-      if (contentType && contentType.includes('audio')) {
-        const audioBlob = await response.blob();
+
+      if (data && data.audioContent) {
+        // Convert base64 to blob
+        const binaryString = atob(data.audioContent);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
         const audioUrl = URL.createObjectURL(audioBlob);
         setAudioUrl(audioUrl);
         
@@ -314,10 +327,7 @@ const Voice = () => {
           variant: "default",
         });
       } else {
-        // 如果不是音频响应，可能是文本错误信息
-        const errorText = await response.text();
-        console.error('非音频响应:', errorText);
-        throw new Error('API返回的不是音频格式');
+        throw new Error('API返回的数据格式错误');
       }
     } catch (error) {
       console.error('Error generating audio:', error);

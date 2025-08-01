@@ -203,21 +203,21 @@ const UserManagement = ({ users, setUsers }: Props) => {
                         <Button
                           size="sm"
                           onClick={() => approveVIP(user.id, 'annual')}
-                          className="bg-blue-600 hover:bg-blue-700"
+                          className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1"
                         >
                           年会员
                         </Button>
                         <Button
                           size="sm"
                           onClick={() => approveVIP(user.id, 'lifetime')}
-                          className="bg-purple-600 hover:bg-purple-700"
+                          className="bg-purple-600 hover:bg-purple-700 text-xs px-2 py-1"
                         >
                           永久会员
                         </Button>
                         <Button
                           size="sm"
                           onClick={() => approveVIP(user.id, 'agent')}
-                          className="bg-orange-600 hover:bg-orange-700"
+                          className="bg-orange-600 hover:bg-orange-700 text-xs px-2 py-1"
                         >
                           <Crown className="h-3 w-3 mr-1" />
                           代理商
@@ -228,8 +228,9 @@ const UserManagement = ({ users, setUsers }: Props) => {
                       variant="destructive"
                       size="sm"
                       onClick={() => deleteUser(user.id)}
+                      className="text-xs px-2 py-1"
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
+                      <Trash2 className="h-3 w-3 mr-1" />
                       删除
                     </Button>
                   </div>
@@ -274,7 +275,7 @@ const UserManagement = ({ users, setUsers }: Props) => {
                         <Button
                           size="sm"
                           onClick={() => approveVIP(request.userId, request.membershipType || 'lifetime')}
-                          className="bg-green-600 hover:bg-green-700"
+                          className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1"
                         >
                           批准
                         </Button>
@@ -282,6 +283,7 @@ const UserManagement = ({ users, setUsers }: Props) => {
                           variant="destructive"
                           size="sm"
                           onClick={() => rejectPayment(request.id)}
+                          className="text-xs px-2 py-1"
                         >
                           拒绝
                         </Button>

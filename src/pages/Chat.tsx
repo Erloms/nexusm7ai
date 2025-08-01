@@ -36,7 +36,7 @@ const Chat = () => {
   const [selectedModel, setSelectedModel] = useState('openai');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // AI模型列表（基于Pollinations.ai可用模型）
+  // 15个AI模型列表（基于Pollinations.ai可用模型）
   const aiModels = [
     { id: "openai", name: "OpenAI GPT-4o-mini", group: "OpenAI" },
     { id: "openai-large", name: "OpenAI GPT-4o", group: "OpenAI" },
@@ -48,11 +48,11 @@ const Chat = () => {
     { id: "deepseek-r1", name: "DeepSeek-R1 Distill Qwen 32B", group: "DeepSeek" },
     { id: "deepseek-reasoner", name: "DeepSeek R1 - Full", group: "DeepSeek" },
     { id: "deepseek-r1-llama", name: "DeepSeek R1 - Llama 70B", group: "DeepSeek" },
-    { id: "claude", name: "Claude 3.5 Haiku", group: "Anthropic" },
     { id: "gemini", name: "Gemini 2.0 Flash", group: "Google" },
     { id: "gemini-thinking", name: "Gemini 2.0 Flash Thinking", group: "Google" },
     { id: "phi", name: "Phi-4 Multimodal Instruct", group: "Microsoft" },
-    { id: "qwen-coder", name: "Qwen 2.5 Coder 32B", group: "Qwen" }
+    { id: "qwen-coder", name: "Qwen 2.5 Coder 32B", group: "Qwen" },
+    { id: "qwen", name: "Qwen 2.5 72B", group: "Qwen" }
   ];
 
   // 6个专业智能体配置
@@ -60,48 +60,48 @@ const Chat = () => {
     {
       id: 'general',
       name: '通用助手',
-      description: '全能AI助手，可以回答各种问题',
-      icon: <Bot className="w-3 h-3" />,
+      description: '全能AI助手',
+      icon: <Bot className="w-4 h-4" />,
       prompt: '你是一个专业的AI助手，能够帮助用户解决各种问题。请用简洁明了的语言回答用户的问题。',
       model: 'openai'
     },
     {
       id: 'creative',
       name: '创意大师',
-      description: '专业的创意写作和内容创作助手',
-      icon: <Palette className="w-3 h-3" />,
+      description: '创作与写作专家',
+      icon: <Palette className="w-4 h-4" />,
       prompt: '你是一个富有创意的写作专家，擅长创作各种类型的内容，包括文案、故事、诗歌等。请发挥你的创造力帮助用户。',
       model: 'openai'
     },
     {
       id: 'coding',
       name: '编程专家',
-      description: '专业的编程和技术问题解决助手',
-      icon: <Code className="w-3 h-3" />,
+      description: '代码与技术解决方案',
+      icon: <Code className="w-4 h-4" />,
       prompt: '你是一个专业的编程专家，精通多种编程语言和开发框架。请提供准确、实用的编程解决方案。',
       model: 'qwen-coder'
     },
     {
       id: 'reasoning',
       name: '推理专家',
-      description: '擅长逻辑推理和复杂问题分析',
-      icon: <Brain className="w-3 h-3" />,
+      description: '逻辑分析与推理',
+      icon: <Brain className="w-4 h-4" />,
       prompt: '你是一个逻辑推理专家，擅长分析复杂问题并提供清晰的推理过程。请用逐步分析的方式解决用户的问题。',
       model: 'deepseek-r1'
     },
     {
       id: 'learning',
       name: '学习导师',
-      description: '专业的学习指导和知识解答助手',
-      icon: <BookOpen className="w-3 h-3" />,
+      description: '教学与知识解答',
+      icon: <BookOpen className="w-4 h-4" />,
       prompt: '你是一个专业的学习导师，善于解释复杂概念，提供学习建议。请用易懂的方式帮助用户学习和理解。',
       model: 'llama'
     },
     {
       id: 'efficient',
       name: '效率助手',
-      description: '快速响应，高效处理各类任务',
-      icon: <Zap className="w-3 h-3" />,
+      description: '快速响应处理',
+      icon: <Zap className="w-4 h-4" />,
       prompt: '你是一个高效的AI助手，能够快速准确地回答用户问题。请提供简洁有效的回答。',
       model: 'phi'
     }
@@ -301,12 +301,12 @@ const Chat = () => {
                   <h2 className="text-3xl font-bold text-white mb-4">选择智能体开始对话</h2>
                   <p className="text-gray-400 text-lg mb-8">每个智能体都有独特的专业能力</p>
                   
-                  {/* 智能体选择网格 - 调整为更紧凑的设计 */}
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-w-2xl mx-auto">
+                  {/* 智能体选择网格 - 更紧凑的设计 */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-w-xl mx-auto">
                     {agents.map((agent) => (
                       <div 
                         key={agent.id}
-                        className={`p-3 rounded-lg border cursor-pointer transition-all hover:scale-105 ${
+                        className={`p-2 rounded-lg border cursor-pointer transition-all hover:scale-105 ${
                           selectedAgent === agent.id 
                             ? 'border-cyan-400 bg-cyan-400/10 shadow-lg shadow-cyan-400/20' 
                             : 'border-gray-700 bg-gray-800/50 hover:border-gray-600 hover:bg-gray-800/70'
@@ -314,7 +314,7 @@ const Chat = () => {
                         onClick={() => setSelectedAgent(agent.id)}
                       >
                         <div className="flex flex-col items-center text-center">
-                          <div className={`p-1.5 rounded-full mb-2 ${
+                          <div className={`p-1 rounded-full mb-1 ${
                             selectedAgent === agent.id ? 'bg-cyan-400 text-white' : 'bg-gray-700 text-gray-300'
                           }`}>
                             {agent.icon}
