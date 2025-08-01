@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -53,13 +54,13 @@ const Chat = () => {
     { id: "qwen-coder", name: "Qwen 2.5 Coder 32B", group: "Qwen" }
   ];
 
-  // 热门智能体配置
+  // 6个专业智能体配置
   const agents: Agent[] = [
     {
       id: 'general',
       name: '通用助手',
       description: '全能AI助手，可以回答各种问题',
-      icon: <Bot className="w-5 h-5" />,
+      icon: <Bot className="w-4 h-4" />,
       prompt: '你是一个专业的AI助手，能够帮助用户解决各种问题。请用简洁明了的语言回答用户的问题。',
       model: 'openai'
     },
@@ -67,7 +68,7 @@ const Chat = () => {
       id: 'creative',
       name: '创意大师',
       description: '专业的创意写作和内容创作助手',
-      icon: <Palette className="w-5 h-5" />,
+      icon: <Palette className="w-4 h-4" />,
       prompt: '你是一个富有创意的写作专家，擅长创作各种类型的内容，包括文案、故事、诗歌等。请发挥你的创造力帮助用户。',
       model: 'openai'
     },
@@ -75,7 +76,7 @@ const Chat = () => {
       id: 'coding',
       name: '编程专家',
       description: '专业的编程和技术问题解决助手',
-      icon: <Code className="w-5 h-5" />,
+      icon: <Code className="w-4 h-4" />,
       prompt: '你是一个专业的编程专家，精通多种编程语言和开发框架。请提供准确、实用的编程解决方案。',
       model: 'qwen-coder'
     },
@@ -83,7 +84,7 @@ const Chat = () => {
       id: 'reasoning',
       name: '推理专家',
       description: '擅长逻辑推理和复杂问题分析',
-      icon: <Brain className="w-5 h-5" />,
+      icon: <Brain className="w-4 h-4" />,
       prompt: '你是一个逻辑推理专家，擅长分析复杂问题并提供清晰的推理过程。请用逐步分析的方式解决用户的问题。',
       model: 'deepseek-r1'
     },
@@ -91,7 +92,7 @@ const Chat = () => {
       id: 'learning',
       name: '学习导师',
       description: '专业的学习指导和知识解答助手',
-      icon: <BookOpen className="w-5 h-5" />,
+      icon: <BookOpen className="w-4 h-4" />,
       prompt: '你是一个专业的学习导师，善于解释复杂概念，提供学习建议。请用易懂的方式帮助用户学习和理解。',
       model: 'llama'
     },
@@ -99,7 +100,7 @@ const Chat = () => {
       id: 'efficient',
       name: '效率助手',
       description: '快速响应，高效处理各类任务',
-      icon: <Zap className="w-5 h-5" />,
+      icon: <Zap className="w-4 h-4" />,
       prompt: '你是一个高效的AI助手，能够快速准确地回答用户问题。请提供简洁有效的回答。',
       model: 'phi'
     }
@@ -297,12 +298,12 @@ const Chat = () => {
                   <h2 className="text-3xl font-bold text-white mb-4">选择智能体开始对话</h2>
                   <p className="text-gray-400 text-lg mb-8">每个智能体都有独特的专业能力</p>
                   
-                  {/* 智能体选择网格 */}
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+                  {/* 智能体选择网格 - 调整为更紧凑的设计 */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-w-3xl mx-auto">
                     {agents.map((agent) => (
                       <div 
                         key={agent.id}
-                        className={`p-6 rounded-xl border cursor-pointer transition-all ${
+                        className={`p-4 rounded-lg border cursor-pointer transition-all hover:scale-105 ${
                           selectedAgent === agent.id 
                             ? 'border-cyan-400 bg-cyan-400/10 shadow-lg shadow-cyan-400/20' 
                             : 'border-gray-700 bg-gray-800/50 hover:border-gray-600 hover:bg-gray-800/70'
@@ -310,13 +311,13 @@ const Chat = () => {
                         onClick={() => setSelectedAgent(agent.id)}
                       >
                         <div className="flex flex-col items-center text-center">
-                          <div className={`p-3 rounded-full mb-3 ${
+                          <div className={`p-2 rounded-full mb-2 ${
                             selectedAgent === agent.id ? 'bg-cyan-400 text-white' : 'bg-gray-700 text-gray-300'
                           }`}>
                             {agent.icon}
                           </div>
-                          <h3 className="text-lg font-semibold text-white mb-2">{agent.name}</h3>
-                          <p className="text-sm text-gray-400">{agent.description}</p>
+                          <h3 className="text-sm font-semibold text-white mb-1">{agent.name}</h3>
+                          <p className="text-xs text-gray-400 leading-tight">{agent.description}</p>
                         </div>
                       </div>
                     ))}

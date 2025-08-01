@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import { Button } from "@/components/ui/button";
@@ -50,10 +51,10 @@ const Voice = () => {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [voiceMode, setVoiceMode] = useState<'reading' | 'ai'>('reading'); // reading: 原文朗读, ai: 智能演绎
+  const [voiceMode, setVoiceMode] = useState<'reading' | 'ai'>('reading');
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // 扩展的语音选项，增加3个新配音，共18个
+  // 18个语音选项
   const voiceOptions: VoiceOption[] = [
     { 
       id: 'alloy', 
@@ -175,7 +176,6 @@ const Voice = () => {
       avatar: '💎',
       personality: '优雅精致，适合高端品牌'
     },
-    // 新增的3个配音
     { 
       id: 'aurora', 
       name: 'Aurora', 
@@ -281,32 +281,49 @@ const Voice = () => {
       // 使用Pollinations.ai的语音生成API
       const voiceApiUrl = `https://text.pollinations.ai/${encodeURIComponent(processedText)}?model=openai-audio&voice=${selectedVoice}&nologo=true`;
       
-      // 模拟生成过程
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // 检查API响应
+      const response = await fetch(voiceApiUrl);
+      if (!response.ok) {
+        throw new Error(`语音生成失败: ${response.status}`);
+      }
       
-      setAudioUrl(voiceApiUrl);
+      // 检查响应是否为音频
+      const contentType = response.headers.get('content-type');
+      console.log('Response content-type:', contentType);
+      console.log('Response status:', response.status);
       
-      const newHistoryItem: HistoryItem = {
-        id: Date.now(),
-        timestamp: new Date(),
-        voice: selectedVoice,
-        text: text,
-        audioUrl: voiceApiUrl,
-        mode: voiceMode
-      };
-      
-      setHistory(prev => [newHistoryItem, ...prev.slice(0, 9)]);
-      
-      toast({
-        title: "语音生成成功",
-        description: voiceMode === 'ai' ? "AI智能演绎版本已生成" : "原文朗读版本已生成",
-        variant: "default",
-      });
+      if (contentType && contentType.includes('audio')) {
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        setAudioUrl(audioUrl);
+        
+        const newHistoryItem: HistoryItem = {
+          id: Date.now(),
+          timestamp: new Date(),
+          voice: selectedVoice,
+          text: text,
+          audioUrl: audioUrl,
+          mode: voiceMode
+        };
+        
+        setHistory(prev => [newHistoryItem, ...prev.slice(0, 9)]);
+        
+        toast({
+          title: "语音生成成功",
+          description: voiceMode === 'ai' ? "AI智能演绎版本已生成" : "原文朗读版本已生成",
+          variant: "default",
+        });
+      } else {
+        // 如果不是音频响应，可能是文本错误信息
+        const errorText = await response.text();
+        console.error('非音频响应:', errorText);
+        throw new Error('API返回的不是音频格式');
+      }
     } catch (error) {
       console.error('Error generating audio:', error);
       toast({
         title: "生成失败",
-        description: "语音生成过程中发生错误，请稍后再试",
+        description: `语音生成失败: ${error instanceof Error ? error.message : '未知错误'}`,
         variant: "destructive",
       });
     } finally {
@@ -392,12 +409,12 @@ const Voice = () => {
                     <RadioGroup 
                       value={selectedVoice} 
                       onValueChange={setSelectedVoice}
-                      className="grid grid-cols-6 gap-3"
+                      className="grid grid-cols-6 gap-2"
                     >
                       {voiceOptions.map((voice) => (
                         <div
                           key={voice.id}
-                          className={`relative cursor-pointer p-3 rounded-lg border transition-all ${
+                          className={`relative cursor-pointer p-2 rounded-lg border transition-all ${
                             selectedVoice === voice.id
                               ? 'border-cyan-400 bg-cyan-400/10'
                               : 'border-gray-600 bg-gray-700/30 hover:bg-gray-700/50'
@@ -414,12 +431,12 @@ const Voice = () => {
                           >
                             {selectedVoice === voice.id && (
                               <div className="absolute -top-1 -right-1 bg-cyan-400 rounded-full">
-                                <CheckCircle2 className="h-3 w-3 text-white" />
+                                <CheckCircle2 className="h-2 w-2 text-white" />
                               </div>
                             )}
-                            <div className="text-xl mb-1">{voice.avatar}</div>
+                            <div className="text-lg mb-1">{voice.avatar}</div>
                             <div className="text-white font-medium text-xs text-center">{voice.name}</div>
-                            <div className="text-gray-400 text-xs text-center">{voice.description}</div>
+                            <div className="text-gray-400 text-xs text-center leading-tight">{voice.description}</div>
                           </label>
                         </div>
                       ))}
