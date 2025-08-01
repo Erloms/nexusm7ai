@@ -14,218 +14,148 @@ export type Database = {
   }
   public: {
     Tables: {
-      agent_customization_projects: {
-        Row: {
-          category: string
-          contact_info: string | null
-          created_at: string
-          description: string | null
-          features: string[] | null
-          id: string
-          is_active: boolean
-          price_info: string | null
-          sort_order: number | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          category: string
-          contact_info?: string | null
-          created_at?: string
-          description?: string | null
-          features?: string[] | null
-          id?: string
-          is_active?: boolean
-          price_info?: string | null
-          sort_order?: number | null
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          category?: string
-          contact_info?: string | null
-          created_at?: string
-          description?: string | null
-          features?: string[] | null
-          id?: string
-          is_active?: boolean
-          price_info?: string | null
-          sort_order?: number | null
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      agents: {
-        Row: {
-          avatar_url: string | null
-          category: string | null
-          created_at: string | null
-          created_by: string | null
-          creator_name: string | null
-          credits_per_message: number | null
-          description: string | null
-          id: string
-          is_active: boolean | null
-          is_premium: boolean | null
-          model: string | null
-          name: string
-          rating: number | null
-          system_prompt: string | null
-          tags: string[] | null
-          updated_at: string | null
-          users_count: number | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          category?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          creator_name?: string | null
-          credits_per_message?: number | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          is_premium?: boolean | null
-          model?: string | null
-          name: string
-          rating?: number | null
-          system_prompt?: string | null
-          tags?: string[] | null
-          updated_at?: string | null
-          users_count?: number | null
-        }
-        Update: {
-          avatar_url?: string | null
-          category?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          creator_name?: string | null
-          credits_per_message?: number | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          is_premium?: boolean | null
-          model?: string | null
-          name?: string
-          rating?: number | null
-          system_prompt?: string | null
-          tags?: string[] | null
-          updated_at?: string | null
-          users_count?: number | null
-        }
-        Relationships: []
-      }
       ai_conversations: {
         Row: {
-          conversation_type: string
           created_at: string | null
           id: string
-          messages: Json | null
-          project_id: string | null
-          user_id: string
+          model_id: string | null
+          title: string
+          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
-          conversation_type: string
           created_at?: string | null
           id?: string
-          messages?: Json | null
-          project_id?: string | null
-          user_id: string
+          model_id?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
-          conversation_type?: string
           created_at?: string | null
           id?: string
-          messages?: Json | null
-          project_id?: string | null
-          user_id?: string
+          model_id?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "ai_conversations_project_id_fkey"
-            columns: ["project_id"]
+            foreignKeyName: "ai_conversations_model_id_fkey"
+            columns: ["model_id"]
             isOneToOne: false
-            referencedRelation: "projects"
+            referencedRelation: "ai_models"
             referencedColumns: ["id"]
           },
         ]
       }
-      ai_website_projects: {
+      ai_generations: {
         Row: {
-          created_at: string
-          demo_url: string | null
-          description: string | null
-          icon_name: string
+          created_at: string | null
+          credits_consumed: number | null
+          height: number | null
           id: string
-          is_active: boolean
-          long_description: string | null
-          screenshot_url: string | null
-          sort_order: number | null
-          title: string
-          updated_at: string
+          image_url: string | null
+          model_used: string | null
+          prompt: string
+          seed: string | null
+          status: string | null
+          translated_prompt: string | null
+          user_id: string | null
+          width: number | null
         }
         Insert: {
-          created_at?: string
-          demo_url?: string | null
-          description?: string | null
-          icon_name: string
+          created_at?: string | null
+          credits_consumed?: number | null
+          height?: number | null
           id?: string
-          is_active?: boolean
-          long_description?: string | null
-          screenshot_url?: string | null
-          sort_order?: number | null
-          title: string
-          updated_at?: string
+          image_url?: string | null
+          model_used?: string | null
+          prompt: string
+          seed?: string | null
+          status?: string | null
+          translated_prompt?: string | null
+          user_id?: string | null
+          width?: number | null
         }
         Update: {
-          created_at?: string
-          demo_url?: string | null
-          description?: string | null
-          icon_name?: string
+          created_at?: string | null
+          credits_consumed?: number | null
+          height?: number | null
           id?: string
-          is_active?: boolean
-          long_description?: string | null
-          screenshot_url?: string | null
-          sort_order?: number | null
-          title?: string
-          updated_at?: string
+          image_url?: string | null
+          model_used?: string | null
+          prompt?: string
+          seed?: string | null
+          status?: string | null
+          translated_prompt?: string | null
+          user_id?: string | null
+          width?: number | null
         }
         Relationships: []
       }
-      content_templates: {
+      ai_messages: {
         Row: {
-          category: string
           content: string
-          created_at: string
+          conversation_id: string | null
+          created_at: string | null
           id: string
-          is_public: boolean | null
-          tags: string[] | null
-          title: string
-          updated_at: string
-          user_id: string
+          role: string
         }
         Insert: {
-          category: string
           content: string
-          created_at?: string
+          conversation_id?: string | null
+          created_at?: string | null
           id?: string
-          is_public?: boolean | null
-          tags?: string[] | null
-          title: string
-          updated_at?: string
-          user_id: string
+          role: string
         }
         Update: {
-          category?: string
           content?: string
-          created_at?: string
+          conversation_id?: string | null
+          created_at?: string | null
           id?: string
-          is_public?: boolean | null
-          tags?: string[] | null
-          title?: string
-          updated_at?: string
-          user_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_models: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          max_tokens: number | null
+          model_id: string
+          name: string
+          provider: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_tokens?: number | null
+          model_id: string
+          name: string
+          provider: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_tokens?: number | null
+          model_id?: string
+          name?: string
+          provider?: string
         }
         Relationships: []
       }
@@ -233,446 +163,534 @@ export type Database = {
         Row: {
           amount: number
           created_at: string | null
-          description: string
+          description: string | null
           id: string
+          order_id: string | null
           type: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           amount: number
           created_at?: string | null
-          description: string
+          description?: string | null
           id?: string
+          order_id?: string | null
           type: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           amount?: number
           created_at?: string | null
-          description?: string
+          description?: string | null
           id?: string
+          order_id?: string | null
           type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      digital_assets: {
+        Row: {
+          asset_type: string
+          content_source: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          pain_points: Json | null
+          priority_score: number | null
+          status: string | null
+          title: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          asset_type: string
+          content_source?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          pain_points?: Json | null
+          priority_score?: number | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          asset_type?: string
+          content_source?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          pain_points?: Json | null
+          priority_score?: number | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
           user_id?: string | null
         }
         Relationships: []
       }
-      daily_checkins: {
+      generated_images: {
         Row: {
-          checkin_date: string
-          created_at: string
-          credits_earned: number
+          aspect_ratio: string | null
+          created_at: string | null
           id: string
+          image_url: string
+          model: string | null
+          negative_prompt: string | null
+          prompt: string
+          seed: number | null
           user_id: string
         }
         Insert: {
-          checkin_date: string
-          created_at?: string
-          credits_earned?: number
+          aspect_ratio?: string | null
+          created_at?: string | null
           id?: string
+          image_url: string
+          model?: string | null
+          negative_prompt?: string | null
+          prompt: string
+          seed?: number | null
           user_id: string
         }
         Update: {
-          checkin_date?: string
-          created_at?: string
-          credits_earned?: number
+          aspect_ratio?: string | null
+          created_at?: string | null
           id?: string
+          image_url?: string
+          model?: string | null
+          negative_prompt?: string | null
+          prompt?: string
+          seed?: number | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      membership_plans: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration_days: number | null
+          duration_months: number | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price: number
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration_days?: number | null
+          duration_months?: number | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price: number
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration_days?: number | null
+          duration_months?: number | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price?: number
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          amount: number
+          commission_processed: boolean | null
+          created_at: string | null
+          id: string
+          order_number: string | null
+          order_type: string | null
+          payment_id: string | null
+          payment_method: string | null
+          product_id: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          commission_processed?: boolean | null
+          created_at?: string | null
+          id?: string
+          order_number?: string | null
+          order_type?: string | null
+          payment_id?: string | null
+          payment_method?: string | null
+          product_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          commission_processed?: boolean | null
+          created_at?: string | null
+          id?: string
+          order_number?: string | null
+          order_type?: string | null
+          payment_id?: string | null
+          payment_method?: string | null
+          product_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "membership_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_configs: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_sandbox: boolean | null
+          mapay_api_url: string | null
+          mapay_key: string
+          mapay_pid: string
+          notify_url: string
+          return_url: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_sandbox?: boolean | null
+          mapay_api_url?: string | null
+          mapay_key?: string
+          mapay_pid?: string
+          notify_url: string
+          return_url: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_sandbox?: boolean | null
+          mapay_api_url?: string | null
+          mapay_key?: string
+          mapay_pid?: string
+          notify_url?: string
+          return_url?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
       payment_orders: {
         Row: {
+          agent_id: string
+          agent_name: string
           amount: number
-          body: string | null
           created_at: string | null
+          currency: string | null
           id: string
-          order_id: string
-          order_type: string
-          status: string
-          subject: string
+          out_trade_no: string | null
+          payment_method: string | null
+          status: string | null
           trade_no: string | null
           updated_at: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
+          agent_id: string
+          agent_name: string
           amount: number
-          body?: string | null
           created_at?: string | null
+          currency?: string | null
           id?: string
-          order_id: string
-          order_type: string
-          status?: string
-          subject: string
+          out_trade_no?: string | null
+          payment_method?: string | null
+          status?: string | null
           trade_no?: string | null
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
+          agent_id?: string
+          agent_name?: string
           amount?: number
-          body?: string | null
           created_at?: string | null
+          currency?: string | null
           id?: string
-          order_id?: string
-          order_type?: string
-          status?: string
-          subject?: string
+          out_trade_no?: string | null
+          payment_method?: string | null
+          status?: string | null
           trade_no?: string | null
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
-      ppt_generations: {
+      priority_matrix: {
         Row: {
+          asset_id: string | null
+          calculated_priority: number | null
           created_at: string | null
+          demand_intensity: number
+          development_cost: number
           id: string
-          outline_markdown: string | null
-          ppt_url: string | null
-          project_id: string
-          status: string | null
-          title: string
-          user_id: string
+          urgency_level: number
         }
         Insert: {
+          asset_id?: string | null
+          calculated_priority?: number | null
           created_at?: string | null
+          demand_intensity: number
+          development_cost: number
           id?: string
-          outline_markdown?: string | null
-          ppt_url?: string | null
-          project_id: string
-          status?: string | null
-          title: string
-          user_id: string
+          urgency_level: number
         }
         Update: {
+          asset_id?: string | null
+          calculated_priority?: number | null
           created_at?: string | null
+          demand_intensity?: number
+          development_cost?: number
           id?: string
-          outline_markdown?: string | null
-          ppt_url?: string | null
-          project_id?: string
-          status?: string | null
-          title?: string
-          user_id?: string
+          urgency_level?: number
         }
         Relationships: [
           {
-            foreignKeyName: "ppt_generations_project_id_fkey"
-            columns: ["project_id"]
+            foreignKeyName: "priority_matrix_asset_id_fkey"
+            columns: ["asset_id"]
             isOneToOne: false
-            referencedRelation: "projects"
+            referencedRelation: "digital_assets"
             referencedColumns: ["id"]
           },
         ]
       }
+      products: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          height: number | null
+          id: string
+          image_url: string | null
+          model_used: string | null
+          price: number
+          prompt: string | null
+          seed: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+          width: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          height?: number | null
+          id?: string
+          image_url?: string | null
+          model_used?: string | null
+          price?: number
+          prompt?: string | null
+          seed?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          width?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          height?: number | null
+          id?: string
+          image_url?: string | null
+          model_used?: string | null
+          price?: number
+          prompt?: string | null
+          seed?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          width?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
+          agent_code: string | null
+          balance: number | null
+          commission_rate: number | null
           created_at: string | null
           email: string | null
           id: string
           membership_expires_at: string | null
           membership_type: string | null
-          role: Database["public"]["Enums"]["user_role"] | null
+          referrer_id: string | null
+          role: string | null
           updated_at: string | null
           username: string | null
         }
         Insert: {
+          agent_code?: string | null
+          balance?: number | null
+          commission_rate?: number | null
           created_at?: string | null
           email?: string | null
           id: string
           membership_expires_at?: string | null
           membership_type?: string | null
-          role?: Database["public"]["Enums"]["user_role"] | null
+          referrer_id?: string | null
+          role?: string | null
           updated_at?: string | null
           username?: string | null
         }
         Update: {
+          agent_code?: string | null
+          balance?: number | null
+          commission_rate?: number | null
           created_at?: string | null
           email?: string | null
           id?: string
           membership_expires_at?: string | null
           membership_type?: string | null
-          role?: Database["public"]["Enums"]["user_role"] | null
+          referrer_id?: string | null
+          role?: string | null
           updated_at?: string | null
           username?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      projects: {
+      redirect_links: {
         Row: {
+          click_count: number | null
           created_at: string | null
-          data: Json | null
+          created_by: string | null
           description: string | null
           id: string
-          phase: number | null
+          is_paid: boolean | null
+          original_url: string
+          price: number | null
+          short_code: string
           title: string
           updated_at: string | null
-          user_id: string
         }
         Insert: {
+          click_count?: number | null
           created_at?: string | null
-          data?: Json | null
+          created_by?: string | null
           description?: string | null
           id?: string
-          phase?: number | null
+          is_paid?: boolean | null
+          original_url: string
+          price?: number | null
+          short_code: string
           title: string
           updated_at?: string | null
-          user_id: string
         }
         Update: {
+          click_count?: number | null
           created_at?: string | null
-          data?: Json | null
+          created_by?: string | null
           description?: string | null
           id?: string
-          phase?: number | null
+          is_paid?: boolean | null
+          original_url?: string
+          price?: number | null
+          short_code?: string
           title?: string
           updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      scheduled_tasks: {
-        Row: {
-          created_at: string
-          cron_expression: string
-          id: string
-          is_active: boolean
-          model: string
-          name: string
-          system_prompt: string | null
-          task_prompt: string
-          tools: Json | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          cron_expression: string
-          id?: string
-          is_active?: boolean
-          model: string
-          name: string
-          system_prompt?: string | null
-          task_prompt: string
-          tools?: Json | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          cron_expression?: string
-          id?: string
-          is_active?: boolean
-          model?: string
-          name?: string
-          system_prompt?: string | null
-          task_prompt?: string
-          tools?: Json | null
-          updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
       system_settings: {
         Row: {
           created_at: string | null
-          setting_key: string
-          setting_value: string
+          id: string
+          is_active: boolean | null
+          setting_type: string
+          settings: Json
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
-          setting_key: string
-          setting_value: string
+          id?: string
+          is_active?: boolean | null
+          setting_type: string
+          settings?: Json
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
-          setting_key?: string
-          setting_value?: string
+          id?: string
+          is_active?: boolean | null
+          setting_type?: string
+          settings?: Json
           updated_at?: string | null
-        }
-        Relationships: []
-      }
-      task_executions: {
-        Row: {
-          duration_ms: number | null
-          error_message: string | null
-          executed_at: string
-          id: string
-          result: Json | null
-          status: string
-          task_id: string
-          user_id: string
-        }
-        Insert: {
-          duration_ms?: number | null
-          error_message?: string | null
-          executed_at?: string
-          id?: string
-          result?: Json | null
-          status: string
-          task_id: string
-          user_id: string
-        }
-        Update: {
-          duration_ms?: number | null
-          error_message?: string | null
-          executed_at?: string
-          id?: string
-          result?: Json | null
-          status?: string
-          task_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "task_executions_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "scheduled_tasks"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_content_templates: {
-        Row: {
-          created_at: string
-          description: string | null
-          elements: string[] | null
-          hooks: string[] | null
-          id: string
-          name: string
-          sample_text: string | null
-          style: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          elements?: string[] | null
-          hooks?: string[] | null
-          id?: string
-          name: string
-          sample_text?: string | null
-          style: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          elements?: string[] | null
-          hooks?: string[] | null
-          id?: string
-          name?: string
-          sample_text?: string | null
-          style?: string
-          updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
       user_credits: {
         Row: {
           created_at: string | null
-          credits: number
+          credits: number | null
+          free_trials_used: number | null
           id: string
-          membership_expires_at: string | null
-          membership_type: string | null
-          total_earned: number
-          total_spent: number
+          total_spent: number | null
           updated_at: string | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string | null
-          credits?: number
+          credits?: number | null
+          free_trials_used?: number | null
           id?: string
-          membership_expires_at?: string | null
-          membership_type?: string | null
-          total_earned?: number
-          total_spent?: number
+          total_spent?: number | null
           updated_at?: string | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           created_at?: string | null
-          credits?: number
+          credits?: number | null
+          free_trials_used?: number | null
           id?: string
-          membership_expires_at?: string | null
-          membership_type?: string | null
-          total_earned?: number
-          total_spent?: number
+          total_spent?: number | null
           updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      user_custom_tools: {
-        Row: {
-          api_url: string
-          body_template: string | null
-          created_at: string
-          enabled: boolean
-          headers: Json | null
-          id: string
-          method: string
-          name: string
-          result_path: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          api_url: string
-          body_template?: string | null
-          created_at?: string
-          enabled?: boolean
-          headers?: Json | null
-          id?: string
-          method?: string
-          name: string
-          result_path?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          api_url?: string
-          body_template?: string | null
-          created_at?: string
-          enabled?: boolean
-          headers?: Json | null
-          id?: string
-          method?: string
-          name?: string
-          result_path?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      user_workspaces: {
-        Row: {
-          created_at: string
-          generated_content: Json | null
-          id: string
-          topics: string[] | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          generated_content?: Json | null
-          id?: string
-          topics?: string[] | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          generated_content?: Json | null
-          id?: string
-          topics?: string[] | null
-          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -682,17 +700,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      add_user_credits: {
-        Args: { p_user_id: string; p_credits: number; p_description: string }
+      activate_membership: {
+        Args: { p_user_id: string; p_plan_id: string; p_order_id?: string }
         Returns: undefined
       }
-      is_admin: {
-        Args: { user_id: string }
+      add_credits: {
+        Args: { user_uuid: string; credit_amount: number; order_uuid?: string }
+        Returns: undefined
+      }
+      consume_credits: {
+        Args: {
+          user_uuid: string
+          credit_amount: number
+          description_text?: string
+        }
         Returns: boolean
+      }
+      generate_order_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
     }
     Enums: {
-      user_role: "admin" | "user"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -819,8 +853,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      user_role: ["admin", "user"],
-    },
+    Enums: {},
   },
 } as const
