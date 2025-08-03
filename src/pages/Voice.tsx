@@ -252,7 +252,6 @@ const Voice = () => {
       return;
     }
 
-    // 更新文本长度限制
     if (text.length > 4000) {
       toast({
         title: "文本过长",
@@ -284,7 +283,6 @@ const Voice = () => {
               optimizedText += chunk;
             }
             
-            // 清理优化后的文本
             processedText = optimizedText.trim().replace(/^[""]|[""]$/g, '');
             if (processedText.length > 4000) {
               processedText = processedText.substring(0, 4000);
@@ -299,8 +297,9 @@ const Voice = () => {
       const supabase = (await import('@/integrations/supabase/client')).supabase;
       
       console.log('Calling TTS function with:', {
-        text: processedText,
-        voice: selectedVoice
+        text: processedText.substring(0, 100) + '...',
+        voice: selectedVoice,
+        textLength: processedText.length
       });
 
       const { data, error } = await supabase.functions.invoke('text-to-speech', {
@@ -310,53 +309,66 @@ const Voice = () => {
         }
       });
 
+      console.log('TTS function response:', { data, error });
+
       if (error) {
         console.error('TTS function error:', error);
         
-        // 提供更友好的错误信息
         let errorMessage = '语音生成服务暂时不可用，请稍后再试';
-        if (error.message?.includes('Text too long')) {
-          errorMessage = '文本过长，请缩短后重试';
-        } else if (error.message?.includes('Unsupported voice')) {
-          errorMessage = '选择的语音风格暂不支持，请选择其他风格';
-        } else if (error.message?.includes('Text is required')) {
-          errorMessage = '请输入要转换的文本';
+        
+        if (typeof error === 'string') {
+          errorMessage = error;
+        } else if (error.message) {
+          if (error.message.includes('Text too long')) {
+            errorMessage = '文本过长，请缩短后重试';
+          } else if (error.message.includes('Unsupported voice')) {
+            errorMessage = '选择的语音风格暂不支持，请选择其他风格';
+          } else if (error.message.includes('Text is required')) {
+            errorMessage = '请输入要转换的文本';
+          } else {
+            errorMessage = error.message;
+          }
         }
         
         throw new Error(errorMessage);
       }
 
       if (!data || !data.audioContent) {
-        throw new Error('语音生成失败，请检查网络连接后重试');
+        throw new Error('语音生成失败，返回的数据为空');
       }
 
       // Convert base64 to blob
-      const binaryString = atob(data.audioContent);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
+      try {
+        const binaryString = atob(data.audioContent);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        setAudioUrl(audioUrl);
+        
+        const newHistoryItem: HistoryItem = {
+          id: Date.now(),
+          timestamp: new Date(),
+          voice: selectedVoice,
+          text: text,
+          audioUrl: audioUrl,
+          mode: voiceMode
+        };
+        
+        setHistory(prev => [newHistoryItem, ...prev.slice(0, 9)]);
+        
+        toast({
+          title: "语音生成成功",
+          description: voiceMode === 'ai' ? "AI智能演绎版本已生成" : "原文朗读版本已生成",
+          variant: "default",
+        });
+      } catch (decodeError) {
+        console.error('Failed to decode audio:', decodeError);
+        throw new Error('音频数据解析失败，请重试');
       }
-      
-      const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
-      const audioUrl = URL.createObjectURL(audioBlob);
-      setAudioUrl(audioUrl);
-      
-      const newHistoryItem: HistoryItem = {
-        id: Date.now(),
-        timestamp: new Date(),
-        voice: selectedVoice,
-        text: text,
-        audioUrl: audioUrl,
-        mode: voiceMode
-      };
-      
-      setHistory(prev => [newHistoryItem, ...prev.slice(0, 9)]);
-      
-      toast({
-        title: "语音生成成功",
-        description: voiceMode === 'ai' ? "AI智能演绎版本已生成" : "原文朗读版本已生成",
-        variant: "default",
-      });
       
     } catch (error) {
       console.error('Error generating audio:', error);
