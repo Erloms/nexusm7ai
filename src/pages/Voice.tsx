@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import { Button } from "@/components/ui/button";
@@ -53,7 +54,7 @@ const Voice = () => {
   const [voiceMode, setVoiceMode] = useState<'reading' | 'ai'>('reading');
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // 18个语音选项
+  // 更新后的语音选项列表（18个语音）
   const voiceOptions: VoiceOption[] = [
     { 
       id: 'alloy', 
@@ -277,7 +278,7 @@ const Voice = () => {
         }
       }
       
-      // 使用OpenAI TTS API (通过Supabase Edge Function)
+      // 调用语音生成 API
       const supabase = (await import('@/integrations/supabase/client')).supabase;
       
       console.log('Calling TTS function with:', {
