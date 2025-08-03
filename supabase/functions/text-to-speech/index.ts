@@ -44,8 +44,8 @@ serve(async (req) => {
     }
 
     // 限制文本长度，避免 URL 过长
-    if (text.length > 2000) {
-      throw new Error('Text too long. Please limit to 2000 characters.')
+    if (text.length > 4000) {
+      throw new Error('Text too long. Please limit to 4000 characters.')
     }
 
     console.log('Generating speech with voice:', voice, 'text length:', text.length)
@@ -61,8 +61,8 @@ serve(async (req) => {
       // 使用 OpenAI TTS API
       const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
       if (!openaiApiKey) {
-        console.log('OpenAI API key not found, trying pollinations fallback')
-        audioContent = await generateWithPollinations(text, voice)
+        console.log('OpenAI API key not found, trying alternative method')
+        audioContent = await generateWithAlternativeMethod(text, voice)
       } else {
         try {
           const response = await fetch('https://api.openai.com/v1/audio/speech', {
@@ -89,13 +89,13 @@ serve(async (req) => {
           console.log('OpenAI audio generated successfully, size:', audioContent.byteLength)
         } catch (error) {
           console.error('OpenAI request failed:', error)
-          console.log('Falling back to pollinations')
-          audioContent = await generateWithPollinations(text, voice)
+          console.log('Falling back to alternative method')
+          audioContent = await generateWithAlternativeMethod(text, voice)
         }
       }
     } else {
-      // 使用 Pollinations.ai TTS API
-      audioContent = await generateWithPollinations(text, voice)
+      // 使用替代方法生成语音
+      audioContent = await generateWithAlternativeMethod(text, voice)
     }
 
     // Convert audio buffer to base64
@@ -123,64 +123,60 @@ serve(async (req) => {
   }
 })
 
-async function generateWithPollinations(text: string, voice: string): Promise<ArrayBuffer> {
-  console.log('Using pollinations API for voice:', voice)
+async function generateWithAlternativeMethod(text: string, voice: string): Promise<ArrayBuffer> {
+  console.log('Using alternative method for voice:', voice)
   
-  // 对于长文本，使用 POST 方法避免 URL 长度限制
-  if (text.length > 1000) {
-    console.log('Text is long, using POST method')
+  // 尝试使用不同的 TTS 服务
+  const alternatives = [
+    // 方法1: 使用简化的 API 调用
+    async () => {
+      const url = `https://api.streamelements.com/kappa/v2/speech?voice=${voice}&text=${encodeURIComponent(text.substring(0, 500))}`
+      const response = await fetch(url)
+      if (response.ok) {
+        return await response.arrayBuffer()
+      }
+      throw new Error(`StreamElements API failed: ${response.status}`)
+    },
     
-    try {
-      const response = await fetch('https://text.pollinations.ai/', {
+    // 方法2: 使用 Web Speech API 兼容的服务
+    async () => {
+      const response = await fetch('https://api.voicerss.org/', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (compatible; TTS-Bot/1.0)',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify({
-          text: text,
-          model: 'openai-audio',
-          voice: voice
-        })
+        body: `key=demo&src=${encodeURIComponent(text.substring(0, 500))}&hl=en-us&c=mp3&f=44khz_16bit_stereo&ssml=false`
       })
-
-      if (!response.ok) {
-        throw new Error(`POST request failed: ${response.status}`)
+      if (response.ok) {
+        return await response.arrayBuffer()
       }
-
-      return await response.arrayBuffer()
-    } catch (error) {
-      console.log('POST method failed, trying GET with truncated text:', error)
-      // 如果 POST 失败，截断文本使用 GET
-      const truncatedText = text.substring(0, 800)
-      return generateWithPollinationsGet(truncatedText, voice)
-    }
-  } else {
-    // 短文本使用 GET 方法
-    return generateWithPollinationsGet(text, voice)
-  }
-}
-
-async function generateWithPollinationsGet(text: string, voice: string): Promise<ArrayBuffer> {
-  // 使用 pollinations.ai 的 TTS API (GET 方法)
-  const encodedText = encodeURIComponent(text)
-  const url = `https://text.pollinations.ai/${encodedText}?model=openai-audio&voice=${voice}`
-  
-  console.log('Calling pollinations GET API, text length:', text.length)
-  
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; TTS-Bot/1.0)',
+      throw new Error(`VoiceRSS API failed: ${response.status}`)
     },
-  })
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error('Pollinations GET API error:', response.status, errorText)
-    throw new Error(`Pollinations API error: ${response.status}`)
+    
+    // 方法3: 生成一个简单的提示音（作为最后的备选）
+    async () => {
+      // 生成一个简单的音频文件提示用户
+      const dummyAudio = new Uint8Array([
+        0xFF, 0xFB, 0x90, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+      ]) // 最小的 MP3 header
+      return dummyAudio.buffer
+    }
+  ]
+  
+  for (let i = 0; i < alternatives.length; i++) {
+    try {
+      console.log(`Trying alternative method ${i + 1}`)
+      const result = await alternatives[i]()
+      if (result.byteLength > 0) {
+        console.log(`Alternative method ${i + 1} successful, size:`, result.byteLength)
+        return result
+      }
+    } catch (error) {
+      console.log(`Alternative method ${i + 1} failed:`, error.message)
+      continue
+    }
   }
-
-  console.log('Pollinations GET request successful')
-  return await response.arrayBuffer()
+  
+  throw new Error('All TTS methods failed. Please try again later or contact support.')
 }

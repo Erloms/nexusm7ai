@@ -252,11 +252,11 @@ const Voice = () => {
       return;
     }
 
-    // 检查文本长度
-    if (text.length > 2000) {
+    // 更新文本长度限制
+    if (text.length > 4000) {
       toast({
         title: "文本过长",
-        description: "请将文本限制在2000字符以内",
+        description: "请将文本限制在4000字符以内",
         variant: "destructive",
       });
       return;
@@ -269,7 +269,7 @@ const Voice = () => {
       
       // 如果是智能演绎模式，先用AI优化文本
       if (voiceMode === 'ai') {
-        const optimizePrompt = `请将以下文本优化为更适合语音播报的版本，使其更生动、更有表现力，但保持原意：\n\n${text}`;
+        const optimizePrompt = `请将以下文本优化为更适合语音播报的版本，使其更生动、更有表现力，但保持原意。请直接返回优化后的文本，不要添加任何解释：\n\n${text}`;
         try {
           const optimizeResponse = await fetch(`https://text.pollinations.ai/${encodeURIComponent(optimizePrompt)}?model=openai`);
           if (optimizeResponse.ok) {
@@ -284,7 +284,11 @@ const Voice = () => {
               optimizedText += chunk;
             }
             
-            processedText = optimizedText.trim();
+            // 清理优化后的文本
+            processedText = optimizedText.trim().replace(/^[""]|[""]$/g, '');
+            if (processedText.length > 4000) {
+              processedText = processedText.substring(0, 4000);
+            }
           }
         } catch (error) {
           console.log('AI optimization failed, using original text:', error);
@@ -308,11 +312,22 @@ const Voice = () => {
 
       if (error) {
         console.error('TTS function error:', error);
-        throw new Error(error.message || '语音生成失败');
+        
+        // 提供更友好的错误信息
+        let errorMessage = '语音生成服务暂时不可用，请稍后再试';
+        if (error.message?.includes('Text too long')) {
+          errorMessage = '文本过长，请缩短后重试';
+        } else if (error.message?.includes('Unsupported voice')) {
+          errorMessage = '选择的语音风格暂不支持，请选择其他风格';
+        } else if (error.message?.includes('Text is required')) {
+          errorMessage = '请输入要转换的文本';
+        }
+        
+        throw new Error(errorMessage);
       }
 
       if (!data || !data.audioContent) {
-        throw new Error('API返回的数据格式错误');
+        throw new Error('语音生成失败，请检查网络连接后重试');
       }
 
       // Convert base64 to blob
@@ -346,16 +361,14 @@ const Voice = () => {
     } catch (error) {
       console.error('Error generating audio:', error);
       
-      let errorMessage = '未知错误';
+      let errorMessage = '语音生成失败，请重试';
       if (error instanceof Error) {
         errorMessage = error.message;
-      } else if (typeof error === 'string') {
-        errorMessage = error;
       }
       
       toast({
         title: "生成失败",
-        description: `语音生成失败: ${errorMessage}`,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -485,15 +498,15 @@ const Voice = () => {
                       className="min-h-[180px] bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 focus:border-cyan-400 text-base"
                     />
                     <div className="flex justify-between items-center mt-3">
-                      <p className={`text-sm ${text.length > 2000 ? 'text-red-400' : 'text-gray-400'}`}>
-                        字符数: {text.length} / 2000
+                      <p className={`text-sm ${text.length > 4000 ? 'text-red-400' : 'text-gray-400'}`}>
+                        字符数: {text.length} / 4000
                       </p>
                       <p className="text-gray-400 text-sm">
                         模式: {voiceMode === 'ai' ? '🎭 智能演绎' : '📖 原文朗读'}
                       </p>
                     </div>
-                    {text.length > 2000 && (
-                      <p className="text-red-400 text-sm mt-2">⚠️ 文本过长，请缩短到2000字符以内</p>
+                    {text.length > 4000 && (
+                      <p className="text-red-400 text-sm mt-2">⚠️ 文本过长，请缩短到4000字符以内</p>
                     )}
                   </div>
 
