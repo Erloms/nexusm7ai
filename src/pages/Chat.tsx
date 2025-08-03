@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,6 +33,7 @@ const Chat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState('general');
   const [selectedModel, setSelectedModel] = useState('openai');
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 15个AI模型列表（基于Pollinations.ai可用模型）
@@ -114,6 +114,68 @@ const Chat = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // 生成图片功能
+  const generateImage = async (prompt: string) => {
+    if (!prompt.trim()) return;
+    
+    setIsGeneratingImage(true);
+    
+    try {
+      // 将中文提示词转换为英文（如果需要）
+      let englishPrompt = prompt;
+      
+      // 如果提示词包含中文，先翻译成英文
+      const chineseRegex = /[\u4e00-\u9fa5]/;
+      if (chineseRegex.test(prompt)) {
+        const translateResponse = await fetch(`https://text.pollinations.ai/Please translate the following text to English for AI image generation, keep it concise and descriptive: ${encodeURIComponent(prompt)}?model=openai`);
+        if (translateResponse.ok) {
+          const reader = translateResponse.body!.getReader();
+          const decoder = new TextDecoder();
+          let translatedText = '';
+          
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value, { stream: true });
+            translatedText += chunk;
+          }
+          
+          englishPrompt = translatedText.trim();
+        }
+      }
+      
+      // 生成图片URL
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(englishPrompt)}?width=1024&height=768&seed=${Math.floor(Math.random() * 100000)}&model=flux&nologo=true`;
+      
+      // 添加图片消息
+      const imageMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `为您生成的配图：\n\n**提示词：** ${englishPrompt}`,
+        timestamp: new Date(),
+        imageUrl: imageUrl
+      };
+      
+      setMessages(prev => [...prev, imageMessage]);
+      
+      toast({
+        title: "图片生成成功",
+        description: "已为您生成配图",
+        variant: "default",
+      });
+      
+    } catch (error) {
+      console.error('生成图像失败:', error);
+      toast({
+        title: "图片生成失败",
+        description: "请稍后再试",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
 
   // 调用Pollinations.ai文本生成API
   const callTextAPI = async (prompt: string, modelId: string) => {
@@ -336,11 +398,14 @@ const Chat = () => {
                           : 'bg-gray-800/80 text-gray-100 mr-12 border border-gray-700'
                       }`}>
                         {message.imageUrl && (
-                          <img 
-                            src={message.imageUrl} 
-                            alt="Generated" 
-                            className="w-full max-w-md rounded-lg mb-3"
-                          />
+                          <div className="mb-3">
+                            <img 
+                              src={message.imageUrl} 
+                              alt="AI生成图片" 
+                              className="w-full max-w-md rounded-lg border border-gray-600"
+                              loading="lazy"
+                            />
+                          </div>
                         )}
                         <div className="prose prose-invert max-w-none">
                           <p className="whitespace-pre-wrap">{message.content}</p>
@@ -359,6 +424,18 @@ const Chat = () => {
                           <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
                           <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                           <span className="text-sm text-gray-400 ml-2">{currentAgent.name}正在思考...</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {isGeneratingImage && (
+                    <div className="flex justify-start">
+                      <div className="bg-gray-800/80 text-gray-100 mr-12 border border-gray-700 rounded-2xl px-6 py-4">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                          <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                          <span className="text-sm text-gray-400 ml-2">正在生成图片...</span>
                         </div>
                       </div>
                     </div>
@@ -406,6 +483,18 @@ const Chat = () => {
                         style={{ minHeight: '48px' }}
                       />
                     </div>
+                    <Button
+                      onClick={() => generateImage(input)}
+                      disabled={!input.trim() || isGeneratingImage}
+                      className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-4 py-3 rounded-xl font-medium h-12 min-w-12"
+                      title="生成图片"
+                    >
+                      {isGeneratingImage ? (
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <span className="text-xl">🎨</span>
+                      )}
+                    </Button>
                     <Button
                       onClick={handleSend}
                       disabled={!input.trim() || isLoading}

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import { Button } from "@/components/ui/button";
@@ -405,8 +404,8 @@ const Voice = () => {
                     </div>
                     <p className="text-gray-400 text-sm mt-2">
                       {voiceMode === 'ai' 
-                        ? '🎭 AI会优化文本，增加表现力和情感色彩' 
-                        : '📖 直接朗读原文，保持文本原貌'}
+                        ? '🎭 AI会根据主题自由发挥，优化表达方式并增加情感色彩' 
+                        : '📖 直接朗读原文内容，保持文本原貌不做任何修改'}
                     </p>
                   </div>
                   
@@ -486,8 +485,8 @@ const Voice = () => {
                   <div className="bg-gray-700/30 rounded-lg p-6">
                     <h4 className="text-white font-medium mb-3 text-base">使用小技巧</h4>
                     <ul className="text-gray-300 text-sm space-y-2 list-disc pl-5">
-                      <li>智能演绎模式会让AI优化文本表达，增加情感色彩</li>
-                      <li>原文朗读模式保持原文不变，适合正式文档</li>
+                      <li>智能演绎模式会让AI根据主题自由发挥，增加情感表达</li>
+                      <li>原文朗读模式保持原文不变，适合正式文档朗读</li>
                       <li>不同音频风格适合不同场景，可以尝试多种风格</li>
                       <li>大段文本可以分为多个短段，生成后合并效果更佳</li>
                     </ul>
