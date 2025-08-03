@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import { Button } from "@/components/ui/button";
@@ -253,6 +252,16 @@ const Voice = () => {
       return;
     }
 
+    // 检查文本长度
+    if (text.length > 2000) {
+      toast({
+        title: "文本过长",
+        description: "请将文本限制在2000字符以内",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     
     try {
@@ -261,20 +270,24 @@ const Voice = () => {
       // 如果是智能演绎模式，先用AI优化文本
       if (voiceMode === 'ai') {
         const optimizePrompt = `请将以下文本优化为更适合语音播报的版本，使其更生动、更有表现力，但保持原意：\n\n${text}`;
-        const optimizeResponse = await fetch(`https://text.pollinations.ai/${encodeURIComponent(optimizePrompt)}?model=openai`);
-        if (optimizeResponse.ok) {
-          const reader = optimizeResponse.body!.getReader();
-          const decoder = new TextDecoder();
-          let optimizedText = '';
-          
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            const chunk = decoder.decode(value, { stream: true });
-            optimizedText += chunk;
+        try {
+          const optimizeResponse = await fetch(`https://text.pollinations.ai/${encodeURIComponent(optimizePrompt)}?model=openai`);
+          if (optimizeResponse.ok) {
+            const reader = optimizeResponse.body!.getReader();
+            const decoder = new TextDecoder();
+            let optimizedText = '';
+            
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              const chunk = decoder.decode(value, { stream: true });
+              optimizedText += chunk;
+            }
+            
+            processedText = optimizedText.trim();
           }
-          
-          processedText = optimizedText;
+        } catch (error) {
+          console.log('AI optimization failed, using original text:', error);
         }
       }
       
@@ -298,42 +311,51 @@ const Voice = () => {
         throw new Error(error.message || '语音生成失败');
       }
 
-      if (data && data.audioContent) {
-        // Convert base64 to blob
-        const binaryString = atob(data.audioContent);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-        
-        const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        setAudioUrl(audioUrl);
-        
-        const newHistoryItem: HistoryItem = {
-          id: Date.now(),
-          timestamp: new Date(),
-          voice: selectedVoice,
-          text: text,
-          audioUrl: audioUrl,
-          mode: voiceMode
-        };
-        
-        setHistory(prev => [newHistoryItem, ...prev.slice(0, 9)]);
-        
-        toast({
-          title: "语音生成成功",
-          description: voiceMode === 'ai' ? "AI智能演绎版本已生成" : "原文朗读版本已生成",
-          variant: "default",
-        });
-      } else {
+      if (!data || !data.audioContent) {
         throw new Error('API返回的数据格式错误');
       }
+
+      // Convert base64 to blob
+      const binaryString = atob(data.audioContent);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      
+      const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      setAudioUrl(audioUrl);
+      
+      const newHistoryItem: HistoryItem = {
+        id: Date.now(),
+        timestamp: new Date(),
+        voice: selectedVoice,
+        text: text,
+        audioUrl: audioUrl,
+        mode: voiceMode
+      };
+      
+      setHistory(prev => [newHistoryItem, ...prev.slice(0, 9)]);
+      
+      toast({
+        title: "语音生成成功",
+        description: voiceMode === 'ai' ? "AI智能演绎版本已生成" : "原文朗读版本已生成",
+        variant: "default",
+      });
+      
     } catch (error) {
       console.error('Error generating audio:', error);
+      
+      let errorMessage = '未知错误';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       toast({
         title: "生成失败",
-        description: `语音生成失败: ${error instanceof Error ? error.message : '未知错误'}`,
+        description: `语音生成失败: ${errorMessage}`,
         variant: "destructive",
       });
     } finally {
@@ -463,11 +485,16 @@ const Voice = () => {
                       className="min-h-[180px] bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 focus:border-cyan-400 text-base"
                     />
                     <div className="flex justify-between items-center mt-3">
-                      <p className="text-gray-400 text-sm">字符数: {text.length}</p>
+                      <p className={`text-sm ${text.length > 2000 ? 'text-red-400' : 'text-gray-400'}`}>
+                        字符数: {text.length} / 2000
+                      </p>
                       <p className="text-gray-400 text-sm">
                         模式: {voiceMode === 'ai' ? '🎭 智能演绎' : '📖 原文朗读'}
                       </p>
                     </div>
+                    {text.length > 2000 && (
+                      <p className="text-red-400 text-sm mt-2">⚠️ 文本过长，请缩短到2000字符以内</p>
+                    )}
                   </div>
 
                   <div className="flex justify-between mb-8">

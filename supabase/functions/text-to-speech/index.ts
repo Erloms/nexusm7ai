@@ -43,6 +43,11 @@ serve(async (req) => {
       throw new Error('Text is required')
     }
 
+    // 限制文本长度，避免 URL 过长
+    if (text.length > 2000) {
+      throw new Error('Text too long. Please limit to 2000 characters.')
+    }
+
     console.log('Generating speech with voice:', voice, 'text length:', text.length)
 
     const voiceConfig = SUPPORTED_VOICES[voice as keyof typeof SUPPORTED_VOICES]
@@ -56,8 +61,7 @@ serve(async (req) => {
       // 使用 OpenAI TTS API
       const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
       if (!openaiApiKey) {
-        console.error('OpenAI API key not found, falling back to pollinations')
-        // 如果没有 OpenAI key，fallback 到 pollinations
+        console.log('OpenAI API key not found, trying pollinations fallback')
         audioContent = await generateWithPollinations(text, voice)
       } else {
         try {
@@ -76,15 +80,16 @@ serve(async (req) => {
           })
 
           if (!response.ok) {
-            console.error('OpenAI API error:', response.status, await response.text())
-            // Fallback to pollinations
-            audioContent = await generateWithPollinations(text, voice)
-          } else {
-            audioContent = await response.arrayBuffer()
+            const errorText = await response.text()
+            console.error('OpenAI API error:', response.status, errorText)
+            throw new Error(`OpenAI API error: ${response.status}`)
           }
+
+          audioContent = await response.arrayBuffer()
+          console.log('OpenAI audio generated successfully, size:', audioContent.byteLength)
         } catch (error) {
           console.error('OpenAI request failed:', error)
-          // Fallback to pollinations
+          console.log('Falling back to pollinations')
           audioContent = await generateWithPollinations(text, voice)
         }
       }
@@ -98,7 +103,7 @@ serve(async (req) => {
       String.fromCharCode(...new Uint8Array(audioContent))
     )
 
-    console.log('Audio generated successfully, size:', audioContent.byteLength)
+    console.log('Audio generated successfully, final size:', audioContent.byteLength)
 
     return new Response(
       JSON.stringify({ audioContent: base64Audio }),
@@ -119,11 +124,49 @@ serve(async (req) => {
 })
 
 async function generateWithPollinations(text: string, voice: string): Promise<ArrayBuffer> {
-  // 使用 pollinations.ai 的 TTS API
+  console.log('Using pollinations API for voice:', voice)
+  
+  // 对于长文本，使用 POST 方法避免 URL 长度限制
+  if (text.length > 1000) {
+    console.log('Text is long, using POST method')
+    
+    try {
+      const response = await fetch('https://text.pollinations.ai/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (compatible; TTS-Bot/1.0)',
+        },
+        body: JSON.stringify({
+          text: text,
+          model: 'openai-audio',
+          voice: voice
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`POST request failed: ${response.status}`)
+      }
+
+      return await response.arrayBuffer()
+    } catch (error) {
+      console.log('POST method failed, trying GET with truncated text:', error)
+      // 如果 POST 失败，截断文本使用 GET
+      const truncatedText = text.substring(0, 800)
+      return generateWithPollinationsGet(truncatedText, voice)
+    }
+  } else {
+    // 短文本使用 GET 方法
+    return generateWithPollinationsGet(text, voice)
+  }
+}
+
+async function generateWithPollinationsGet(text: string, voice: string): Promise<ArrayBuffer> {
+  // 使用 pollinations.ai 的 TTS API (GET 方法)
   const encodedText = encodeURIComponent(text)
   const url = `https://text.pollinations.ai/${encodedText}?model=openai-audio&voice=${voice}`
   
-  console.log('Calling pollinations API:', url)
+  console.log('Calling pollinations GET API, text length:', text.length)
   
   const response = await fetch(url, {
     method: 'GET',
@@ -134,9 +177,10 @@ async function generateWithPollinations(text: string, voice: string): Promise<Ar
 
   if (!response.ok) {
     const errorText = await response.text()
-    console.error('Pollinations API error:', response.status, errorText)
-    throw new Error(`Pollinations API error: ${response.status} ${errorText}`)
+    console.error('Pollinations GET API error:', response.status, errorText)
+    throw new Error(`Pollinations API error: ${response.status}`)
   }
 
+  console.log('Pollinations GET request successful')
   return await response.arrayBuffer()
 }
