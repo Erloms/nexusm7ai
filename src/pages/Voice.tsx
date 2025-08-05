@@ -13,7 +13,8 @@ import {
   Play,
   Pause,
   BookOpen,
-  Sparkles
+  Sparkles,
+  RefreshCw
 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -52,7 +53,6 @@ const Voice = () => {
   const [voiceMode, setVoiceMode] = useState<'reading' | 'ai'>('reading');
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // 更新后的语音选项列表（18个语音）
   const voiceOptions: VoiceOption[] = [
     { 
       id: 'alloy', 
@@ -200,7 +200,6 @@ const Voice = () => {
     }
   ];
 
-  // Load history from localStorage
   useEffect(() => {
     const savedHistory = localStorage.getItem('nexusAiVoiceHistory');
     if (savedHistory) {
@@ -216,7 +215,6 @@ const Voice = () => {
     }
   }, []);
 
-  // Save history to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('nexusAiVoiceHistory', JSON.stringify(history));
   }, [history]);
@@ -265,7 +263,6 @@ const Voice = () => {
     try {
       let processedText = text;
       
-      // 如果是智能演绎模式，先用AI优化文本
       if (voiceMode === 'ai') {
         const optimizePrompt = `请将以下文本优化为更适合语音播报的版本，使其更生动、更有表现力，但保持原意。请直接返回优化后的文本，不要添加任何解释：\n\n${text}`;
         try {
@@ -292,7 +289,6 @@ const Voice = () => {
         }
       }
       
-      // 调用语音生成 API
       const supabase = (await import('@/integrations/supabase/client')).supabase;
       
       console.log('Calling TTS function with:', {
@@ -316,32 +312,30 @@ const Voice = () => {
         let errorMessage = '语音生成服务暂时不可用，请稍后再试';
         
         if (typeof error === 'string') {
-          errorMessage = error;
-        } else if (error.message) {
-          if (error.message.includes('Text too long')) {
+          if (error.includes('All TTS services are currently unavailable')) {
+            errorMessage = '所有语音服务暂时不可用，请稍后再试或选择其他语音风格';
+          } else if (error.includes('Text too long')) {
             errorMessage = '文本过长，请缩短后重试';
-          } else if (error.message.includes('Unsupported voice')) {
+          } else if (error.includes('Unsupported voice')) {
             errorMessage = '选择的语音风格暂不支持，请选择其他风格';
-          } else if (error.message.includes('Text is required')) {
-            errorMessage = '请输入要转换的文本';
           } else {
-            errorMessage = error.message;
+            errorMessage = error;
           }
+        } else if (error.message) {
+          errorMessage = error.message;
         }
         
         throw new Error(errorMessage);
       }
 
       if (!data || !data.audioContent) {
-        throw new Error('语音生成失败，返回的数据为空');
+        throw new Error('语音生成失败，请重试或选择其他语音风格');
       }
 
-      // 检查返回的音频数据长度
       if (data.audioContent.length < 100) {
-        throw new Error('生成的音频数据过小，可能生成失败，请重试');
+        throw new Error('生成的音频数据过小，请重试或选择其他语音风格');
       }
 
-      // Convert base64 to blob
       try {
         const binaryString = atob(data.audioContent);
         const bytes = new Uint8Array(binaryString.length);
@@ -352,7 +346,6 @@ const Voice = () => {
         const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
         const audioUrl = URL.createObjectURL(audioBlob);
         
-        // 简化的音频验证，直接设置而不做复杂检查
         setAudioUrl(audioUrl);
         
         const newHistoryItem: HistoryItem = {
@@ -368,7 +361,7 @@ const Voice = () => {
         
         toast({
           title: "语音生成成功",
-          description: voiceMode === 'ai' ? "AI智能演绎版本已生成" : "原文朗读版本已生成",
+          description: `${voiceOptions.find(v => v.id === selectedVoice)?.name || selectedVoice} 语音已生成完成`,
           variant: "default",
         });
         
@@ -422,7 +415,6 @@ const Voice = () => {
       
       <main className="pt-24 px-6">
         <div className="max-w-7xl mx-auto">
-          {/* 标题区域 */}
           <div className="text-center mb-16">
             <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
               AI 文本转音频
@@ -434,13 +426,11 @@ const Voice = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* 左侧控制面板 */}
             <div className="space-y-8">
               <Card className="bg-gray-800/50 border-gray-700">
                 <CardContent className="p-8">
                   <h3 className="text-2xl font-bold mb-8 text-white">语音生成</h3>
                   
-                  {/* 模式切换 */}
                   <div className="mb-8">
                     <h4 className="text-cyan-400 font-medium mb-4 text-lg">生成模式</h4>
                     <div className="flex items-center justify-between p-4 bg-gray-700/50 rounded-lg">
@@ -535,7 +525,14 @@ const Voice = () => {
                       disabled={loading || !text.trim()}
                       className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-10 py-3 text-base"
                     >
-                      {loading ? "生成中..." : "生成语音"}
+                      {loading ? (
+                        <>
+                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                          生成中...
+                        </>
+                      ) : (
+                        "生成语音"
+                      )}
                     </Button>
                     <Button variant="ghost" className="text-gray-400 hover:text-gray-200">
                       快捷键 (Ctrl + Enter)
@@ -547,15 +544,14 @@ const Voice = () => {
                     <ul className="text-gray-300 text-sm space-y-2 list-disc pl-5">
                       <li>智能演绎模式会让AI根据主题自由发挥，增加情感表达</li>
                       <li>原文朗读模式保持原文不变，适合正式文档朗读</li>
-                      <li>不同音频风格适合不同场景，可以尝试多种风格</li>
-                      <li>大段文本可以分为多个短段，生成后合并效果更佳</li>
+                      <li>OpenAI官方语音（前6个）更稳定，其他为社区扩展语音</li>
+                      <li>如遇生成失败，建议先尝试 Alloy 等官方语音</li>
                     </ul>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* 右侧音频预览和历史区域 */}
             <div className="space-y-8">
               <Card className="bg-gray-800/50 border-gray-700">
                 <CardContent className="p-8">

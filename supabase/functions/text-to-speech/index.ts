@@ -30,6 +30,9 @@ const SUPPORTED_VOICES = {
   'luna': { provider: 'pollinations' }
 }
 
+// 你提供的 API key
+const API_KEY = 'r---77WuReCx4PoE'
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -80,85 +83,125 @@ serve(async (req) => {
 
     let audioContent: ArrayBuffer
 
-    // 直接使用 Pollinations.ai 的GET方式，这个更稳定
-    console.log('Using Pollinations.ai TTS with GET method')
-    
-    // 限制文本长度以适应API限制
-    const limitedText = text.substring(0, 1000)
-    
-    try {
-      // 使用GET方式调用Pollinations.ai TTS
-      const ttsUrl = `https://text.pollinations.ai/${encodeURIComponent(limitedText)}?model=openai-audio&voice=${voice}`
+    // 根据语音类型选择不同的API
+    if (voiceConfig.provider === 'openai') {
+      // 使用你的 API key 调用 OpenAI TTS
+      console.log('Using OpenAI TTS API with provided key')
       
-      console.log('Calling Pollinations TTS URL:', ttsUrl.substring(0, 100) + '...')
-      
-      const response = await fetch(ttsUrl, {
-        method: 'GET',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          'Accept': 'audio/*,*/*;q=0.9',
-        },
-      })
-
-      console.log('Pollinations response status:', response.status)
-      console.log('Pollinations response headers:', Object.fromEntries(response.headers.entries()))
-
-      if (response.ok) {
-        audioContent = await response.arrayBuffer()
-        console.log('Pollinations TTS successful, size:', audioContent.byteLength)
-        
-        // 验证音频内容
-        if (audioContent.byteLength < 100) {
-          throw new Error('Generated audio is too small, likely invalid')
-        }
-        
-        // 检查是否是有效的音频格式（简单检查）
-        const audioBytes = new Uint8Array(audioContent.slice(0, 4))
-        const isValidAudio = (
-          // MP3 header
-          (audioBytes[0] === 0xFF && (audioBytes[1] & 0xE0) === 0xE0) ||
-          // WAV header
-          (audioBytes[0] === 0x52 && audioBytes[1] === 0x49 && audioBytes[2] === 0x46 && audioBytes[3] === 0x46) ||
-          // OGG header
-          (audioBytes[0] === 0x4F && audioBytes[1] === 0x67 && audioBytes[2] === 0x67 && audioBytes[3] === 0x53)
-        )
-        
-        if (!isValidAudio) {
-          // 如果不是有效音频，尝试将响应作为文本读取看看是什么内容
-          const textContent = new TextDecoder().decode(audioContent.slice(0, 200))
-          console.log('Response content (first 200 chars):', textContent)
-          throw new Error('Response is not valid audio format')
-        }
-
-      } else {
-        const errorText = await response.text()
-        console.error('Pollinations API error:', response.status, errorText)
-        throw new Error(`Pollinations API error: ${response.status} - ${errorText}`)
-      }
-
-    } catch (error) {
-      console.error('Pollinations TTS error:', error)
-      
-      // 备用方案：使用简单的TTS服务
-      console.log('Trying fallback TTS service')
       try {
-        const fallbackResponse = await fetch(`https://api.streamelements.com/kappa/v2/speech?voice=${voice}&text=${encodeURIComponent(limitedText)}`, {
-          method: 'GET'
+        const response = await fetch('https://api.openai.com/v1/audio/speech', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${API_KEY}`,
+            'Content-Type': 'application/json',
+            'User-Agent': 'NexusAI/1.0'
+          },
+          body: JSON.stringify({
+            model: 'tts-1',
+            input: text,
+            voice: voice,
+            response_format: 'mp3'
+          })
         })
 
-        if (fallbackResponse.ok) {
-          audioContent = await fallbackResponse.arrayBuffer()
-          console.log('Fallback TTS successful, size:', audioContent.byteLength)
-          
-          if (audioContent.byteLength < 100) {
-            throw new Error('Fallback TTS generated invalid audio')
-          }
+        console.log('OpenAI TTS response status:', response.status)
+        
+        if (response.ok) {
+          audioContent = await response.arrayBuffer()
+          console.log('OpenAI TTS successful, size:', audioContent.byteLength)
         } else {
-          throw new Error('Fallback TTS also failed')
+          const errorText = await response.text()
+          console.error('OpenAI TTS API error:', response.status, errorText)
+          throw new Error(`OpenAI TTS API error: ${response.status} - ${errorText}`)
         }
-      } catch (fallbackError) {
-        console.error('Fallback TTS error:', fallbackError)
-        throw new Error('All TTS services failed. Please try again with shorter text.')
+      } catch (error) {
+        console.error('OpenAI TTS error:', error)
+        throw new Error(`OpenAI TTS failed: ${error.message}`)
+      }
+    } else {
+      // 使用 Pollinations.ai 处理其他语音
+      console.log('Using Pollinations.ai TTS API')
+      
+      // 限制文本长度以适应 Pollinations API
+      const limitedText = text.substring(0, 1000)
+      
+      try {
+        // 方法1: 尝试 Pollinations.ai 的 GET 方式（带你的 API key）
+        const pollinationsUrl = `https://text.pollinations.ai/${encodeURIComponent(limitedText)}?model=openai-audio&voice=${voice}&key=${API_KEY}`
+        
+        console.log('Calling Pollinations TTS with API key')
+        
+        const response = await fetch(pollinationsUrl, {
+          method: 'GET',
+          headers: {
+            'User-Agent': 'NexusAI/1.0',
+            'Accept': 'audio/*,*/*;q=0.9',
+            'Referer': 'https://nexusai.app'
+          }
+        })
+
+        console.log('Pollinations response status:', response.status)
+        console.log('Pollinations response headers:', Object.fromEntries(response.headers.entries()))
+
+        if (response.ok) {
+          audioContent = await response.arrayBuffer()
+          console.log('Pollinations TTS successful, size:', audioContent.byteLength)
+          
+          // 验证音频内容
+          if (audioContent.byteLength < 100) {
+            throw new Error('Generated audio is too small')
+          }
+          
+        } else {
+          const errorText = await response.text()
+          console.error('Pollinations API error:', response.status, errorText)
+          
+          // 备用方案: 使用免费的 TTS 服务
+          console.log('Trying free TTS fallback')
+          const fallbackUrl = `https://api.voicerss.org/?key=demo&hl=en-us&src=${encodeURIComponent(limitedText.substring(0, 500))}&f=22khz_16bit_mono`
+          
+          const fallbackResponse = await fetch(fallbackUrl, {
+            method: 'GET'
+          })
+
+          if (fallbackResponse.ok) {
+            audioContent = await fallbackResponse.arrayBuffer()
+            console.log('Fallback TTS successful, size:', audioContent.byteLength)
+          } else {
+            throw new Error('All TTS services failed')
+          }
+        }
+
+      } catch (error) {
+        console.error('Pollinations TTS error:', error)
+        
+        // 最终备用方案：使用你的 API key 调用 OpenAI API，但用默认的 alloy 语音
+        console.log('Using OpenAI as final fallback with alloy voice')
+        try {
+          const response = await fetch('https://api.openai.com/v1/audio/speech', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: 'tts-1',
+              input: limitedText,
+              voice: 'alloy',
+              response_format: 'mp3'
+            })
+          })
+
+          if (response.ok) {
+            audioContent = await response.arrayBuffer()
+            console.log('Final fallback successful, size:', audioContent.byteLength)
+          } else {
+            throw new Error('All TTS services failed including OpenAI fallback')
+          }
+        } catch (finalError) {
+          console.error('Final fallback failed:', finalError)
+          throw new Error('All TTS services are currently unavailable. Please try again later.')
+        }
       }
     }
 
