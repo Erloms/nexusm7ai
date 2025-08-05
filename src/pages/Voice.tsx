@@ -20,7 +20,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Link } from 'react-router-dom';
 
 interface VoiceOption {
   id: string;
@@ -270,7 +269,11 @@ const Voice = () => {
       if (voiceMode === 'ai') {
         const optimizePrompt = `请将以下文本优化为更适合语音播报的版本，使其更生动、更有表现力，但保持原意。请直接返回优化后的文本，不要添加任何解释：\n\n${text}`;
         try {
-          const optimizeResponse = await fetch(`https://text.pollinations.ai/${encodeURIComponent(optimizePrompt)}?model=openai`);
+          const optimizeResponse = await fetch(`https://text.pollinations.ai/${encodeURIComponent(optimizePrompt)}?model=openai`, {
+            headers: {
+              'Authorization': 'Bearer r---77WuReCx4PoE'
+            }
+          });
           if (optimizeResponse.ok) {
             const reader = optimizeResponse.body!.getReader();
             const decoder = new TextDecoder();
@@ -337,6 +340,11 @@ const Voice = () => {
         throw new Error('语音生成失败，返回的数据为空');
       }
 
+      // 检查返回的音频数据长度
+      if (data.audioContent.length < 100) {
+        throw new Error('生成的音频数据过小，可能生成失败，请重试');
+      }
+
       // Convert base64 to blob
       try {
         const binaryString = atob(data.audioContent);
@@ -347,24 +355,50 @@ const Voice = () => {
         
         const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
         const audioUrl = URL.createObjectURL(audioBlob);
-        setAudioUrl(audioUrl);
         
-        const newHistoryItem: HistoryItem = {
-          id: Date.now(),
-          timestamp: new Date(),
-          voice: selectedVoice,
-          text: text,
-          audioUrl: audioUrl,
-          mode: voiceMode
-        };
+        // 验证音频文件是否有效
+        const audio = new Audio();
+        audio.preload = 'metadata';
         
-        setHistory(prev => [newHistoryItem, ...prev.slice(0, 9)]);
-        
-        toast({
-          title: "语音生成成功",
-          description: voiceMode === 'ai' ? "AI智能演绎版本已生成" : "原文朗读版本已生成",
-          variant: "default",
+        return new Promise((resolve, reject) => {
+          audio.onloadedmetadata = () => {
+            if (audio.duration > 0) {
+              setAudioUrl(audioUrl);
+              
+              const newHistoryItem: HistoryItem = {
+                id: Date.now(),
+                timestamp: new Date(),
+                voice: selectedVoice,
+                text: text,
+                audioUrl: audioUrl,
+                mode: voiceMode
+              };
+              
+              setHistory(prev => [newHistoryItem, ...prev.slice(0, 9)]);
+              
+              toast({
+                title: "语音生成成功",
+                description: voiceMode === 'ai' ? "AI智能演绎版本已生成" : "原文朗读版本已生成",
+                variant: "default",
+              });
+              resolve(void 0);
+            } else {
+              reject(new Error('生成的音频文件无效，时长为0'));
+            }
+          };
+          
+          audio.onerror = () => {
+            reject(new Error('生成的音频文件格式不正确'));
+          };
+          
+          // 设置超时
+          setTimeout(() => {
+            reject(new Error('音频验证超时'));
+          }, 5000);
+          
+          audio.src = audioUrl;
         });
+        
       } catch (decodeError) {
         console.error('Failed to decode audio:', decodeError);
         throw new Error('音频数据解析失败，请重试');

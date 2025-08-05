@@ -1,4 +1,5 @@
 
+
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const corsHeaders = {
@@ -81,46 +82,41 @@ serve(async (req) => {
     let audioContent: ArrayBuffer
 
     if (voiceConfig.provider === 'openai') {
-      // 尝试使用 OpenAI TTS API
-      const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
-      if (openaiApiKey) {
-        try {
-          console.log('Using OpenAI API')
-          const response = await fetch('https://api.openai.com/v1/audio/speech', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${openaiApiKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model: 'tts-1',
-              input: text,
-              voice: voice,
-              response_format: 'mp3',
-            }),
-          })
+      // 使用您提供的API key尝试 OpenAI TTS API
+      const apiKey = 'r---77WuReCx4PoE' // 使用您提供的API key
+      try {
+        console.log('Using OpenAI API with provided key')
+        const response = await fetch('https://api.openai.com/v1/audio/speech', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'tts-1',
+            input: text,
+            voice: voice,
+            response_format: 'mp3',
+          }),
+        })
 
-          if (!response.ok) {
-            const errorText = await response.text()
-            console.error('OpenAI API error:', response.status, errorText)
-            throw new Error(`OpenAI API error: ${response.status}`)
-          }
-
-          audioContent = await response.arrayBuffer()
-          console.log('OpenAI audio generated successfully, size:', audioContent.byteLength)
-        } catch (error) {
-          console.error('OpenAI request failed:', error)
-          console.log('Falling back to alternative method')
-          audioContent = await generateWithAlternativeMethod(text, voice)
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('OpenAI API error:', response.status, errorText)
+          throw new Error(`OpenAI API error: ${response.status} - ${errorText}`)
         }
-      } else {
-        console.log('OpenAI API key not found, using alternative method')
-        audioContent = await generateWithAlternativeMethod(text, voice)
+
+        audioContent = await response.arrayBuffer()
+        console.log('OpenAI audio generated successfully, size:', audioContent.byteLength)
+      } catch (error) {
+        console.error('OpenAI request failed:', error)
+        console.log('Falling back to Pollinations.ai')
+        audioContent = await generateWithPollinations(text, voice)
       }
     } else {
-      // 使用替代方法生成语音
-      console.log('Using alternative method for voice:', voice)
-      audioContent = await generateWithAlternativeMethod(text, voice)
+      // 使用 Pollinations.ai 生成语音
+      console.log('Using Pollinations.ai for voice:', voice)
+      audioContent = await generateWithPollinations(text, voice)
     }
 
     // Convert audio buffer to base64
@@ -148,80 +144,76 @@ serve(async (req) => {
   }
 })
 
-async function generateWithAlternativeMethod(text: string, voice: string): Promise<ArrayBuffer> {
-  console.log('Using alternative method for voice:', voice)
+async function generateWithPollinations(text: string, voice: string): Promise<ArrayBuffer> {
+  console.log('Using Pollinations.ai for TTS generation')
   
-  // 尝试使用不同的 TTS 服务
-  const alternatives = [
-    // 方法1: 使用 ElevenLabs 公共API (如果可用)
-    async () => {
-      console.log('Trying ElevenLabs public API')
-      try {
-        const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            text: text.substring(0, 1000),
-            model_id: 'eleven_multilingual_v2',
-            voice_settings: {
-              stability: 0.5,
-              similarity_boost: 0.75
-            }
-          })
-        })
-        if (response.ok) {
-          return await response.arrayBuffer()
-        }
-        throw new Error(`ElevenLabs API failed: ${response.status}`)
-      } catch (error) {
-        console.log('ElevenLabs failed:', error)
-        throw error
-      }
-    },
+  try {
+    // 使用您提供的API key
+    const apiKey = 'r---77WuReCx4PoE'
     
-    // 方法2: 使用 Text-to-Speech API
-    async () => {
-      console.log('Trying TTS API')
-      try {
-        const response = await fetch(`https://api.streamelements.com/kappa/v2/speech?voice=${voice}&text=${encodeURIComponent(text.substring(0, 500))}`)
-        if (response.ok) {
-          return await response.arrayBuffer()
-        }
-        throw new Error(`TTS API failed: ${response.status}`)
-      } catch (error) {
-        console.log('TTS API failed:', error)
-        throw error
-      }
-    },
+    // 限制文本长度以适应API限制
+    const limitedText = text.substring(0, 1000)
     
-    // 方法3: 生成一个简单的音频提示
-    async () => {
-      console.log('Generating placeholder audio')
-      // 返回一个最小的有效MP3文件头
-      const mp3Header = new Uint8Array([
-        0xFF, 0xFB, 0x90, 0x00, 0x00, 0x00, 0x00, 0x00, 
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x49, 0x44, 0x33, 0x03
-      ])
-      return mp3Header.buffer
-    }
-  ]
-  
-  for (let i = 0; i < alternatives.length; i++) {
-    try {
-      console.log(`Trying alternative method ${i + 1}`)
-      const result = await alternatives[i]()
-      if (result.byteLength > 20) { // 确保有实际内容
-        console.log(`Alternative method ${i + 1} successful, size:`, result.byteLength)
-        return result
+    // 尝试使用 Pollinations.ai TTS API
+    const response = await fetch('https://text.pollinations.ai/tts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        text: limitedText,
+        voice: voice,
+        speed: 1.0,
+        format: 'mp3'
+      }),
+    })
+
+    if (response.ok) {
+      const audioBuffer = await response.arrayBuffer()
+      if (audioBuffer.byteLength > 100) { // 确保有实际内容
+        console.log('Pollinations.ai TTS successful, size:', audioBuffer.byteLength)
+        return audioBuffer
       }
-    } catch (error) {
-      console.log(`Alternative method ${i + 1} failed:`, error.message)
-      continue
     }
+
+    console.log('Pollinations.ai TTS failed, trying alternative URL')
+    
+    // 备用方法：使用URL参数方式
+    const urlResponse = await fetch(`https://text.pollinations.ai/tts?text=${encodeURIComponent(limitedText)}&voice=${voice}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+      },
+    })
+
+    if (urlResponse.ok) {
+      const audioBuffer = await urlResponse.arrayBuffer()
+      if (audioBuffer.byteLength > 100) {
+        console.log('Pollinations.ai URL method successful, size:', audioBuffer.byteLength)
+        return audioBuffer
+      }
+    }
+
+    // 最后的备用方法
+    console.log('Trying fallback TTS service')
+    const fallbackResponse = await fetch(`https://api.streamelements.com/kappa/v2/speech?voice=${voice}&text=${encodeURIComponent(limitedText)}`, {
+      method: 'GET'
+    })
+
+    if (fallbackResponse.ok) {
+      const audioBuffer = await fallbackResponse.arrayBuffer()
+      if (audioBuffer.byteLength > 100) {
+        console.log('Fallback TTS successful, size:', audioBuffer.byteLength)
+        return audioBuffer
+      }
+    }
+
+    throw new Error('All TTS methods failed to generate valid audio')
+    
+  } catch (error) {
+    console.error('Pollinations TTS error:', error)
+    throw new Error('TTS generation failed. Please try again with shorter text.')
   }
-  
-  throw new Error('All TTS methods failed. Please check your network connection and try again.')
 }
+
