@@ -6,34 +6,36 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// 支持的语音列表
+// 支持的语音列表 - 使用Pollinations.ai服务
 const SUPPORTED_VOICES = {
-  // OpenAI 官方语音 - 但我们没有有效的OpenAI API key，所以通过Pollinations.ai调用
-  'alloy': { provider: 'pollinations' },
-  'echo': { provider: 'pollinations' },
-  'fable': { provider: 'pollinations' },
-  'onyx': { provider: 'pollinations' },
-  'nova': { provider: 'pollinations' },
-  'shimmer': { provider: 'pollinations' },
+  // OpenAI 兼容语音
+  'alloy': 'alloy',
+  'echo': 'echo', 
+  'fable': 'fable',
+  'onyx': 'onyx',
+  'nova': 'nova',
+  'shimmer': 'shimmer',
   // Pollinations.ai 扩展语音
-  'coral': { provider: 'pollinations' },
-  'verse': { provider: 'pollinations' },
-  'ballad': { provider: 'pollinations' },
-  'ash': { provider: 'pollinations' },
-  'sage': { provider: 'pollinations' },
-  'brook': { provider: 'pollinations' },
-  'clover': { provider: 'pollinations' },
-  'dan': { provider: 'pollinations' },
-  'elan': { provider: 'pollinations' },
-  'aurora': { provider: 'pollinations' },
-  'phoenix': { provider: 'pollinations' },
-  'luna': { provider: 'pollinations' }
+  'coral': 'coral',
+  'verse': 'verse',
+  'ballad': 'ballad',
+  'ash': 'ash',
+  'sage': 'sage',
+  'brook': 'brook',
+  'clover': 'clover',
+  'dan': 'dan',
+  'elan': 'elan',
+  'aurora': 'aurora',
+  'phoenix': 'phoenix',
+  'luna': 'luna'
 }
 
 // Pollinations.ai API key
 const POLLINATIONS_API_KEY = 'r---77WuReCx4PoE'
 
 serve(async (req) => {
+  console.log('TTS Function called, method:', req.method)
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -42,10 +44,9 @@ serve(async (req) => {
   try {
     const { text, voice } = await req.json()
 
-    console.log('TTS Request received:', { textLength: text?.length, voice })
+    console.log('TTS Request:', { textLength: text?.length, voice })
 
     if (!text) {
-      console.error('Text is required but not provided')
       return new Response(
         JSON.stringify({ error: 'Text is required' }),
         {
@@ -57,7 +58,6 @@ serve(async (req) => {
 
     // 限制文本长度
     if (text.length > 4000) {
-      console.error('Text too long:', text.length)
       return new Response(
         JSON.stringify({ error: 'Text too long. Please limit to 4000 characters.' }),
         {
@@ -67,9 +67,8 @@ serve(async (req) => {
       )
     }
 
-    const voiceConfig = SUPPORTED_VOICES[voice as keyof typeof SUPPORTED_VOICES]
-    if (!voiceConfig) {
-      console.error('Unsupported voice:', voice)
+    const voiceName = SUPPORTED_VOICES[voice as keyof typeof SUPPORTED_VOICES]
+    if (!voiceName) {
       return new Response(
         JSON.stringify({ error: `Unsupported voice: ${voice}` }),
         {
@@ -79,96 +78,54 @@ serve(async (req) => {
       )
     }
 
-    console.log('Generating speech with voice:', voice, 'using Pollinations.ai')
+    console.log('Using voice:', voiceName)
 
     let audioContent: ArrayBuffer
 
     try {
-      // 使用 Pollinations.ai TTS API (所有语音都通过这个服务)
-      const limitedText = text.substring(0, 1000) // Pollinations限制文本长度
+      // 限制文本长度到1000字符以内
+      const limitedText = text.substring(0, 1000)
       
-      // 方法1: 尝试带API key的POST请求
-      console.log('Trying Pollinations TTS with POST and API key')
+      console.log('Calling Pollinations.ai TTS API')
       
-      const postResponse = await fetch('https://text.pollinations.ai/', {
-        method: 'POST',
+      // 使用Pollinations.ai的TTS服务
+      const encodedText = encodeURIComponent(limitedText)
+      const ttsUrl = `https://text.pollinations.ai/${encodedText}?model=openai-audio&voice=${voiceName}`
+      
+      console.log('TTS URL:', ttsUrl)
+      
+      const response = await fetch(ttsUrl, {
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${POLLINATIONS_API_KEY}`,
-          'User-Agent': 'NexusAI/1.0'
-        },
-        body: JSON.stringify({
-          text: limitedText,
-          model: 'openai-audio',
-          voice: voice
-        })
+          'User-Agent': 'NexusAI/1.0',
+          'Accept': 'audio/*,*/*;q=0.9'
+        }
       })
 
-      console.log('Pollinations POST response status:', postResponse.status)
+      console.log('Pollinations response status:', response.status)
+      console.log('Pollinations response headers:', Object.fromEntries(response.headers.entries()))
 
-      if (postResponse.ok) {
-        audioContent = await postResponse.arrayBuffer()
-        console.log('Pollinations POST TTS successful, size:', audioContent.byteLength)
-      } else {
-        // 方法2: 尝试GET请求带API key
-        console.log('POST failed, trying GET with API key')
-        const getUrl = `https://text.pollinations.ai/${encodeURIComponent(limitedText)}?model=openai-audio&voice=${voice}&key=${POLLINATIONS_API_KEY}`
-        
-        const getResponse = await fetch(getUrl, {
-          method: 'GET',
-          headers: {
-            'User-Agent': 'NexusAI/1.0',
-            'Accept': 'audio/*,*/*;q=0.9'
-          }
-        })
-
-        console.log('Pollinations GET response status:', getResponse.status)
-
-        if (getResponse.ok) {
-          audioContent = await getResponse.arrayBuffer()
-          console.log('Pollinations GET TTS successful, size:', audioContent.byteLength)
-        } else {
-          // 方法3: 尝试不带API key的GET请求
-          console.log('GET with key failed, trying GET without key')
-          const simpleGetUrl = `https://text.pollinations.ai/${encodeURIComponent(limitedText)}?model=openai-audio&voice=${voice}`
-          
-          const simpleResponse = await fetch(simpleGetUrl, {
-            method: 'GET',
-            headers: {
-              'User-Agent': 'NexusAI/1.0',
-              'Accept': 'audio/*,*/*;q=0.9'
-            }
-          })
-
-          console.log('Pollinations simple GET response status:', simpleResponse.status)
-
-          if (simpleResponse.ok) {
-            audioContent = await simpleResponse.arrayBuffer()
-            console.log('Pollinations simple GET TTS successful, size:', audioContent.byteLength)
-          } else {
-            // 最后的备用方案：使用免费TTS服务
-            console.log('All Pollinations methods failed, trying fallback TTS')
-            const fallbackUrl = `https://api.voicerss.org/?key=demo&hl=en-us&src=${encodeURIComponent(limitedText.substring(0, 500))}&f=22khz_16bit_mono`
-            
-            const fallbackResponse = await fetch(fallbackUrl)
-            if (fallbackResponse.ok) {
-              audioContent = await fallbackResponse.arrayBuffer()
-              console.log('Fallback TTS successful, size:', audioContent.byteLength)
-            } else {
-              throw new Error('All TTS services failed')
-            }
-          }
-        }
+      if (!response.ok) {
+        throw new Error(`Pollinations API returned ${response.status}: ${response.statusText}`)
       }
 
-      // 验证音频内容
+      audioContent = await response.arrayBuffer()
+      console.log('Audio content size:', audioContent.byteLength)
+
+      // 检查音频内容是否有效
       if (audioContent.byteLength < 100) {
-        throw new Error('Generated audio is too small, likely not valid audio')
+        throw new Error('Generated audio is too small, likely not valid')
       }
 
     } catch (error) {
       console.error('TTS generation error:', error)
-      throw new Error(`TTS服务暂时不可用: ${error.message}`)
+      return new Response(
+        JSON.stringify({ error: `TTS service unavailable: ${error.message}` }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
     }
 
     // Convert audio buffer to base64
@@ -176,7 +133,7 @@ serve(async (req) => {
       String.fromCharCode(...new Uint8Array(audioContent))
     )
 
-    console.log('Audio generated successfully, final size:', audioContent.byteLength)
+    console.log('TTS generation successful, audio size:', audioContent.byteLength)
 
     return new Response(
       JSON.stringify({ audioContent: base64Audio }),
