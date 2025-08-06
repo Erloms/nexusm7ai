@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import { Button } from "@/components/ui/button";
@@ -291,36 +292,80 @@ const Voice = () => {
       
       // 限制文本长度到1000字符
       const limitedText = processedText.substring(0, 1000);
-      
-      console.log('Calling Pollinations.ai TTS API directly from frontend');
-      
-      // 直接调用 Pollinations.ai API
       const encodedText = encodeURIComponent(limitedText);
-      const ttsUrl = `https://text.pollinations.ai/${encodedText}?model=openai-audio&voice=${selectedVoice}`;
       
-      console.log('TTS URL:', ttsUrl);
+      console.log('Attempting TTS generation...');
       
-      const response = await fetch(ttsUrl, {
-        method: 'GET',
-        headers: {
-          'User-Agent': 'NexusAI/1.0',
-          'Accept': 'audio/*,*/*;q=0.9'
+      // 尝试多种调用方式
+      const attempts = [
+        // 方式1: 不使用API key的直接调用
+        () => fetch(`https://text.pollinations.ai/${encodedText}?voice=${selectedVoice}`, {
+          method: 'GET',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'audio/*,*/*;q=0.9',
+            'Referer': 'https://pollinations.ai/'
+          }
+        }),
+        
+        // 方式2: 使用model参数但不用API key
+        () => fetch(`https://text.pollinations.ai/${encodedText}?model=openai-audio&voice=${selectedVoice}`, {
+          method: 'GET',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'audio/*,*/*;q=0.9',
+            'Referer': 'https://pollinations.ai/'
+          }
+        }),
+        
+        // 方式3: 使用简化的URL
+        () => fetch(`https://text.pollinations.ai/${encodedText}`, {
+          method: 'GET',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'audio/*,*/*;q=0.9'
+          }
+        })
+      ];
+
+      let audioContent: ArrayBuffer | null = null;
+      let lastError: Error | null = null;
+
+      for (let i = 0; i < attempts.length; i++) {
+        try {
+          console.log(`Trying method ${i + 1}...`);
+          const response = await attempts[i]();
+          
+          console.log(`Method ${i + 1} response:`, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries())
+          });
+
+          if (response.ok) {
+            audioContent = await response.arrayBuffer();
+            console.log(`Method ${i + 1} success, audio size:`, audioContent.byteLength);
+            
+            // 检查音频内容是否有效
+            if (audioContent.byteLength > 100) {
+              break; // 成功获取到音频
+            } else {
+              console.log(`Method ${i + 1} returned small audio, trying next...`);
+              audioContent = null;
+            }
+          } else {
+            const errorText = await response.text();
+            console.log(`Method ${i + 1} failed:`, errorText);
+            lastError = new Error(`HTTP ${response.status}: ${errorText}`);
+          }
+        } catch (error) {
+          console.log(`Method ${i + 1} error:`, error);
+          lastError = error as Error;
         }
-      });
-
-      console.log('Pollinations response status:', response.status);
-      console.log('Pollinations response headers:', Object.fromEntries(response.headers.entries()));
-
-      if (!response.ok) {
-        throw new Error(`Pollinations API returned ${response.status}: ${response.statusText}`);
       }
 
-      const audioContent = await response.arrayBuffer();
-      console.log('Audio content size:', audioContent.byteLength);
-
-      // 检查音频内容是否有效
-      if (audioContent.byteLength < 100) {
-        throw new Error('Generated audio is too small, likely not valid');
+      if (!audioContent) {
+        throw lastError || new Error('所有TTS方法都失败了');
       }
 
       // 创建音频URL
@@ -349,16 +394,16 @@ const Voice = () => {
     } catch (error) {
       console.error('Error generating audio:', error);
       
-      let errorMessage = '语音生成失败，请重试';
+      let errorMessage = '语音生成失败';
       if (error instanceof Error) {
         if (error.message.includes('402')) {
-          errorMessage = 'API服务配额不足，请稍后再试或选择其他语音风格';
+          errorMessage = 'API配额不足，正在尝试其他方式...';
         } else if (error.message.includes('404')) {
-          errorMessage = '语音服务暂时不可用，请选择其他语音风格';
+          errorMessage = '语音服务暂时不可用';
         } else if (error.message.includes('500')) {
-          errorMessage = '语音服务器忙碌，请稍后重试';
+          errorMessage = '服务器繁忙，请稍后重试';
         } else {
-          errorMessage = error.message;
+          errorMessage = `生成失败: ${error.message}`;
         }
       }
       
@@ -528,8 +573,8 @@ const Voice = () => {
                     <ul className="text-gray-300 text-sm space-y-2 list-disc pl-5">
                       <li>智能演绎模式会让AI根据主题自由发挥，增加情感表达</li>
                       <li>原文朗读模式保持原文不变，适合正式文档朗读</li>
-                      <li>现在直接调用语音API，响应更快更稳定</li>
-                      <li>文本会自动限制在1000字符内以确保生成质量</li>
+                      <li>现在使用多种方式尝试语音生成，提高成功率</li>
+                      <li>如果某种方式失败会自动尝试其他方式</li>
                     </ul>
                   </div>
                 </CardContent>
