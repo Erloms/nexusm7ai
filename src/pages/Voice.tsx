@@ -289,93 +289,77 @@ const Voice = () => {
         }
       }
       
-      const supabase = (await import('@/integrations/supabase/client')).supabase;
+      // 限制文本长度到1000字符
+      const limitedText = processedText.substring(0, 1000);
       
-      console.log('Calling TTS function with:', {
-        text: processedText.substring(0, 100) + '...',
+      console.log('Calling Pollinations.ai TTS API directly from frontend');
+      
+      // 直接调用 Pollinations.ai API
+      const encodedText = encodeURIComponent(limitedText);
+      const ttsUrl = `https://text.pollinations.ai/${encodedText}?model=openai-audio&voice=${selectedVoice}`;
+      
+      console.log('TTS URL:', ttsUrl);
+      
+      const response = await fetch(ttsUrl, {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'NexusAI/1.0',
+          'Accept': 'audio/*,*/*;q=0.9'
+        }
+      });
+
+      console.log('Pollinations response status:', response.status);
+      console.log('Pollinations response headers:', Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        throw new Error(`Pollinations API returned ${response.status}: ${response.statusText}`);
+      }
+
+      const audioContent = await response.arrayBuffer();
+      console.log('Audio content size:', audioContent.byteLength);
+
+      // 检查音频内容是否有效
+      if (audioContent.byteLength < 100) {
+        throw new Error('Generated audio is too small, likely not valid');
+      }
+
+      // 创建音频URL
+      const audioBlob = new Blob([audioContent], { type: 'audio/mpeg' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      setAudioUrl(audioUrl);
+      
+      const newHistoryItem: HistoryItem = {
+        id: Date.now(),
+        timestamp: new Date(),
         voice: selectedVoice,
-        textLength: processedText.length
+        text: text,
+        audioUrl: audioUrl,
+        mode: voiceMode
+      };
+      
+      setHistory(prev => [newHistoryItem, ...prev.slice(0, 9)]);
+      
+      toast({
+        title: "语音生成成功",
+        description: `${voiceOptions.find(v => v.id === selectedVoice)?.name || selectedVoice} 语音已生成完成`,
+        variant: "default",
       });
-
-      const { data, error } = await supabase.functions.invoke('text-to-speech', {
-        body: {
-          text: processedText,
-          voice: selectedVoice
-        }
-      });
-
-      console.log('TTS function response:', { data, error });
-
-      if (error) {
-        console.error('TTS function error:', error);
-        
-        let errorMessage = '语音生成服务暂时不可用，请稍后再试';
-        
-        if (typeof error === 'string') {
-          if (error.includes('All TTS services are currently unavailable')) {
-            errorMessage = '所有语音服务暂时不可用，请稍后再试或选择其他语音风格';
-          } else if (error.includes('Text too long')) {
-            errorMessage = '文本过长，请缩短后重试';
-          } else if (error.includes('Unsupported voice')) {
-            errorMessage = '选择的语音风格暂不支持，请选择其他风格';
-          } else {
-            errorMessage = error;
-          }
-        } else if (error.message) {
-          errorMessage = error.message;
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      if (!data || !data.audioContent) {
-        throw new Error('语音生成失败，请重试或选择其他语音风格');
-      }
-
-      if (data.audioContent.length < 100) {
-        throw new Error('生成的音频数据过小，请重试或选择其他语音风格');
-      }
-
-      try {
-        const binaryString = atob(data.audioContent);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-        
-        const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        
-        setAudioUrl(audioUrl);
-        
-        const newHistoryItem: HistoryItem = {
-          id: Date.now(),
-          timestamp: new Date(),
-          voice: selectedVoice,
-          text: text,
-          audioUrl: audioUrl,
-          mode: voiceMode
-        };
-        
-        setHistory(prev => [newHistoryItem, ...prev.slice(0, 9)]);
-        
-        toast({
-          title: "语音生成成功",
-          description: `${voiceOptions.find(v => v.id === selectedVoice)?.name || selectedVoice} 语音已生成完成`,
-          variant: "default",
-        });
-        
-      } catch (decodeError) {
-        console.error('Failed to decode audio:', decodeError);
-        throw new Error('音频数据解析失败，请重试');
-      }
       
     } catch (error) {
       console.error('Error generating audio:', error);
       
       let errorMessage = '语音生成失败，请重试';
       if (error instanceof Error) {
-        errorMessage = error.message;
+        if (error.message.includes('402')) {
+          errorMessage = 'API服务配额不足，请稍后再试或选择其他语音风格';
+        } else if (error.message.includes('404')) {
+          errorMessage = '语音服务暂时不可用，请选择其他语音风格';
+        } else if (error.message.includes('500')) {
+          errorMessage = '语音服务器忙碌，请稍后重试';
+        } else {
+          errorMessage = error.message;
+        }
       }
       
       toast({
@@ -544,8 +528,8 @@ const Voice = () => {
                     <ul className="text-gray-300 text-sm space-y-2 list-disc pl-5">
                       <li>智能演绎模式会让AI根据主题自由发挥，增加情感表达</li>
                       <li>原文朗读模式保持原文不变，适合正式文档朗读</li>
-                      <li>OpenAI官方语音（前6个）更稳定，其他为社区扩展语音</li>
-                      <li>如遇生成失败，建议先尝试 Alloy 等官方语音</li>
+                      <li>现在直接调用语音API，响应更快更稳定</li>
+                      <li>文本会自动限制在1000字符内以确保生成质量</li>
                     </ul>
                   </div>
                 </CardContent>
