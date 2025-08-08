@@ -85,66 +85,107 @@ serve(async (req) => {
       
       console.log('Calling Pollinations.ai TTS API')
       
-      // 使用Pollinations.ai的TTS服务，添加API token
-      const encodedText = encodeURIComponent(limitedText)
-      const ttsUrl = `https://text.pollinations.ai/${encodedText}?model=openai-audio&voice=${voiceName}&token=r---77WuReCx4PoE`
-      
-      console.log('TTS URL:', ttsUrl)
-      
-      const response = await fetch(ttsUrl, {
-        method: 'GET',
-        headers: {
-          'User-Agent': 'NexusAI/1.0',
-          'Accept': 'audio/mpeg, audio/wav, audio/mp3, audio/*',
-          'Authorization': 'Bearer r---77WuReCx4PoE'
-        }
-      })
-
-      console.log('Pollinations response status:', response.status)
-      console.log('Pollinations response headers:', Object.fromEntries(response.headers.entries()))
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('Pollinations API error:', errorText)
+      // 尝试多种不同的API调用方式
+      const apiUrls = [
+        // 方式1: 使用新的API格式，不带token
+        `https://text.pollinations.ai/${encodeURIComponent(limitedText)}?voice=${voiceName}`,
         
-        // 如果是402错误，尝试不带token的请求
-        if (response.status === 402) {
-          console.log('Trying without token due to 402 error')
-          const fallbackUrl = `https://text.pollinations.ai/${encodedText}?model=openai-audio&voice=${voiceName}`
+        // 方式2: 使用原始格式
+        `https://text.pollinations.ai/${encodeURIComponent(limitedText)}?model=openai-audio&voice=${voiceName}`,
+        
+        // 方式3: 使用不同的端点
+        `https://audio.pollinations.ai/tts?text=${encodeURIComponent(limitedText)}&voice=${voiceName}`,
+      ]
+      
+      let success = false
+      
+      for (const [index, ttsUrl] of apiUrls.entries()) {
+        console.log(`Trying API approach ${index + 1}:`, ttsUrl)
+        
+        try {
+          const response = await fetch(ttsUrl, {
+            method: 'GET',
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (compatible; NexusAI/1.0)',
+              'Accept': 'audio/mpeg, audio/wav, audio/mp3, audio/*',
+              'Referer': 'https://pollinations.ai',
+            }
+          })
+
+          console.log(`API approach ${index + 1} response status:`, response.status)
+          console.log(`API approach ${index + 1} response headers:`, Object.fromEntries(response.headers.entries()))
+
+          if (response.ok) {
+            audioContent = await response.arrayBuffer()
+            console.log('Audio content size:', audioContent.byteLength)
+            
+            // 检查音频内容是否有效
+            if (audioContent.byteLength > 100) {
+              success = true
+              break
+            } else {
+              console.log(`API approach ${index + 1}: Audio too small, trying next approach`)
+              continue
+            }
+          } else if (response.status !== 402 && response.status !== 429) {
+            // 如果不是付费或频率限制错误，尝试下一个方法
+            const errorText = await response.text()
+            console.log(`API approach ${index + 1} error:`, errorText)
+            continue
+          } else {
+            console.log(`API approach ${index + 1}: Got ${response.status}, trying next approach`)
+            continue
+          }
+        } catch (error) {
+          console.error(`API approach ${index + 1} failed:`, error)
+          continue
+        }
+      }
+      
+      if (!success) {
+        // 如果所有方法都失败，尝试使用简化的文本
+        console.log('All API approaches failed, trying with simplified text')
+        
+        const simplifiedText = limitedText
+          .replace(/[^\u4e00-\u9fa5\w\s]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .substring(0, 200) // 进一步缩短文本
+        
+        if (simplifiedText) {
+          const fallbackUrl = `https://text.pollinations.ai/${encodeURIComponent(simplifiedText)}?voice=alloy`
+          console.log('Trying fallback with simplified text:', fallbackUrl)
           
           const fallbackResponse = await fetch(fallbackUrl, {
             method: 'GET',
             headers: {
-              'User-Agent': 'NexusAI/1.0',
-              'Accept': 'audio/mpeg, audio/wav, audio/mp3, audio/*'
+              'User-Agent': 'Mozilla/5.0 (compatible; NexusAI/1.0)',
+              'Accept': 'audio/*',
             }
           })
           
-          if (!fallbackResponse.ok) {
-            throw new Error(`Pollinations API returned ${fallbackResponse.status}: ${await fallbackResponse.text()}`)
+          if (fallbackResponse.ok) {
+            audioContent = await fallbackResponse.arrayBuffer()
+            if (audioContent.byteLength > 100) {
+              success = true
+              console.log('Fallback method succeeded')
+            }
           }
-          
-          audioContent = await fallbackResponse.arrayBuffer()
-        } else {
-          throw new Error(`Pollinations API returned ${response.status}: ${errorText}`)
         }
-      } else {
-        audioContent = await response.arrayBuffer()
       }
       
-      console.log('Audio content size:', audioContent.byteLength)
-
-      // 检查音频内容是否有效
-      if (audioContent.byteLength < 100) {
-        throw new Error('Generated audio is too small, likely not valid')
+      if (!success) {
+        throw new Error('All TTS API methods failed. The service may be temporarily unavailable.')
       }
 
     } catch (error) {
       console.error('TTS generation error:', error)
       return new Response(
-        JSON.stringify({ error: `TTS service error: ${error.message}` }),
+        JSON.stringify({ 
+          error: `TTS service unavailable: ${error.message}` 
+        }),
         {
-          status: 500,
+          status: 503,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       )

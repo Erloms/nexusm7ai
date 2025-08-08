@@ -380,7 +380,11 @@ const Voice = () => {
       
       let errorMessage = '语音生成失败';
       if (error instanceof Error) {
-        if (error.message.includes('content_filter') || error.message.includes('content management policy')) {
+        if (error.message.includes('service unavailable') || error.message.includes('TTS service unavailable')) {
+          errorMessage = 'TTS服务暂时不可用，请稍后重试。我们正在尝试修复此问题。';
+        } else if (error.message.includes('All TTS API methods failed')) {
+          errorMessage = '语音服务暂时繁忙，请稍后重试或尝试缩短文本内容';
+        } else if (error.message.includes('content_filter') || error.message.includes('content management policy')) {
           errorMessage = '输入内容包含敏感词汇，请修改后重试';
         } else if (error.message.includes('network') || error.message.includes('fetch')) {
           errorMessage = '网络连接失败，请检查网络后重试';
@@ -389,7 +393,7 @@ const Voice = () => {
         } else if (error.message.includes('rate limit')) {
           errorMessage = 'API调用频率过高，请稍后重试';
         } else if (error.message.includes('402') || error.message.includes('Payment Required')) {
-          errorMessage = 'API调用配额不足，正在尝试备用方案，请重试';
+          errorMessage = '语音服务暂时受限，正在尝试备用方案，请重试';
         } else {
           errorMessage = error.message;
         }
@@ -557,12 +561,12 @@ const Voice = () => {
                   </div>
 
                   <div className="bg-gray-700/30 rounded-lg p-6">
-                    <h4 className="text-white font-medium mb-3 text-base">技术说明</h4>
+                    <h4 className="text-white font-medium mb-3 text-base">服务状态说明</h4>
                     <ul className="text-gray-300 text-sm space-y-2 list-disc pl-5">
-                      <li>🎯 使用Supabase Edge Function调用Pollinations.ai API</li>
-                      <li>🔒 通过服务端代理避免CORS跨域问题</li>
+                      <li>🔄 使用多重备用API确保服务可用性</li>
+                      <li>⚡ 系统会自动选择最佳的语音生成方案</li>
                       <li>📊 建议文本长度控制在500字符以内以获得最佳效果</li>
-                      <li>✅ 自动过滤敏感内容，确保内容合规</li>
+                      <li>🛡️ 自动过滤敏感内容，确保内容合规</li>
                       <li>⏱️ 生成时间通常在10-30秒，请耐心等待</li>
                       <li>🎵 支持18种不同的语音风格选择</li>
                     </ul>
