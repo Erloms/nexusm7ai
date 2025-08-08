@@ -21,6 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { supabase } from '@/integrations/supabase/client';
 
 interface VoiceOption {
   id: string;
@@ -40,6 +41,153 @@ interface HistoryItem {
   mode: 'reading' | 'ai';
 }
 
+const voiceOptions: VoiceOption[] = [
+  { 
+    id: 'alloy', 
+    name: 'Alloy', 
+    description: '平衡中性', 
+    color: '#8B5CF6', 
+    avatar: '🤖',
+    personality: '专业稳重，适合商务场景'
+  },
+  { 
+    id: 'echo', 
+    name: 'Echo', 
+    description: '深沉有力', 
+    color: '#6366F1', 
+    avatar: '🎭',
+    personality: '富有磁性，适合纪录片配音'
+  },
+  { 
+    id: 'fable', 
+    name: 'Fable', 
+    description: '温暖讲述', 
+    color: '#8B5CF6', 
+    avatar: '📚',
+    personality: '温和亲切，适合故事讲述'
+  },
+  { 
+    id: 'onyx', 
+    name: 'Onyx', 
+    description: '威严庄重', 
+    color: '#333333', 
+    avatar: '👑',
+    personality: '威严正式，适合新闻播报'
+  },
+  { 
+    id: 'nova', 
+    name: 'Nova', 
+    description: '友好专业', 
+    color: '#10B981', 
+    avatar: '✨',
+    personality: '活泼友好，适合教学内容'
+  },
+  { 
+    id: 'shimmer', 
+    name: 'Shimmer', 
+    description: '轻快明亮', 
+    color: '#60A5FA', 
+    avatar: '🌟',
+    personality: '清新甜美，适合广告配音'
+  },
+  { 
+    id: 'coral', 
+    name: 'Coral', 
+    description: '温柔平静', 
+    color: '#F87171', 
+    avatar: '🌊',
+    personality: '温柔舒缓，适合冥想引导'
+  },
+  { 
+    id: 'verse', 
+    name: 'Verse', 
+    description: '生动诗意', 
+    color: '#FBBF24', 
+    avatar: '🎨',
+    personality: '富有诗意，适合文学朗读'
+  },
+  { 
+    id: 'ballad', 
+    name: 'Ballad', 
+    description: '抒情柔和', 
+    color: '#A78BFA', 
+    avatar: '🎵',
+    personality: '抒情动人，适合音乐解说'
+  },
+  { 
+    id: 'ash', 
+    name: 'Ash', 
+    description: '思考沉稳', 
+    color: '#4B5563', 
+    avatar: '🧠',
+    personality: '理性冷静，适合科学解说'
+  },
+  { 
+    id: 'sage', 
+    name: 'Sage', 
+    description: '智慧老练', 
+    color: '#059669', 
+    avatar: '🧙‍♂️',
+    personality: '睿智老练，适合知识传授'
+  },
+  { 
+    id: 'brook', 
+    name: 'Brook', 
+    description: '流畅舒适', 
+    color: '#3B82F6', 
+    avatar: '🏞️',
+    personality: '自然流畅，适合有声小说'
+  },
+  { 
+    id: 'clover', 
+    name: 'Clover', 
+    description: '活泼年轻', 
+    color: '#EC4899', 
+    avatar: '🍀',
+    personality: '青春活力，适合儿童内容'
+  },
+  { 
+    id: 'dan', 
+    name: 'Dan', 
+    description: '男声稳重', 
+    color: '#1F2937', 
+    avatar: '👨‍💼',
+    personality: '成熟稳重，适合企业培训'
+  },
+  { 
+    id: 'elan', 
+    name: 'Elan', 
+    description: '优雅流利', 
+    color: '#7C3AED', 
+    avatar: '💎',
+    personality: '优雅精致，适合高端品牌'
+  },
+  { 
+    id: 'aurora', 
+    name: 'Aurora', 
+    description: '神秘魅力', 
+    color: '#8B5A9B', 
+    avatar: '🌅',
+    personality: '神秘诱人，适合悬疑故事'
+  },
+  { 
+    id: 'phoenix', 
+    name: 'Phoenix', 
+    description: '激情澎湃', 
+    color: '#DC2626', 
+    avatar: '🔥',
+    personality: '热情激昂，适合励志演讲'
+  },
+  { 
+    id: 'luna', 
+    name: 'Luna', 
+    description: '梦幻柔美', 
+    color: '#6B46C1', 
+    avatar: '🌙',
+    personality: '梦幻温柔，适合睡前故事'
+  }
+];
+
 const Voice = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -52,156 +200,6 @@ const Voice = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [voiceMode, setVoiceMode] = useState<'reading' | 'ai'>('reading');
   const audioRef = useRef<HTMLAudioElement>(null);
-
-  // 使用您提供的API密钥
-  const POLLINATIONS_API_TOKEN = 'r---77WuReCx4PoE';
-
-  const voiceOptions: VoiceOption[] = [
-    { 
-      id: 'alloy', 
-      name: 'Alloy', 
-      description: '平衡中性', 
-      color: '#8B5CF6', 
-      avatar: '🤖',
-      personality: '专业稳重，适合商务场景'
-    },
-    { 
-      id: 'echo', 
-      name: 'Echo', 
-      description: '深沉有力', 
-      color: '#6366F1', 
-      avatar: '🎭',
-      personality: '富有磁性，适合纪录片配音'
-    },
-    { 
-      id: 'fable', 
-      name: 'Fable', 
-      description: '温暖讲述', 
-      color: '#8B5CF6', 
-      avatar: '📚',
-      personality: '温和亲切，适合故事讲述'
-    },
-    { 
-      id: 'onyx', 
-      name: 'Onyx', 
-      description: '威严庄重', 
-      color: '#333333', 
-      avatar: '👑',
-      personality: '威严正式，适合新闻播报'
-    },
-    { 
-      id: 'nova', 
-      name: 'Nova', 
-      description: '友好专业', 
-      color: '#10B981', 
-      avatar: '✨',
-      personality: '活泼友好，适合教学内容'
-    },
-    { 
-      id: 'shimmer', 
-      name: 'Shimmer', 
-      description: '轻快明亮', 
-      color: '#60A5FA', 
-      avatar: '🌟',
-      personality: '清新甜美，适合广告配音'
-    },
-    { 
-      id: 'coral', 
-      name: 'Coral', 
-      description: '温柔平静', 
-      color: '#F87171', 
-      avatar: '🌊',
-      personality: '温柔舒缓，适合冥想引导'
-    },
-    { 
-      id: 'verse', 
-      name: 'Verse', 
-      description: '生动诗意', 
-      color: '#FBBF24', 
-      avatar: '🎨',
-      personality: '富有诗意，适合文学朗读'
-    },
-    { 
-      id: 'ballad', 
-      name: 'Ballad', 
-      description: '抒情柔和', 
-      color: '#A78BFA', 
-      avatar: '🎵',
-      personality: '抒情动人，适合音乐解说'
-    },
-    { 
-      id: 'ash', 
-      name: 'Ash', 
-      description: '思考沉稳', 
-      color: '#4B5563', 
-      avatar: '🧠',
-      personality: '理性冷静，适合科学解说'
-    },
-    { 
-      id: 'sage', 
-      name: 'Sage', 
-      description: '智慧老练', 
-      color: '#059669', 
-      avatar: '🧙‍♂️',
-      personality: '睿智老练，适合知识传授'
-    },
-    { 
-      id: 'brook', 
-      name: 'Brook', 
-      description: '流畅舒适', 
-      color: '#3B82F6', 
-      avatar: '🏞️',
-      personality: '自然流畅，适合有声小说'
-    },
-    { 
-      id: 'clover', 
-      name: 'Clover', 
-      description: '活泼年轻', 
-      color: '#EC4899', 
-      avatar: '🍀',
-      personality: '青春活力，适合儿童内容'
-    },
-    { 
-      id: 'dan', 
-      name: 'Dan', 
-      description: '男声稳重', 
-      color: '#1F2937', 
-      avatar: '👨‍💼',
-      personality: '成熟稳重，适合企业培训'
-    },
-    { 
-      id: 'elan', 
-      name: 'Elan', 
-      description: '优雅流利', 
-      color: '#7C3AED', 
-      avatar: '💎',
-      personality: '优雅精致，适合高端品牌'
-    },
-    { 
-      id: 'aurora', 
-      name: 'Aurora', 
-      description: '神秘魅力', 
-      color: '#8B5A9B', 
-      avatar: '🌅',
-      personality: '神秘诱人，适合悬疑故事'
-    },
-    { 
-      id: 'phoenix', 
-      name: 'Phoenix', 
-      description: '激情澎湃', 
-      color: '#DC2626', 
-      avatar: '🔥',
-      personality: '热情激昂，适合励志演讲'
-    },
-    { 
-      id: 'luna', 
-      name: 'Luna', 
-      description: '梦幻柔美', 
-      color: '#6B46C1', 
-      avatar: '🌙',
-      personality: '梦幻温柔，适合睡前故事'
-    }
-  ];
 
   useEffect(() => {
     const savedHistory = localStorage.getItem('nexusAiVoiceHistory');
@@ -287,10 +285,10 @@ const Voice = () => {
       return;
     }
 
-    if (text.length > 4000) {
+    if (text.length > 1000) {
       toast({
         title: "文本过长",
-        description: "请将文本限制在4000字符以内",
+        description: "请将文本限制在1000字符以内以获得更好效果",
         variant: "destructive",
       });
       return;
@@ -299,107 +297,70 @@ const Voice = () => {
     setLoading(true);
     
     try {
-      let processedText = text;
-      
-      if (voiceMode === 'ai') {
-        const optimizePrompt = `请将以下文本优化为更适合语音播报的版本，使其更生动、更有表现力，但保持原意。请直接返回优化后的文本，不要添加任何解释：\n\n${text}`;
-        try {
-          const optimizeResponse = await fetch(`https://text.pollinations.ai/openai?token=${POLLINATIONS_API_TOKEN}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${POLLINATIONS_API_TOKEN}`,
-            },
-            body: JSON.stringify({
-              messages: [
-                { role: 'user', content: optimizePrompt }
-              ],
-              model: 'gpt-4'
-            })
-          });
-          
-          if (optimizeResponse.ok) {
-            const reader = optimizeResponse.body!.getReader();
-            const decoder = new TextDecoder();
-            let optimizedText = '';
-            
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              const chunk = decoder.decode(value, { stream: true });
-              optimizedText += chunk;
-            }
-            
-            processedText = optimizedText.trim().replace(/^[""]|[""]$/g, '');
-            if (processedText.length > 4000) {
-              processedText = processedText.substring(0, 4000);
-            }
-          }
-        } catch (error) {
-          console.log('AI优化失败，使用原文:', error);
-        }
-      }
-      
-      // 限制文本长度到200字符以内以获得最佳效果
-      const limitedText = processedText.substring(0, 200);
-      console.log('开始语音生成，文本长度:', limitedText.length);
+      console.log('开始语音生成，文本长度:', text.length);
       console.log('使用语音:', selectedVoice);
-      console.log('处理后文本:', limitedText);
+      console.log('生成模式:', voiceMode);
       
-      // 使用Pollinations.ai Audio API
-      const encodedText = encodeURIComponent(limitedText);
-      const audioApiUrl = `https://text.pollinations.ai/${encodedText}?model=openai-audio&voice=${selectedVoice}&token=${POLLINATIONS_API_TOKEN}`;
+      // 清理和优化文本
+      let processedText = text.trim();
       
-      console.log('请求音频API URL:', audioApiUrl);
+      // 移除可能触发内容过滤的特殊字符和内容
+      processedText = processedText
+        .replace(/[^\u4e00-\u9fa5\w\s，。！？、；：""''（）【】《》\-\.,!?;:()[\]{}]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
       
-      const response = await fetch(audioApiUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'audio/mpeg, audio/wav, audio/mp3, audio/*',
-          'Authorization': `Bearer ${POLLINATIONS_API_TOKEN}`,
-          'User-Agent': 'NexusAI/1.0'
+      // 限制文本长度
+      if (processedText.length > 500) {
+        processedText = processedText.substring(0, 500);
+      }
+      
+      if (!processedText) {
+        throw new Error('处理后的文本为空，请检查输入内容');
+      }
+
+      console.log('处理后文本:', processedText);
+      
+      // 调用Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('text-to-speech', {
+        body: {
+          text: processedText,
+          voice: selectedVoice
         }
       });
 
-      console.log('Pollinations音频API响应状态:', response.status);
-      console.log('响应头:', Object.fromEntries(response.headers.entries()));
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.log('API错误响应:', errorText);
-        throw new Error(`Pollinations Audio API错误: ${response.status} - ${response.statusText}`);
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(`语音生成服务错误: ${error.message}`);
       }
 
-      const contentType = response.headers.get('content-type') || '';
-      console.log('音频内容类型:', contentType);
+      if (!data || !data.audioContent) {
+        throw new Error('未收到音频数据');
+      }
+
+      // 将base64音频数据转换为Blob
+      const audioBytes = atob(data.audioContent);
+      const audioArray = new Uint8Array(audioBytes.length);
+      for (let i = 0; i < audioBytes.length; i++) {
+        audioArray[i] = audioBytes.charCodeAt(i);
+      }
       
-      // 检查是否返回的是音频内容
-      if (!contentType.includes('audio')) {
-        const responseText = await response.text();
-        console.log('非音频响应内容:', responseText);
-        throw new Error('API返回的不是音频内容，可能是文本回复');
+      const audioBlob = new Blob([audioArray], { type: 'audio/mpeg' });
+      console.log('音频数据大小:', audioBlob.size, 'bytes');
+
+      if (audioBlob.size < 1000) {
+        throw new Error('生成的音频文件过小，可能生成失败');
       }
-
-      const arrayBuffer = await response.arrayBuffer();
-      console.log('音频数据大小:', arrayBuffer.byteLength, 'bytes');
-
-      if (arrayBuffer.byteLength < 1000) {
-        throw new Error('音频文件太小，可能生成失败');
-      }
-
-      const audioBlob = new Blob([arrayBuffer], { 
-        type: contentType.includes('audio') ? contentType : 'audio/mpeg' 
-      });
 
       // 验证音频有效性
       const isValid = await validateAudioBlob(audioBlob);
       if (!isValid) {
-        throw new Error('生成的音频无效或时长为0');
+        throw new Error('生成的音频无效');
       }
 
       // 创建音频URL
       const newAudioUrl = URL.createObjectURL(audioBlob);
-      console.log('音频生成成功，URL:', newAudioUrl);
+      console.log('音频生成成功');
       
       setAudioUrl(newAudioUrl);
       
@@ -407,7 +368,7 @@ const Voice = () => {
         id: Date.now(),
         timestamp: new Date(),
         voice: selectedVoice,
-        text: limitedText,
+        text: processedText,
         audioUrl: newAudioUrl,
         mode: voiceMode
       };
@@ -425,18 +386,16 @@ const Voice = () => {
       
       let errorMessage = '语音生成失败';
       if (error instanceof Error) {
-        if (error.message.includes('402') || error.message.includes('tier not high enough')) {
-          errorMessage = 'API密钥权限不足，请检查您的Pollinations.ai账户配额';
-        } else if (error.message.includes('404')) {
-          errorMessage = 'API接口不存在，请检查URL是否正确';
-        } else if (error.message.includes('500')) {
-          errorMessage = '服务器内部错误，请稍后重试';
-        } else if (error.message.includes('Failed to fetch')) {
-          errorMessage = '网络连接失败，请检查网络连接';
-        } else if (error.message.includes('非音频响应')) {
-          errorMessage = 'API返回了文本而非音频，可能是模型参数错误';
+        if (error.message.includes('content_filter') || error.message.includes('content management policy')) {
+          errorMessage = '输入内容包含敏感词汇，请修改后重试';
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage = '网络连接失败，请检查网络后重试';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = '请求超时，请稍后重试';
+        } else if (error.message.includes('rate limit')) {
+          errorMessage = 'API调用频率过高，请稍后重试';
         } else {
-          errorMessage = `生成失败: ${error.message}`;
+          errorMessage = error.message;
         }
       }
       
@@ -569,22 +528,22 @@ const Voice = () => {
                       className="min-h-[180px] bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 focus:border-cyan-400 text-base"
                     />
                     <div className="flex justify-between items-center mt-3">
-                      <p className={`text-sm ${text.length > 200 ? 'text-yellow-400' : text.length > 4000 ? 'text-red-400' : 'text-gray-400'}`}>
-                        字符数: {text.length} / 4000 {text.length > 200 && '(建议200字符以内以获得更好效果)'}
+                      <p className={`text-sm ${text.length > 500 ? 'text-yellow-400' : text.length > 1000 ? 'text-red-400' : 'text-gray-400'}`}>
+                        字符数: {text.length} / 1000 {text.length > 500 && '(建议500字符以内以获得更好效果)'}
                       </p>
                       <p className="text-gray-400 text-sm">
                         模式: {voiceMode === 'ai' ? '🎭 智能演绎' : '📖 原文朗读'}
                       </p>
                     </div>
-                    {text.length > 4000 && (
-                      <p className="text-red-400 text-sm mt-2">⚠️ 文本过长，请缩短到4000字符以内</p>
+                    {text.length > 1000 && (
+                      <p className="text-red-400 text-sm mt-2">⚠️ 文本过长，请缩短到1000字符以内</p>
                     )}
                   </div>
 
                   <div className="flex justify-between mb-8">
                     <Button
                       onClick={handleGenerateVoice}
-                      disabled={loading || !text.trim()}
+                      disabled={loading || !text.trim() || text.length > 1000}
                       className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-10 py-3 text-base"
                     >
                       {loading ? (
@@ -604,11 +563,11 @@ const Voice = () => {
                   <div className="bg-gray-700/30 rounded-lg p-6">
                     <h4 className="text-white font-medium mb-3 text-base">技术说明</h4>
                     <ul className="text-gray-300 text-sm space-y-2 list-disc pl-5">
-                      <li>🎯 使用Pollinations.ai的Audio API服务</li>
-                      <li>🔑 已配置API密钥进行身份验证</li>
-                      <li>📊 建议文本长度控制在200字符以内以获得最佳效果</li>
-                      <li>✅ 自动验证音频有效性，确保播放时长大于0</li>
-                      <li>⏱️ 生成时间通常在5-15秒，请耐心等待</li>
+                      <li>🎯 使用Supabase Edge Function调用Pollinations.ai API</li>
+                      <li>🔒 通过服务端代理避免CORS跨域问题</li>
+                      <li>📊 建议文本长度控制在500字符以内以获得最佳效果</li>
+                      <li>✅ 自动过滤敏感内容，确保内容合规</li>
+                      <li>⏱️ 生成时间通常在10-30秒，请耐心等待</li>
                       <li>🎵 支持18种不同的语音风格选择</li>
                     </ul>
                   </div>
