@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
+import WebSpeechTTS from '@/components/WebSpeechTTS';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -14,7 +15,9 @@ import {
   Pause,
   BookOpen,
   Sparkles,
-  RefreshCw
+  RefreshCw,
+  Globe,
+  Zap
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -199,6 +202,7 @@ const Voice = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [voiceMode, setVoiceMode] = useState<'reading' | 'ai'>('reading');
+  const [ttsMode, setTTSMode] = useState<'cloud' | 'browser'>('browser');
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
@@ -409,6 +413,27 @@ const Voice = () => {
     }
   };
 
+  const handleWebSpeechAudioGenerated = (audioUrl: string) => {
+    setAudioUrl(audioUrl);
+    
+    const newHistoryItem: HistoryItem = {
+      id: Date.now(),
+      timestamp: new Date(),
+      voice: 'browser-tts',
+      text: text,
+      audioUrl: audioUrl,
+      mode: voiceMode
+    };
+    
+    setHistory(prev => [newHistoryItem, ...prev.slice(0, 9)]);
+    
+    toast({
+      title: "语音生成成功",
+      description: "使用浏览器原生TTS生成完成",
+      variant: "default",
+    });
+  };
+
   const togglePlayPause = () => {
     if (audioRef.current && audioUrl) {
       if (isPlaying) {
@@ -441,7 +466,7 @@ const Voice = () => {
               AI 文本转音频
             </h1>
             <p className="text-gray-300 mb-8 text-lg">
-              输入文字，选择语音风格，一键转换为自然流畅的语音。<br />
+              选择云端AI语音或浏览器原生TTS，一键转换为自然流畅的语音。<br />
               支持原文朗读和AI智能演绎两种模式，创建专业水准的音频内容。
             </p>
           </div>
@@ -451,6 +476,53 @@ const Voice = () => {
               <Card className="bg-gray-800/50 border-gray-700">
                 <CardContent className="p-8">
                   <h3 className="text-2xl font-bold mb-8 text-white">语音生成</h3>
+                  
+                  <div className="mb-8">
+                    <h4 className="text-cyan-400 font-medium mb-4 text-lg">TTS引擎选择</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Button
+                        variant={ttsMode === 'browser' ? 'default' : 'outline'}
+                        onClick={() => setTTSMode('browser')}
+                        className={`p-6 h-auto flex flex-col items-center gap-2 ${
+                          ttsMode === 'browser' 
+                            ? 'bg-green-500 hover:bg-green-600 border-green-400' 
+                            : 'border-gray-600 hover:border-green-400'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Globe className="h-5 w-5" />
+                          <span className="font-medium">浏览器TTS</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-sm">
+                          <Zap className="h-4 w-4 text-green-400" />
+                          <span>免费 • 实时 • 离线</span>
+                        </div>
+                      </Button>
+                      
+                      <Button
+                        variant={ttsMode === 'cloud' ? 'default' : 'outline'}
+                        onClick={() => setTTSMode('cloud')}
+                        className={`p-6 h-auto flex flex-col items-center gap-2 ${
+                          ttsMode === 'cloud' 
+                            ? 'bg-purple-500 hover:bg-purple-600 border-purple-400' 
+                            : 'border-gray-600 hover:border-purple-400'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="h-5 w-5" />
+                          <span className="font-medium">云端AI语音</span>
+                        </div>
+                        <div className="text-sm text-orange-400">
+                          ⚠️ 服务不稳定
+                        </div>
+                      </Button>
+                    </div>
+                    <p className="text-gray-400 text-sm mt-3">
+                      {ttsMode === 'browser' 
+                        ? '🌐 推荐使用：浏览器原生TTS，完全免费且稳定可靠' 
+                        : '☁️ 云端AI语音目前存在服务问题，建议使用浏览器TTS'}
+                    </p>
+                  </div>
                   
                   <div className="mb-8">
                     <h4 className="text-cyan-400 font-medium mb-4 text-lg">生成模式</h4>
@@ -474,49 +546,51 @@ const Voice = () => {
                         : '📖 直接朗读原文内容，保持文本原貌不做任何修改'}
                     </p>
                   </div>
-                  
-                  <div className="mb-8">
-                    <h4 className="text-cyan-400 font-medium mb-6 text-lg">选择语音风格</h4>
-                    <p className="text-gray-400 text-sm mb-6">
-                      每种风格都有独特的音色和个性，选择最适合您内容的声音
-                    </p>
-                    
-                    <RadioGroup 
-                      value={selectedVoice} 
-                      onValueChange={setSelectedVoice}
-                      className="grid grid-cols-6 gap-2"
-                    >
-                      {voiceOptions.map((voice) => (
-                        <div
-                          key={voice.id}
-                          className={`relative cursor-pointer p-2 rounded-lg border transition-all ${
-                            selectedVoice === voice.id
-                              ? 'border-cyan-400 bg-cyan-400/10'
-                              : 'border-gray-600 bg-gray-700/30 hover:bg-gray-700/50'
-                          }`}
-                        >
-                          <RadioGroupItem
-                            value={voice.id}
-                            id={`voice-${voice.id}`}
-                            className="absolute opacity-0"
-                          />
-                          <label
-                            htmlFor={`voice-${voice.id}`}
-                            className="flex flex-col items-center cursor-pointer"
+
+                  {ttsMode === 'cloud' && (
+                    <div className="mb-8">
+                      <h4 className="text-cyan-400 font-medium mb-6 text-lg">选择语音风格</h4>
+                      <p className="text-gray-400 text-sm mb-6">
+                        每种风格都有独特的音色和个性，选择最适合您内容的声音
+                      </p>
+                      
+                      <RadioGroup 
+                        value={selectedVoice} 
+                        onValueChange={setSelectedVoice}
+                        className="grid grid-cols-6 gap-2"
+                      >
+                        {voiceOptions.map((voice) => (
+                          <div
+                            key={voice.id}
+                            className={`relative cursor-pointer p-2 rounded-lg border transition-all ${
+                              selectedVoice === voice.id
+                                ? 'border-cyan-400 bg-cyan-400/10'
+                                : 'border-gray-600 bg-gray-700/30 hover:bg-gray-700/50'
+                            }`}
                           >
-                            {selectedVoice === voice.id && (
-                              <div className="absolute -top-1 -right-1 bg-cyan-400 rounded-full">
-                                <CheckCircle2 className="h-2 w-2 text-white" />
-                              </div>
-                            )}
-                            <div className="text-lg mb-1">{voice.avatar}</div>
-                            <div className="text-white font-medium text-xs text-center">{voice.name}</div>
-                            <div className="text-gray-400 text-xs text-center leading-tight">{voice.description}</div>
-                          </label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  </div>
+                            <RadioGroupItem
+                              value={voice.id}
+                              id={`voice-${voice.id}`}
+                              className="absolute opacity-0"
+                            />
+                            <label
+                              htmlFor={`voice-${voice.id}`}
+                              className="flex flex-col items-center cursor-pointer"
+                            >
+                              {selectedVoice === voice.id && (
+                                <div className="absolute -top-1 -right-1 bg-cyan-400 rounded-full">
+                                  <CheckCircle2 className="h-2 w-2 text-white" />
+                                </div>
+                              )}
+                              <div className="text-lg mb-1">{voice.avatar}</div>
+                              <div className="text-white font-medium text-xs text-center">{voice.name}</div>
+                              <div className="text-gray-400 text-xs text-center leading-tight">{voice.description}</div>
+                            </label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </div>
+                  )}
 
                   <div className="mb-8">
                     <Label htmlFor="text-input" className="text-cyan-400 font-medium mb-4 block text-lg">输入文本</Label>
@@ -529,48 +603,56 @@ const Voice = () => {
                     />
                     <div className="flex justify-between items-center mt-3">
                       <p className={`text-sm ${text.length > 500 ? 'text-yellow-400' : text.length > 800 ? 'text-red-400' : 'text-gray-400'}`}>
-                        字符数: {text.length} / 800 {text.length > 500 && '(建议500字符以内以获得更好效果)'}
+                        字符数: {text.length} {ttsMode === 'cloud' ? '/ 800' : '(无限制)'} 
+                        {ttsMode === 'cloud' && text.length > 500 && '(建议500字符以内以获得更好效果)'}
                       </p>
                       <p className="text-gray-400 text-sm">
                         模式: {voiceMode === 'ai' ? '🎭 智能演绎' : '📖 原文朗读'}
                       </p>
                     </div>
-                    {text.length > 800 && (
-                      <p className="text-red-400 text-sm mt-2">⚠️ 文本过长，请缩短到800字符以内</p>
+                    {ttsMode === 'cloud' && text.length > 800 && (
+                      <p className="text-red-400 text-sm mt-2">⚠️ 云端模式文本过长，请缩短到800字符以内</p>
                     )}
                   </div>
 
-                  <div className="flex justify-between mb-8">
-                    <Button
-                      onClick={handleGenerateVoice}
-                      disabled={loading || !text.trim() || text.length > 800}
-                      className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-10 py-3 text-base"
-                    >
-                      {loading ? (
-                        <>
-                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                          生成中...
-                        </>
-                      ) : (
-                        "生成语音"
-                      )}
-                    </Button>
-                    <Button variant="ghost" className="text-gray-400 hover:text-gray-200">
-                      快捷键 (Ctrl + Enter)
-                    </Button>
-                  </div>
+                  {ttsMode === 'cloud' ? (
+                    <>
+                      <div className="flex justify-between mb-8">
+                        <Button
+                          onClick={handleGenerateVoice}
+                          disabled={loading || !text.trim() || text.length > 800}
+                          className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-10 py-3 text-base"
+                        >
+                          {loading ? (
+                            <>
+                              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                              生成中...
+                            </>
+                          ) : (
+                            "生成语音"
+                          )}
+                        </Button>
+                        <Button variant="ghost" className="text-gray-400 hover:text-gray-200">
+                          快捷键 (Ctrl + Enter)
+                        </Button>
+                      </div>
 
-                  <div className="bg-gray-700/30 rounded-lg p-6">
-                    <h4 className="text-white font-medium mb-3 text-base">服务状态说明</h4>
-                    <ul className="text-gray-300 text-sm space-y-2 list-disc pl-5">
-                      <li>🔄 使用多重备用API确保服务可用性</li>
-                      <li>⚡ 系统会自动选择最佳的语音生成方案</li>
-                      <li>📊 建议文本长度控制在500字符以内以获得最佳效果</li>
-                      <li>🛡️ 自动过滤敏感内容，确保内容合规</li>
-                      <li>⏱️ 生成时间通常在10-30秒，请耐心等待</li>
-                      <li>🎵 支持18种不同的语音风格选择</li>
-                    </ul>
-                  </div>
+                      <div className="bg-gray-700/30 rounded-lg p-6">
+                        <h4 className="text-white font-medium mb-3 text-base">⚠️ 云端服务状态</h4>
+                        <ul className="text-gray-300 text-sm space-y-2 list-disc pl-5">
+                          <li>❌ Pollinations API目前存在CORS和内容过滤问题</li>
+                          <li>❌ 中文文本经常被内容管理策略拒绝</li>
+                          <li>❌ 返回的音频数据可能无效(仅581字节)</li>
+                          <li>✅ 建议切换到"浏览器TTS"获得稳定体验</li>
+                        </ul>
+                      </div>
+                    </>
+                  ) : (
+                    <WebSpeechTTS 
+                      text={text} 
+                      onAudioGenerated={handleWebSpeechAudioGenerated}
+                    />
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -587,17 +669,17 @@ const Voice = () => {
                           <div 
                             className="w-12 h-12 rounded-full flex items-center justify-center mr-4 text-xl"
                             style={{ 
-                              backgroundColor: voiceOptions.find(v => v.id === selectedVoice)?.color || '#8B5CF6' 
+                              backgroundColor: ttsMode === 'browser' ? '#10B981' : (voiceOptions.find(v => v.id === selectedVoice)?.color || '#8B5CF6')
                             }}
                           >
-                            {voiceOptions.find(v => v.id === selectedVoice)?.avatar || '🤖'}
+                            {ttsMode === 'browser' ? '🌐' : (voiceOptions.find(v => v.id === selectedVoice)?.avatar || '🤖')}
                           </div>
                           <div>
                             <div className="text-white font-medium text-base">
-                              {voiceOptions.find(v => v.id === selectedVoice)?.name || 'Voice'}
+                              {ttsMode === 'browser' ? '浏览器TTS' : (voiceOptions.find(v => v.id === selectedVoice)?.name || 'Voice')}
                             </div>
                             <div className="text-gray-400 text-sm">
-                              {voiceOptions.find(v => v.id === selectedVoice)?.description}
+                              {ttsMode === 'browser' ? '原生语音合成' : (voiceOptions.find(v => v.id === selectedVoice)?.description)}
                             </div>
                             <div className="text-gray-500 text-xs mt-1">
                               {voiceMode === 'ai' ? '🎭 智能演绎版' : '📖 原文朗读版'}
@@ -628,7 +710,7 @@ const Voice = () => {
                               if (audioUrl) {
                                 const link = document.createElement('a');
                                 link.href = audioUrl;
-                                link.download = `voice_${Date.now()}.mp3`;
+                                link.download = `voice_${Date.now()}.${ttsMode === 'browser' ? 'wav' : 'mp3'}`;
                                 link.click();
                               }
                               toast({
