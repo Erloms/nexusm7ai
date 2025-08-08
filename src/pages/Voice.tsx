@@ -53,6 +53,9 @@ const Voice = () => {
   const [voiceMode, setVoiceMode] = useState<'reading' | 'ai'>('reading');
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  // 使用您提供的API密钥
+  const POLLINATIONS_API_TOKEN = 'r---77WuReCx4PoE';
+
   const voiceOptions: VoiceOption[] = [
     { 
       id: 'alloy', 
@@ -301,7 +304,20 @@ const Voice = () => {
       if (voiceMode === 'ai') {
         const optimizePrompt = `请将以下文本优化为更适合语音播报的版本，使其更生动、更有表现力，但保持原意。请直接返回优化后的文本，不要添加任何解释：\n\n${text}`;
         try {
-          const optimizeResponse = await fetch(`https://text.pollinations.ai/${encodeURIComponent(optimizePrompt)}?model=openai`);
+          const optimizeResponse = await fetch(`https://text.pollinations.ai/openai?token=${POLLINATIONS_API_TOKEN}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${POLLINATIONS_API_TOKEN}`,
+            },
+            body: JSON.stringify({
+              messages: [
+                { role: 'user', content: optimizePrompt }
+              ],
+              model: 'gpt-4'
+            })
+          });
+          
           if (optimizeResponse.ok) {
             const reader = optimizeResponse.body!.getReader();
             const decoder = new TextDecoder();
@@ -320,219 +336,79 @@ const Voice = () => {
             }
           }
         } catch (error) {
-          console.log('AI optimization failed, using original text:', error);
+          console.log('AI优化失败，使用原文:', error);
         }
       }
       
-      // 限制文本长度
+      // 限制文本长度到200字符以内以获得最佳效果
       const limitedText = processedText.substring(0, 200);
       console.log('开始语音生成，文本长度:', limitedText.length);
-      console.log('使用的文本内容:', limitedText);
+      console.log('使用语音:', selectedVoice);
+      console.log('处理后文本:', limitedText);
       
-      // TTS服务数组
-      const ttsServices = [
-        // 方法1: 直接使用Pollinations Audio API
-        async (): Promise<Blob> => {
-          console.log('尝试Pollinations Audio API方法1...');
-          const encodedText = encodeURIComponent(limitedText);
-          const audioUrl = `https://text.pollinations.ai/${encodedText}?model=openai-audio&voice=${selectedVoice}`;
-          console.log('请求URL:', audioUrl);
-          
-          const response = await fetch(audioUrl, {
-            method: 'GET',
-            headers: {
-              'Accept': 'audio/mpeg, audio/wav, audio/mp3, audio/*',
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-              'Referer': 'https://pollinations.ai/',
-              'Origin': 'https://pollinations.ai'
-            }
-          });
-          
-          console.log('Pollinations响应状态:', response.status);
-          console.log('响应头:', Object.fromEntries(response.headers.entries()));
-          
-          if (!response.ok) {
-            const text = await response.text();
-            console.log('Pollinations错误响应:', text.substring(0, 200));
-            throw new Error(`Pollinations API错误: ${response.status} ${response.statusText}`);
-          }
-          
-          const contentType = response.headers.get('content-type') || '';
-          console.log('内容类型:', contentType);
-          
-          const arrayBuffer = await response.arrayBuffer();
-          console.log('音频数据大小:', arrayBuffer.byteLength, 'bytes');
-          
-          if (arrayBuffer.byteLength < 1000) {
-            throw new Error('音频文件太小，可能无效');
-          }
-          
-          const blob = new Blob([arrayBuffer], { 
-            type: contentType.includes('audio') ? contentType : 'audio/mpeg' 
-          });
-          
-          // 验证音频
-          const isValid = await validateAudioBlob(blob);
-          if (!isValid) {
-            throw new Error('生成的音频无效或时长为0');
-          }
-          
-          return blob;
-        },
-
-        // 方法2: 尝试不同的API格式
-        async (): Promise<Blob> => {
-          console.log('尝试Pollinations Audio API方法2...');
-          const audioUrl = `https://text.pollinations.ai/audio?text=${encodeURIComponent(limitedText)}&voice=${selectedVoice}`;
-          console.log('请求URL:', audioUrl);
-          
-          const response = await fetch(audioUrl, {
-            method: 'GET',
-            headers: {
-              'Accept': 'audio/*',
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-          });
-          
-          if (!response.ok) {
-            throw new Error(`方法2失败: ${response.status}`);
-          }
-          
-          const arrayBuffer = await response.arrayBuffer();
-          if (arrayBuffer.byteLength < 1000) {
-            throw new Error('音频文件太小');
-          }
-          
-          const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
-          
-          // 验证音频
-          const isValid = await validateAudioBlob(blob);
-          if (!isValid) {
-            throw new Error('生成的音频无效或时长为0');
-          }
-          
-          return blob;
-        },
-
-        // 方法3: Web Speech API（有实际音频输出）
-        async (): Promise<Blob> => {
-          console.log('尝试Web Speech API录制...');
-          
-          if (!('speechSynthesis' in window)) {
-            throw new Error('浏览器不支持Web Speech API');
-          }
-          
-          return new Promise<Blob>((resolve, reject) => {
-            // 使用MediaRecorder录制Web Speech API的输出
-            navigator.mediaDevices.getUserMedia({ audio: true })
-              .then(stream => {
-                const mediaRecorder = new MediaRecorder(stream);
-                const audioChunks: BlobPart[] = [];
-                
-                mediaRecorder.ondataavailable = (event) => {
-                  audioChunks.push(event.data);
-                };
-                
-                mediaRecorder.onstop = () => {
-                  const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                  stream.getTracks().forEach(track => track.stop());
-                  resolve(audioBlob);
-                };
-                
-                mediaRecorder.onerror = () => {
-                  stream.getTracks().forEach(track => track.stop());
-                  reject(new Error('录制失败'));
-                };
-                
-                // 开始录制
-                mediaRecorder.start();
-                
-                // 开始语音合成
-                const utterance = new SpeechSynthesisUtterance(limitedText);
-                const voices = speechSynthesis.getVoices();
-                
-                const chineseVoice = voices.find(voice => 
-                  voice.lang.includes('zh') || voice.name.includes('Chinese')
-                );
-                
-                if (chineseVoice) {
-                  utterance.voice = chineseVoice;
-                }
-                
-                utterance.rate = 0.9;
-                utterance.pitch = 1;
-                utterance.volume = 1;
-                
-                utterance.onend = () => {
-                  // 延迟停止录制，确保音频完整
-                  setTimeout(() => {
-                    mediaRecorder.stop();
-                  }, 500);
-                };
-                
-                utterance.onerror = () => {
-                  mediaRecorder.stop();
-                  reject(new Error('语音合成失败'));
-                };
-                
-                speechSynthesis.speak(utterance);
-                
-                // 超时保护
-                setTimeout(() => {
-                  if (mediaRecorder.state === 'recording') {
-                    mediaRecorder.stop();
-                    reject(new Error('录制超时'));
-                  }
-                }, 10000);
-              })
-              .catch(() => {
-                // 如果无法获取麦克风权限，返回静默音频
-                reject(new Error('无法获取录制权限'));
-              });
-          });
+      // 使用Pollinations.ai Audio API
+      const encodedText = encodeURIComponent(limitedText);
+      const audioApiUrl = `https://text.pollinations.ai/${encodedText}?model=openai-audio&voice=${selectedVoice}&token=${POLLINATIONS_API_TOKEN}`;
+      
+      console.log('请求音频API URL:', audioApiUrl);
+      
+      const response = await fetch(audioApiUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'audio/mpeg, audio/wav, audio/mp3, audio/*',
+          'Authorization': `Bearer ${POLLINATIONS_API_TOKEN}`,
+          'User-Agent': 'NexusAI/1.0'
         }
-      ];
+      });
 
-      let audioBlob: Blob | null = null;
-      let lastError: Error | null = null;
-      let serviceIndex = 0;
+      console.log('Pollinations音频API响应状态:', response.status);
+      console.log('响应头:', Object.fromEntries(response.headers.entries()));
 
-      for (const service of ttsServices) {
-        try {
-          serviceIndex++;
-          console.log(`尝试TTS服务 ${serviceIndex}...`);
-          audioBlob = await service();
-          console.log(`服务 ${serviceIndex} 成功，音频大小:`, audioBlob.size, 'bytes');
-          
-          if (audioBlob && audioBlob.size > 1000) {
-            console.log('音频验证通过，准备播放');
-            break;
-          } else {
-            console.log(`服务 ${serviceIndex} 返回的音频文件太小，尝试下一个...`);
-            audioBlob = null;
-          }
-        } catch (error) {
-          console.log(`服务 ${serviceIndex} 失败:`, error);
-          lastError = error as Error;
-        }
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('API错误响应:', errorText);
+        throw new Error(`Pollinations Audio API错误: ${response.status} - ${response.statusText}`);
       }
 
-      if (!audioBlob) {
-        throw lastError || new Error('所有TTS服务都失败了');
+      const contentType = response.headers.get('content-type') || '';
+      console.log('音频内容类型:', contentType);
+      
+      // 检查是否返回的是音频内容
+      if (!contentType.includes('audio')) {
+        const responseText = await response.text();
+        console.log('非音频响应内容:', responseText);
+        throw new Error('API返回的不是音频内容，可能是文本回复');
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      console.log('音频数据大小:', arrayBuffer.byteLength, 'bytes');
+
+      if (arrayBuffer.byteLength < 1000) {
+        throw new Error('音频文件太小，可能生成失败');
+      }
+
+      const audioBlob = new Blob([arrayBuffer], { 
+        type: contentType.includes('audio') ? contentType : 'audio/mpeg' 
+      });
+
+      // 验证音频有效性
+      const isValid = await validateAudioBlob(audioBlob);
+      if (!isValid) {
+        throw new Error('生成的音频无效或时长为0');
       }
 
       // 创建音频URL
-      const audioUrl = URL.createObjectURL(audioBlob);
-      console.log('创建音频URL成功:', audioUrl);
+      const newAudioUrl = URL.createObjectURL(audioBlob);
+      console.log('音频生成成功，URL:', newAudioUrl);
       
-      setAudioUrl(audioUrl);
+      setAudioUrl(newAudioUrl);
       
       const newHistoryItem: HistoryItem = {
         id: Date.now(),
         timestamp: new Date(),
         voice: selectedVoice,
         text: limitedText,
-        audioUrl: audioUrl,
+        audioUrl: newAudioUrl,
         mode: voiceMode
       };
       
@@ -549,16 +425,16 @@ const Voice = () => {
       
       let errorMessage = '语音生成失败';
       if (error instanceof Error) {
-        if (error.message.includes('402') || error.message.includes('配额')) {
-          errorMessage = 'API服务配额不足，请稍后再试';
+        if (error.message.includes('402') || error.message.includes('tier not high enough')) {
+          errorMessage = 'API密钥权限不足，请检查您的Pollinations.ai账户配额';
         } else if (error.message.includes('404')) {
-          errorMessage = 'Pollinations语音服务暂时不可用';
+          errorMessage = 'API接口不存在，请检查URL是否正确';
         } else if (error.message.includes('500')) {
-          errorMessage = '服务器繁忙，请稍后重试';
+          errorMessage = '服务器内部错误，请稍后重试';
         } else if (error.message.includes('Failed to fetch')) {
-          errorMessage = '网络连接失败或服务不可用';
-        } else if (error.message.includes('时长为0')) {
-          errorMessage = '生成的音频时长为0，请尝试更换语音或缩短文本';
+          errorMessage = '网络连接失败，请检查网络连接';
+        } else if (error.message.includes('非音频响应')) {
+          errorMessage = 'API返回了文本而非音频，可能是模型参数错误';
         } else {
           errorMessage = `生成失败: ${error.message}`;
         }
@@ -728,11 +604,12 @@ const Voice = () => {
                   <div className="bg-gray-700/30 rounded-lg p-6">
                     <h4 className="text-white font-medium mb-3 text-base">技术说明</h4>
                     <ul className="text-gray-300 text-sm space-y-2 list-disc pl-5">
-                      <li>🎯 首选Pollinations.ai的Audio API服务</li>
+                      <li>🎯 使用Pollinations.ai的Audio API服务</li>
+                      <li>🔑 已配置API密钥进行身份验证</li>
                       <li>📊 建议文本长度控制在200字符以内以获得最佳效果</li>
-                      <li>🎙️ 备用方案使用Web Speech API录制（需要麦克风权限）</li>
                       <li>✅ 自动验证音频有效性，确保播放时长大于0</li>
                       <li>⏱️ 生成时间通常在5-15秒，请耐心等待</li>
+                      <li>🎵 支持18种不同的语音风格选择</li>
                     </ul>
                   </div>
                 </CardContent>
