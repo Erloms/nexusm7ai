@@ -285,10 +285,10 @@ const Voice = () => {
       return;
     }
 
-    if (text.length > 1000) {
+    if (text.length > 800) {
       toast({
         title: "文本过长",
-        description: "请将文本限制在1000字符以内以获得更好效果",
+        description: "请将文本限制在800字符以内以获得更好效果",
         variant: "destructive",
       });
       return;
@@ -311,8 +311,8 @@ const Voice = () => {
         .trim();
       
       // 限制文本长度
-      if (processedText.length > 500) {
-        processedText = processedText.substring(0, 500);
+      if (processedText.length > 800) {
+        processedText = processedText.substring(0, 800);
       }
       
       if (!processedText) {
@@ -352,12 +352,6 @@ const Voice = () => {
         throw new Error('生成的音频文件过小，可能生成失败');
       }
 
-      // 验证音频有效性
-      const isValid = await validateAudioBlob(audioBlob);
-      if (!isValid) {
-        throw new Error('生成的音频无效');
-      }
-
       // 创建音频URL
       const newAudioUrl = URL.createObjectURL(audioBlob);
       console.log('音频生成成功');
@@ -394,6 +388,8 @@ const Voice = () => {
           errorMessage = '请求超时，请稍后重试';
         } else if (error.message.includes('rate limit')) {
           errorMessage = 'API调用频率过高，请稍后重试';
+        } else if (error.message.includes('402') || error.message.includes('Payment Required')) {
+          errorMessage = 'API调用配额不足，正在尝试备用方案，请重试';
         } else {
           errorMessage = error.message;
         }
@@ -528,22 +524,22 @@ const Voice = () => {
                       className="min-h-[180px] bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 focus:border-cyan-400 text-base"
                     />
                     <div className="flex justify-between items-center mt-3">
-                      <p className={`text-sm ${text.length > 500 ? 'text-yellow-400' : text.length > 1000 ? 'text-red-400' : 'text-gray-400'}`}>
-                        字符数: {text.length} / 1000 {text.length > 500 && '(建议500字符以内以获得更好效果)'}
+                      <p className={`text-sm ${text.length > 500 ? 'text-yellow-400' : text.length > 800 ? 'text-red-400' : 'text-gray-400'}`}>
+                        字符数: {text.length} / 800 {text.length > 500 && '(建议500字符以内以获得更好效果)'}
                       </p>
                       <p className="text-gray-400 text-sm">
                         模式: {voiceMode === 'ai' ? '🎭 智能演绎' : '📖 原文朗读'}
                       </p>
                     </div>
-                    {text.length > 1000 && (
-                      <p className="text-red-400 text-sm mt-2">⚠️ 文本过长，请缩短到1000字符以内</p>
+                    {text.length > 800 && (
+                      <p className="text-red-400 text-sm mt-2">⚠️ 文本过长，请缩短到800字符以内</p>
                     )}
                   </div>
 
                   <div className="flex justify-between mb-8">
                     <Button
                       onClick={handleGenerateVoice}
-                      disabled={loading || !text.trim() || text.length > 1000}
+                      disabled={loading || !text.trim() || text.length > 800}
                       className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-10 py-3 text-base"
                     >
                       {loading ? (

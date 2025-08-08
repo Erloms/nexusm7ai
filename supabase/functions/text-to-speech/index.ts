@@ -6,9 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// 支持的语音列表 - 使用Pollinations.ai服务
+// 支持的语音列表
 const SUPPORTED_VOICES = {
-  // OpenAI 兼容语音
+  // OpenAI 原生语音
   'alloy': 'alloy',
   'echo': 'echo', 
   'fable': 'fable',
@@ -29,9 +29,6 @@ const SUPPORTED_VOICES = {
   'phoenix': 'phoenix',
   'luna': 'luna'
 }
-
-// Pollinations.ai API key
-const POLLINATIONS_API_KEY = 'r---77WuReCx4PoE'
 
 serve(async (req) => {
   console.log('TTS Function called, method:', req.method)
@@ -57,9 +54,9 @@ serve(async (req) => {
     }
 
     // 限制文本长度
-    if (text.length > 4000) {
+    if (text.length > 2000) {
       return new Response(
-        JSON.stringify({ error: 'Text too long. Please limit to 4000 characters.' }),
+        JSON.stringify({ error: 'Text too long. Please limit to 2000 characters.' }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -83,14 +80,14 @@ serve(async (req) => {
     let audioContent: ArrayBuffer
 
     try {
-      // 限制文本长度到1000字符以内
-      const limitedText = text.substring(0, 1000)
+      // 限制文本长度到800字符以内
+      const limitedText = text.substring(0, 800)
       
       console.log('Calling Pollinations.ai TTS API')
       
-      // 使用Pollinations.ai的TTS服务
+      // 使用Pollinations.ai的TTS服务，添加API token
       const encodedText = encodeURIComponent(limitedText)
-      const ttsUrl = `https://text.pollinations.ai/${encodedText}?model=openai-audio&voice=${voiceName}`
+      const ttsUrl = `https://text.pollinations.ai/${encodedText}?model=openai-audio&voice=${voiceName}&token=r---77WuReCx4PoE`
       
       console.log('TTS URL:', ttsUrl)
       
@@ -98,7 +95,8 @@ serve(async (req) => {
         method: 'GET',
         headers: {
           'User-Agent': 'NexusAI/1.0',
-          'Accept': 'audio/*,*/*;q=0.9'
+          'Accept': 'audio/mpeg, audio/wav, audio/mp3, audio/*',
+          'Authorization': 'Bearer r---77WuReCx4PoE'
         }
       })
 
@@ -106,10 +104,34 @@ serve(async (req) => {
       console.log('Pollinations response headers:', Object.fromEntries(response.headers.entries()))
 
       if (!response.ok) {
-        throw new Error(`Pollinations API returned ${response.status}: ${response.statusText}`)
+        const errorText = await response.text()
+        console.error('Pollinations API error:', errorText)
+        
+        // 如果是402错误，尝试不带token的请求
+        if (response.status === 402) {
+          console.log('Trying without token due to 402 error')
+          const fallbackUrl = `https://text.pollinations.ai/${encodedText}?model=openai-audio&voice=${voiceName}`
+          
+          const fallbackResponse = await fetch(fallbackUrl, {
+            method: 'GET',
+            headers: {
+              'User-Agent': 'NexusAI/1.0',
+              'Accept': 'audio/mpeg, audio/wav, audio/mp3, audio/*'
+            }
+          })
+          
+          if (!fallbackResponse.ok) {
+            throw new Error(`Pollinations API returned ${fallbackResponse.status}: ${await fallbackResponse.text()}`)
+          }
+          
+          audioContent = await fallbackResponse.arrayBuffer()
+        } else {
+          throw new Error(`Pollinations API returned ${response.status}: ${errorText}`)
+        }
+      } else {
+        audioContent = await response.arrayBuffer()
       }
-
-      audioContent = await response.arrayBuffer()
+      
       console.log('Audio content size:', audioContent.byteLength)
 
       // 检查音频内容是否有效
@@ -120,7 +142,7 @@ serve(async (req) => {
     } catch (error) {
       console.error('TTS generation error:', error)
       return new Response(
-        JSON.stringify({ error: `TTS service unavailable: ${error.message}` }),
+        JSON.stringify({ error: `TTS service error: ${error.message}` }),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
