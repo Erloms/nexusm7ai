@@ -12,12 +12,10 @@ interface ToastProps {
   action?: React.ReactNode;
 }
 
-// Define our toast interface
 export interface Toast extends ToastProps {
   id: string;
 }
 
-// Create a proper toast implementation that uses Sonner
 export const toast = ({
   title,
   description,
@@ -25,7 +23,6 @@ export const toast = ({
   duration = 3000,
   action,
 }: ToastProps) => {
-  // Handle different variants properly
   if (variant === "destructive") {
     return sonnerToast.error(title, {
       description,
@@ -60,8 +57,6 @@ export const toast = ({
 };
 
 export const useToast = () => {
-  // Since we're using sonner under the hood and it manages its own toast state,
-  // we'll provide an empty array for compatibility
   return {
     toast,
     toasts: [] as Toast[],
