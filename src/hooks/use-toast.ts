@@ -17,8 +17,7 @@ export interface Toast extends ToastProps {
   id: string;
 }
 
-// Create a dummy implementation that doesn't actually store toasts 
-// since we're using Sonner toast under the hood
+// Create a proper toast implementation that uses Sonner
 export const toast = ({
   title,
   description,
@@ -26,18 +25,38 @@ export const toast = ({
   duration = 3000,
   action,
 }: ToastProps) => {
-  // Convert variant to sonner style
-  const type = 
-    variant === "destructive" ? "error" :
-    variant === "success" ? "success" : 
-    variant === "warning" ? "warning" :
-    variant === "info" ? "info" : "default";
-
-  return sonnerToast[type](title, {
-    description,
-    duration,
-    action,
-  });
+  // Handle different variants properly
+  if (variant === "destructive") {
+    return sonnerToast.error(title, {
+      description,
+      duration,
+      action,
+    });
+  } else if (variant === "success") {
+    return sonnerToast.success(title, {
+      description,
+      duration,
+      action,
+    });
+  } else if (variant === "warning") {
+    return sonnerToast.warning(title, {
+      description,
+      duration,
+      action,
+    });
+  } else if (variant === "info") {
+    return sonnerToast.info(title, {
+      description,
+      duration,
+      action,
+    });
+  } else {
+    return sonnerToast(title, {
+      description,
+      duration,
+      action,
+    });
+  }
 };
 
 export const useToast = () => {
